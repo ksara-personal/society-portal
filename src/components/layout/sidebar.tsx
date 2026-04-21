@@ -1,0 +1,144 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
+import {
+  LayoutDashboard,
+  ClipboardList,
+  PlusCircle,
+  Tag,
+  Users,
+  LogOut,
+  Building2,
+  Shield,
+  UserCircle,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+
+interface SidebarProps {
+  userRole: string;
+  userName: string;
+  userEmail: string;
+}
+
+const navItems = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/issues", label: "All Issues", icon: ClipboardList },
+  { href: "/issues/new", label: "Report Issue", icon: PlusCircle },
+  { href: "/profile", label: "My Profile", icon: UserCircle },
+];
+
+const adminItems = [
+  { href: "/admin/categories", label: "Categories", icon: Tag },
+  { href: "/admin/users", label: "Users", icon: Users },
+];
+
+export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
+  const pathname = usePathname();
+  const isAdmin = userRole === "ADMIN";
+
+  return (
+    <aside className="flex flex-col h-full w-64 border-r bg-white">
+      {/* Logo */}
+      <div className="p-4 border-b">
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+            <Building2 className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <p className="font-semibold text-sm leading-tight">Green Valley</p>
+            <p className="text-xs text-gray-500 leading-tight">Residences</p>
+          </div>
+        </Link>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        {navItems.map((item) => {
+          const isActive =
+            item.href === "/issues"
+              ? pathname === "/issues" || (pathname.startsWith("/issues") && !pathname.startsWith("/issues/new"))
+              : pathname === item.href || pathname.startsWith(item.href + "/");
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-primary/10 text-primary"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              )}
+            >
+              <item.icon className="h-4 w-4 shrink-0" />
+              {item.label}
+            </Link>
+          );
+        })}
+
+        {isAdmin && (
+          <>
+            <Separator className="my-2" />
+            <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+              <Shield className="h-3 w-3" />
+              Admin
+            </p>
+            {adminItems.map((item) => {
+              const isActive = pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  )}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </>
+        )}
+      </nav>
+
+      {/* User info + sign out */}
+      <div className="p-3 border-t">
+        <Link
+          href="/profile"
+          className={cn(
+            "flex items-center gap-2 px-2 py-2 rounded-md transition-colors",
+            pathname === "/profile"
+              ? "bg-primary/10"
+              : "hover:bg-gray-100"
+          )}
+        >
+          <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+            <span className="text-primary font-semibold text-sm">
+              {userName.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{userName}</p>
+            <p className="text-xs text-gray-500 truncate">{userEmail}</p>
+          </div>
+        </Link>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full mt-1 text-gray-600 hover:text-red-600 hover:bg-red-50"
+          onClick={() => signOut({ callbackUrl: "/login" })}
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Sign Out
+        </Button>
+      </div>
+    </aside>
+  );
+}

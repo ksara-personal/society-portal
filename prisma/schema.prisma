@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+enum Role {
+  ADMIN
+  RESIDENT
+}
+
+enum IssueStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum AttachmentType {
+  IMAGE
+  VIDEO
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id             String     @id @default(cuid())
+  name           String
+  email          String     @unique
+  password       String
+  role           Role       @default(RESIDENT)
+  approvalStatus UserStatus @default(PENDING)
+  approvedAt     DateTime?
+  phone          String?
+  wing           String?
+  flatNo         String?
+  isActive       Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  // Relations
+  createdIssues  Issue[]         @relation("CreatedBy")
+  assignedIssues Issue[]         @relation("AssignedTo")
+  statusChanges  StatusHistory[]
+
+  @@index([email])
+  @@index([role])
+  @@index([approvalStatus])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  issues Issue[]
+
+  @@index([slug])
+}
+
+model Issue {
+  id           String      @id @default(cuid())
+  title        String
+  description  String
+  status       IssueStatus @default(PENDING)
+  priority     Priority    @default(MEDIUM)
+  wing         String?
+  location     String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  resolvedAt   DateTime?
+
+  // Foreign keys
+  categoryId   String
+  createdById  String
+  assignedToId String?
+
+  // Relations
+  category      Category        @relation(fields: [categoryId], references: [id])
+  createdBy     User            @relation("CreatedBy", fields: [createdById], references: [id])
+  assignedTo    User?           @relation("AssignedTo", fields: [assignedToId], references: [id])
+  attachments   Attachment[]
+  statusHistory StatusHistory[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([createdById])
+  @@index([assignedToId])
+  @@index([createdAt])
+  @@index([wing])
+}
+
+model Attachment {
+  id        String         @id @default(cuid())
+  url       String
+  type      AttachmentType
+  filename  String
+  size      Int
+  createdAt DateTime       @default(now())
+
+  // Foreign keys
+  issueId   String
+
+  // Relations
+  issue     Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@index([issueId])
+}
+
+model StatusHistory {
+  id          String       @id @default(cuid())
+  fromStatus  IssueStatus?
+  toStatus    IssueStatus
+  note        String?
+  createdAt   DateTime     @default(now())
+
+  // Foreign keys
+  issueId     String
+  changedById String
+
+  // Relations
+  issue       Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  changedBy   User  @relation(fields: [changedById], references: [id])
+
+  @@index([issueId])
+  @@index([createdAt])
+}
