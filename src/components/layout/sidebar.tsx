@@ -49,7 +49,7 @@ export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
             <Building2 className="h-5 w-5 text-white" />
           </div>
           <div>
-            <p className="font-semibold text-sm leading-tight">Green Valley</p>
+            <p className="font-semibold text-sm leading-tight">Amber Meadows</p>
             <p className="text-xs text-gray-500 leading-tight">Residences</p>
           </div>
         </Link>

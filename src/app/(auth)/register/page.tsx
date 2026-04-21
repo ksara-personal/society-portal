@@ -94,7 +94,7 @@ export default function RegisterPage() {
         <div>
           <CardTitle className="text-2xl">Create Account</CardTitle>
           <CardDescription>
-            Register as a Green Valley resident
+            Register as a Amber Meadows resident
           </CardDescription>
         </div>
       </CardHeader>

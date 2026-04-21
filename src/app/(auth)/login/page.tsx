@@ -76,7 +76,7 @@ export default function LoginPage() {
           </div>
         </div>
         <div>
-          <CardTitle className="text-2xl">Green Valley</CardTitle>
+          <CardTitle className="text-2xl">Amber Meadows</CardTitle>
           <CardDescription>
             Sign in to access the issue tracker
           </CardDescription>
