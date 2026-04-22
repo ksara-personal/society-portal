@@ -191,9 +191,6 @@ export async function getIssues(searchParams: Record<string, string>) {
 
   const where: Record<string, unknown> = {};
 
-  if (user.role === "RESIDENT") {
-    where.createdById = user.id;
-  }
 
   if (filters.status) where.status = filters.status;
   if (filters.categoryId) where.categoryId = filters.categoryId;

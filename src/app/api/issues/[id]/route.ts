@@ -9,15 +9,10 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (\!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const issue = await getIssueById(params.id);
-  if (!issue) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  // Residents can only view their own issues
-  if (session.user.role === "RESIDENT" && issue.createdById !== session.user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  if (\!issue) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   return NextResponse.json(issue);
 }
