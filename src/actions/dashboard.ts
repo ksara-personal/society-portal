@@ -66,7 +66,7 @@ export async function getDashboardStats() {
     });
     if (resolved.length > 0) {
       const totalMs = resolved.reduce(
-        (acc, i) => acc + (i.resolvedAt\!.getTime() - i.createdAt.getTime()),
+        (acc, i) => acc + (i.resolvedAt!.getTime() - i.createdAt.getTime()),
         0
       );
       avgResolutionDays = totalMs / resolved.length / (1000 * 60 * 60 * 24);
