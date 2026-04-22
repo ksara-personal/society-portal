@@ -153,7 +153,7 @@ export async function updateIssueStatus(
   return { success: true };
 }
 
-export async function assignIssue(issueId: string, adminId: string) {
+export async function assignIssue(issueId: string, adminId: string | null) {
   await requireAdmin();
 
   await prisma.issue.update({

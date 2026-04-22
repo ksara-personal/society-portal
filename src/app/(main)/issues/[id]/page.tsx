@@ -86,10 +86,12 @@ export default function IssueDetailPage() {
   }
 
   async function handleAssign(adminId: string) {
-    await assignIssue(params.id as string, adminId);
+    // "unassigned" sentinel → pass null to clear the assignment
+    const resolvedId = adminId === "unassigned" ? null : adminId;
+    await assignIssue(params.id as string, resolvedId);
     const data = await fetch(`/api/issues/${params.id}`).then((r) => r.json());
     setIssue(data);
-    toast({ title: "Issue assigned!" });
+    toast({ title: resolvedId ? "Issue assigned!" : "Assignment cleared" });
   }
 
   async function handleDelete() {
@@ -266,14 +268,14 @@ export default function IssueDetailPage() {
                 <div className="pt-2 border-t space-y-1.5">
                   <Label>Assign To</Label>
                   <Select
-                    value={issue.assignedToId || ""}
+                    value={issue.assignedToId || "unassigned"}
                     onValueChange={handleAssign}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select admin" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Unassigned</SelectItem>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
                       {admins.map((admin: any) => (
                         <SelectItem key={admin.id} value={admin.id}>
                           {admin.name}
