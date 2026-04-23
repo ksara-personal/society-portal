@@ -19,7 +19,7 @@ export async function createIssue(formData: FormData) {
     description: formData.get("description"),
     categoryId: formData.get("categoryId"),
     priority: formData.get("priority") || "MEDIUM",
-    wing: formData.get("wing") || user.wing || undefined,
+    wing: formData.get("wing") || undefined,
     location: formData.get("location") || undefined,
   });
 
@@ -196,6 +196,7 @@ export async function getIssues(searchParams: Record<string, string>) {
   if (filters.categoryId) where.categoryId = filters.categoryId;
   if (filters.priority) where.priority = filters.priority;
   if (filters.wing) where.wing = filters.wing;
+  if (filters.unassigned) where.assignedToId = null;
   if (filters.search) {
     where.OR = [
       { title: { contains: filters.search, mode: "insensitive" } },

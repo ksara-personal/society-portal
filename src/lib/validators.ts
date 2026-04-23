@@ -27,6 +27,7 @@ export const issueFilterSchema = z.object({
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
   wing: z.string().optional(),
   search: z.string().optional(),
+  unassigned: z.coerce.boolean().optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(50).default(12),
 });

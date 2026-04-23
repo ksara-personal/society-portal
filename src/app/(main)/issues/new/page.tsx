@@ -32,6 +32,7 @@ export default function NewIssuePage() {
   const [loading, setLoading] = useState(false);
   const [attachments, setAttachments] = useState<UploadedFile[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [wing, setWing] = useState<string>("");
 
   useEffect(() => {
     fetch("/api/categories")
@@ -133,7 +134,7 @@ export default function NewIssuePage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Wing</Label>
-                <Select name="wing">
+                <Select name="wing" value={wing} onValueChange={setWing}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select wing" />
                   </SelectTrigger>

@@ -3,7 +3,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "./status-badge";
 import { PriorityBadge } from "./priority-badge";
-import { MapPin, User, ImageIcon } from "lucide-react";
+import { MapPin, User, ImageIcon, UserCheck } from "lucide-react";
 
 interface IssueCardProps {
   issue: {
@@ -55,6 +55,10 @@ export function IssueCard({ issue }: IssueCardProps) {
                     {issue.attachments.length > 1 ? "s" : ""}
                   </span>
                 )}
+                <span className="flex items-center gap-1">
+                  <UserCheck className="h-3 w-3" />
+                  {issue.assignedTo ? issue.assignedTo.name : "Unassigned"}
+                </span>
               </div>
             </div>
             <div className="flex flex-col items-end gap-1.5 shrink-0">

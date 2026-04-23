@@ -57,7 +57,8 @@ export function IssueFilters({ categories }: IssueFiltersProps) {
     searchParams.get("categoryId") ||
     searchParams.get("priority") ||
     searchParams.get("wing") ||
-    searchParams.get("search");
+    searchParams.get("search") ||
+    searchParams.get("unassigned");
 
   return (
     <div className="flex flex-wrap gap-2 items-center">
@@ -138,6 +139,21 @@ export function IssueFilters({ categories }: IssueFiltersProps) {
           <SelectItem value="HIGH">High</SelectItem>
           <SelectItem value="MEDIUM">Medium</SelectItem>
           <SelectItem value="LOW">Low</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={searchParams.get("unassigned") === "true" ? "unassigned" : ""}
+        onValueChange={(v) =>
+          updateFilter("unassigned", v === "unassigned" ? "true" : null)
+        }
+      >
+        <SelectTrigger className="w-36">
+          <SelectValue placeholder="Assignment" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Issues</SelectItem>
+          <SelectItem value="unassigned">Unassigned</SelectItem>
         </SelectContent>
       </Select>
 
