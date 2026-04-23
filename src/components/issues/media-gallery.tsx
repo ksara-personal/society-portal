@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, ChevronLeft, ChevronRight, FileVideo } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, FileVideo, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Attachment {
@@ -17,6 +17,26 @@ interface MediaGalleryProps {
 
 export function MediaGallery({ attachments }: MediaGalleryProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const handleShare = async (attachment: Attachment) => {
+    const shareData = {
+      title: attachment.filename,
+      text: attachment.filename,
+      url: attachment.url,
+    };
+
+    // Use native Web Share API (works with WhatsApp, Messages, etc. on mobile)
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch {
+        // User cancelled or error — do nothing
+      }
+    } else {
+      // Desktop fallback: open WhatsApp web share
+      const waUrl = `https://wa.me/?text=${encodeURIComponent(attachment.filename + "\n" + attachment.url)}`;
+      window.open(waUrl, "_blank");
+    }
+  };
 
   if (attachments.length === 0) return null;
 
@@ -67,6 +87,7 @@ export function MediaGallery({ attachments }: MediaGalleryProps) {
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
           onClick={() => setLightboxIndex(null)}
         >
+          {/* Close button */}
           <Button
             variant="ghost"
             size="icon"
@@ -74,6 +95,20 @@ export function MediaGallery({ attachments }: MediaGalleryProps) {
             onClick={() => setLightboxIndex(null)}
           >
             <X className="h-6 w-6" />
+          </Button>
+
+          {/* Share button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-16 text-white hover:bg-white/20"
+            title="Share"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleShare(attachments[lightboxIndex]);
+            }}
+          >
+            <Share2 className="h-5 w-5" />
           </Button>
 
           {lightboxIndex > 0 && (
