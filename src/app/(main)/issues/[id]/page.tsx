@@ -19,6 +19,7 @@ import { StatusBadge } from "@/components/issues/status-badge";
 import { PriorityBadge } from "@/components/issues/priority-badge";
 import { StatusTimeline } from "@/components/issues/status-timeline";
 import { MediaGallery } from "@/components/issues/media-gallery";
+import { ShareIssueButton } from "@/components/issues/share-issue-button";
 import { updateIssueStatus, assignIssue, deleteIssue } from "@/actions/issues";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -135,6 +136,7 @@ export default function IssueDetailPage() {
           </Link>
         </Button>
         <div className="flex gap-2">
+          <ShareIssueButton issue={issue} />
           {(isOwner || isAdmin) && (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/issues/${issue.id}/edit`} className="gap-1">
