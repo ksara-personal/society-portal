@@ -77,6 +77,29 @@ async function main() {
   }
   console.log(`✅ ${categories.length} categories created`);
 
+  // Create contact categories
+  const contactCategories = [
+    { name: "Electrician",      slug: "electrician",      icon: "zap",             color: "#f59e0b", order: 1 },
+    { name: "Plumber",          slug: "plumber",          icon: "wrench",          color: "#3b82f6", order: 2 },
+    { name: "Carpenter",        slug: "carpenter",        icon: "hammer",          color: "#78716c", order: 3 },
+    { name: "Tile Work",        slug: "tile-work",        icon: "grid-3x3",        color: "#8b5cf6", order: 4 },
+    { name: "Painting",         slug: "painting",         icon: "paintbrush",      color: "#ec4899", order: 5 },
+    { name: "Curtain Provider", slug: "curtain-provider", icon: "blinds",          color: "#06b6d4", order: 6 },
+    { name: "Pest Control",     slug: "pest-control",     icon: "bug",             color: "#22c55e", order: 7 },
+    { name: "Cleaning Service", slug: "cleaning-service", icon: "sparkles",        color: "#f97316", order: 8 },
+    { name: "AC / Appliance",   slug: "ac-appliance",     icon: "thermometer",     color: "#64748b", order: 9 },
+    { name: "Other",            slug: "other",            icon: "more-horizontal", color: "#94a3b8", order: 10 },
+  ];
+
+  for (const cat of contactCategories) {
+    await prisma.contactCategory.upsert({
+      where: { slug: cat.slug },
+      update: {},
+      create: cat,
+    });
+  }
+  console.log(`✅ ${contactCategories.length} contact categories created`);
+
   console.log("\n🎉 Seed complete!");
 }
 
