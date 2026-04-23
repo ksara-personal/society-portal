@@ -31,26 +31,29 @@ interface Category {
 export default function NewVillaIssuePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [loading, setLoading] = useState(false);
   const [attachments, setAttachments] = useState<UploadedFile[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [wing, setWing] = useState<string>("");
   const [flatNo, setFlatNo] = useState<string>("");
 
+  // Fetch categories once on mount
   useEffect(() => {
     fetch("/api/categories")
       .then((r) => r.json())
       .then(setCategories)
       .catch(() => {});
+  }, []);
 
-    // Pre-fill wing/flatNo from user profile
-    if (session?.user) {
-      const u = session.user as any;
-      if (u.wing) setWing(u.wing);
-      if (u.flatNo) setFlatNo(u.flatNo);
-    }
-  }, [session]);
+  // Pre-fill wing/flatNo from profile once session is authenticated
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user) return;
+    const profileWing = session.user.wing ?? "";
+    const profileFlatNo = session.user.flatNo ?? "";
+    if (profileWing) setWing(profileWing);
+    if (profileFlatNo) setFlatNo(profileFlatNo);
+  }, [status, session?.user?.wing, session?.user?.flatNo]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

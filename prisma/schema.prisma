@@ -90,7 +90,9 @@ model Issue {
   description  String
   status       IssueStatus @default(PENDING)
   priority     Priority    @default(MEDIUM)
+  issueType    IssueType   @default(SOCIETY)
   wing         String?
+  flatNo       String?
   location     String?
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
@@ -114,6 +116,7 @@ model Issue {
   @@index([assignedToId])
   @@index([createdAt])
   @@index([wing])
+  @@index([issueType])
 }
 
 model Attachment {

@@ -47,13 +47,15 @@ export function MobileNav({ userRole, userName }: MobileNavProps) {
           <SheetHeader className="p-4 border-b">
             <SheetTitle asChild>
               <Link href="/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                  <Building2 className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="font-semibold text-sm leading-tight">Amber Meadows</p>
-                  <p className="text-xs text-gray-500 leading-tight">Residences</p>
-                </div>
+                <Image
+                  src="/amber-meadows.png"
+                  alt="Amber Meadows"
+                  width={140}
+                  height={44}
+                  className="h-9 w-auto object-contain"
+                  priority
+                />
+                <span className="font-semibold text-sm text-gray-900">Amber Meadows</span>
               </Link>
             </SheetTitle>
           </SheetHeader>
