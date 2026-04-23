@@ -9,26 +9,29 @@ export async function getDashboardStats() {
 
   const [total, byStatus, byCategory, byWing, recentIssues] =
     await Promise.all([
-      prisma.issue.count(),
+      prisma.issue.count({ where: { issueType: "SOCIETY" } }),
 
       prisma.issue.groupBy({
         by: ["status"],
+        where: { issueType: "SOCIETY" },
         _count: { id: true },
       }),
 
       prisma.issue.groupBy({
         by: ["categoryId"],
+        where: { issueType: "SOCIETY" },
         _count: { id: true },
       }),
 
       prisma.issue.groupBy({
         by: ["wing"],
-        where: { wing: { not: null } },
+        where: { issueType: "SOCIETY", wing: { not: null } },
         _count: { id: true },
         orderBy: { _count: { id: "desc" } },
       }),
 
       prisma.issue.findMany({
+        where: { issueType: "SOCIETY" },
         include: {
           category: true,
           createdBy: { select: { name: true } },
@@ -61,7 +64,7 @@ export async function getDashboardStats() {
   let avgResolutionDays: number | null = null;
   try {
     const resolved = await prisma.issue.findMany({
-      where: { status: "COMPLETED", resolvedAt: { not: null } },
+      where: { issueType: "SOCIETY", status: "COMPLETED", resolvedAt: { not: null } },
       select: { createdAt: true, resolvedAt: true },
     });
     if (resolved.length > 0) {
@@ -77,7 +80,7 @@ export async function getDashboardStats() {
 
   // Trend: issues per day last 30 days
   const trendIssues = await prisma.issue.findMany({
-    where: { createdAt: { gte: subDays(new Date(), 30) } },
+    where: { issueType: "SOCIETY", createdAt: { gte: subDays(new Date(), 30) } },
     select: { createdAt: true },
     orderBy: { createdAt: "asc" },
   });

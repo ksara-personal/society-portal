@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Menu, Building2, LayoutDashboard, ClipboardList, PlusCircle, Tag, Users, LogOut, Shield, UserCircle } from "lucide-react";
+import { Menu, LayoutDashboard, ClipboardList, PlusCircle, Tag, Users, LogOut, Shield, UserCircle, Home, BarChart2, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -19,10 +20,13 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/issues", label: "All Issues", icon: ClipboardList },
   { href: "/issues/new", label: "Report Issue", icon: PlusCircle },
+  { href: "/villa-issues", label: "My Villa Issues", icon: Home },
   { href: "/profile", label: "My Profile", icon: UserCircle },
 ];
 
 const adminItems = [
+  { href: "/admin/villa-dashboard", label: "Villa Dashboard", icon: BarChart2 },
+  { href: "/admin/all-villa-issues", label: "All Villa Issues", icon: Building2 },
   { href: "/admin/categories", label: "Categories", icon: Tag },
   { href: "/admin/users", label: "Users", icon: Users },
 ];
@@ -43,13 +47,15 @@ export function MobileNav({ userRole, userName }: MobileNavProps) {
           <SheetHeader className="p-4 border-b">
             <SheetTitle asChild>
               <Link href="/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                  <Building2 className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="font-semibold text-sm leading-tight">Amber Meadows</p>
-                  <p className="text-xs text-gray-500 leading-tight">Residences</p>
-                </div>
+                <Image
+                  src="/amber-meadows.png"
+                  alt="Amber Meadows"
+                  width={140}
+                  height={44}
+                  className="h-9 w-auto object-contain"
+                  priority
+                />
+                <span className="font-semibold text-sm text-gray-900">Amber Meadows</span>
               </Link>
             </SheetTitle>
           </SheetHeader>
