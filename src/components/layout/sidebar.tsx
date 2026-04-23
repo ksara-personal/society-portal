@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
@@ -10,9 +11,11 @@ import {
   Tag,
   Users,
   LogOut,
-  Building2,
   Shield,
   UserCircle,
+  Home,
+  BarChart2,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -28,10 +31,13 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/issues", label: "All Issues", icon: ClipboardList },
   { href: "/issues/new", label: "Report Issue", icon: PlusCircle },
+  { href: "/villa-issues", label: "My Villa Issues", icon: Home },
   { href: "/profile", label: "My Profile", icon: UserCircle },
 ];
 
 const adminItems = [
+  { href: "/admin/villa-dashboard", label: "Villa Dashboard", icon: BarChart2 },
+  { href: "/admin/all-villa-issues", label: "All Villa Issues", icon: Building2 },
   { href: "/admin/categories", label: "Categories", icon: Tag },
   { href: "/admin/users", label: "Users", icon: Users },
 ];
@@ -44,10 +50,15 @@ export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
     <aside className="flex flex-col h-full w-64 border-r bg-white">
       {/* Logo */}
       <div className="p-4 border-b">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Building2 className="h-5 w-5 text-white" />
-          </div>
+        <Link href="/dashboard" className="flex items-center">
+          <Image
+            src="/amber-meadows.png"
+            alt="Amber Meadows"
+            width={160}
+            height={48}
+            className="h-10 w-auto object-contain"
+            priority
+          />
           <div>
             <p className="font-semibold text-sm leading-tight">Amber Meadows</p>
             <p className="text-xs text-gray-500 leading-tight">Residences</p>

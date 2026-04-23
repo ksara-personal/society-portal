@@ -10,6 +10,13 @@ function getTitle(pathname: string): string {
   if (pathname.match(/\/issues\/[^/]+\/edit/)) return "Edit Issue";
   if (pathname.match(/\/issues\/[^/]+/)) return "Issue Details";
   if (pathname === "/issues") return "All Issues";
+  if (pathname === "/villa-issues/new") return "Log Villa Issue";
+  if (pathname.match(/\/villa-issues\/[^/]+\/edit/)) return "Edit Villa Issue";
+  if (pathname.match(/\/villa-issues\/[^/]+/)) return "Villa Issue Details";
+  if (pathname === "/villa-issues") return "My Villa Issues";
+  if (pathname === "/admin/villa-dashboard") return "Villa Issues Dashboard";
+  if (pathname === "/admin/all-villa-issues") return "All Villa Issues";
+  if (pathname.match(/\/admin\/all-villa-issues\/.+/)) return "Villa Issue Detail";
   if (pathname === "/admin/categories") return "Manage Categories";
   if (pathname === "/admin/users") return "Manage Users";
   if (pathname === "/profile") return "My Profile";

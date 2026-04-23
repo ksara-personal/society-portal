@@ -189,8 +189,7 @@ export async function getIssues(searchParams: Record<string, string>) {
   const user = await requireAuth();
   const filters = issueFilterSchema.parse(searchParams);
 
-  const where: Record<string, unknown> = {};
-
+  const where: Record<string, unknown> = { issueType: "SOCIETY" };
 
   if (filters.status) where.status = filters.status;
   if (filters.categoryId) where.categoryId = filters.categoryId;

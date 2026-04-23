@@ -20,6 +20,11 @@ enum IssueStatus {
   REJECTED
 }
 
+enum IssueType {
+  SOCIETY
+  VILLA
+}
+
 enum Priority {
   LOW
   MEDIUM

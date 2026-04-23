@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Menu, Building2, LayoutDashboard, ClipboardList, PlusCircle, Tag, Users, LogOut, Shield, UserCircle } from "lucide-react";
+import { Menu, LayoutDashboard, ClipboardList, PlusCircle, Tag, Users, LogOut, Shield, UserCircle, Home, BarChart2, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -19,10 +20,13 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/issues", label: "All Issues", icon: ClipboardList },
   { href: "/issues/new", label: "Report Issue", icon: PlusCircle },
+  { href: "/villa-issues", label: "My Villa Issues", icon: Home },
   { href: "/profile", label: "My Profile", icon: UserCircle },
 ];
 
 const adminItems = [
+  { href: "/admin/villa-dashboard", label: "Villa Dashboard", icon: BarChart2 },
+  { href: "/admin/all-villa-issues", label: "All Villa Issues", icon: Building2 },
   { href: "/admin/categories", label: "Categories", icon: Tag },
   { href: "/admin/users", label: "Users", icon: Users },
 ];
