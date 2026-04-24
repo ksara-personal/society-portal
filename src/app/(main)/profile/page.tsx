@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { getProfile, updateProfile, changePassword } from "@/actions/profile";
-import { WINGS, FLAT_NUMBERS } from "@/lib/utils";
+import { WINGS, getFlatsForWing } from "@/lib/utils";
 import {
   User,
   Shield,
@@ -217,7 +217,7 @@ export default function ProfilePage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Wing</Label>
-                <Select value={wing} onValueChange={setWing}>
+                <Select value={wing} onValueChange={(v) => { setWing(v); setFlatNo(""); }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select wing" />
                   </SelectTrigger>
@@ -230,12 +230,12 @@ export default function ProfilePage() {
               </div>
               <div className="space-y-1.5">
                 <Label>Flat No.</Label>
-                <Select value={flatNo} onValueChange={setFlatNo}>
+                <Select value={flatNo} onValueChange={setFlatNo} disabled={!wing}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select flat" />
+                    <SelectValue placeholder={wing ? "Select flat" : "Select wing first"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {FLAT_NUMBERS.map((n) => (
+                    {getFlatsForWing(wing).map((n) => (
                       <SelectItem key={n} value={n}>{n}</SelectItem>
                     ))}
                   </SelectContent>

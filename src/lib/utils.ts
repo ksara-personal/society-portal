@@ -1,16 +1,35 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { BUILDING_CONFIG } from "@/config/building";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const WINGS = ["A", "B", "C", "D", "E"] as const;
-export type Wing = (typeof WINGS)[number];
+// Derived from BUILDING_CONFIG — do not hardcode here, edit src/config/building.ts
+export const WINGS = BUILDING_CONFIG.wings.map((w) => w.name);
+export type Wing = (typeof BUILDING_CONFIG.wings)[number]["name"];
 
-export const FLAT_NUMBERS = Array.from({ length: 60 }, (_, i) =>
-  String(i + 1).padStart(3, "0")
-);
+/**
+ * Returns padded flat numbers ("001", "002", …) for a given wing.
+ * If wing is empty or not found, returns all flats across every wing.
+ */
+export function getFlatsForWing(wing?: string): string[] {
+  const config = BUILDING_CONFIG.wings.find((w) => w.name === wing);
+  if (config) {
+    return Array.from(
+      { length: config.flatEnd - config.flatStart + 1 },
+      (_, i) => String(config.flatStart + i).padStart(3, "0")
+    );
+  }
+  // No wing selected — return all flats as fallback
+  return BUILDING_CONFIG.wings.flatMap((w) =>
+    Array.from(
+      { length: w.flatEnd - w.flatStart + 1 },
+      (_, i) => String(w.flatStart + i).padStart(3, "0")
+    )
+  );
+}
 
 export function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Building2, CheckCircle2, Clock } from "lucide-react";
 import { registerUser } from "@/actions/auth";
-import { WINGS, FLAT_NUMBERS } from "@/lib/utils";
+import { WINGS, getFlatsForWing } from "@/lib/utils";
 
 export default function RegisterPage() {
   const [error, setError] = useState("");
@@ -140,7 +140,7 @@ export default function RegisterPage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Wing</Label>
-              <Select value={wing} onValueChange={setWing}>
+              <Select value={wing} onValueChange={(v) => { setWing(v); setFlatNo(""); }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
@@ -155,12 +155,12 @@ export default function RegisterPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Flat No.</Label>
-              <Select value={flatNo} onValueChange={setFlatNo}>
+              <Select value={flatNo} onValueChange={setFlatNo} disabled={!wing}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder={wing ? "Select" : "Select wing first"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {FLAT_NUMBERS.map((n) => (
+                  {getFlatsForWing(wing).map((n) => (
                     <SelectItem key={n} value={n}>
                       {n}
                     </SelectItem>
