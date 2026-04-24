@@ -39,7 +39,9 @@ export function ContactAccordion({
     });
   }
 
-  if (categories.length === 0) {
+  const visibleCategories = categories.filter((cat) => cat.contacts.length > 0);
+
+  if (visibleCategories.length === 0) {
     return (
       <div className="py-16 text-center">
         <p className="text-gray-400 text-lg">No contacts found.</p>
@@ -49,7 +51,7 @@ export function ContactAccordion({
 
   return (
     <div className="space-y-3">
-      {categories.map((cat) => {
+      {visibleCategories.map((cat) => {
         const isOpen = openIds.has(cat.id);
         const count = cat.contacts.length;
 
@@ -69,11 +71,6 @@ export function ContactAccordion({
                   className="h-3 w-3 rounded-full shrink-0"
                   style={{ backgroundColor: cat.color }}
                 />
-              )}
-
-              {/* Emoji icon */}
-              {cat.icon && (
-                <span className="text-lg leading-none shrink-0">{cat.icon}</span>
               )}
 
               {/* Name */}
@@ -110,6 +107,7 @@ export function ContactAccordion({
                         contact={contact}
                         currentUserId={currentUserId}
                         isAdmin={isAdmin}
+                        compact={true}
                       />
                     ))}
                   </div>

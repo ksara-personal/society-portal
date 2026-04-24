@@ -94,12 +94,6 @@ export function ContactCard({ contact, currentUserId, isAdmin, compact = false }
               >
                 {contact.name}
               </Link>
-              {contact.type === "INDIVIDUAL" && contact.companyName && (
-                <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-gray-500">
-                  <Building2 className="h-3 w-3 shrink-0" />
-                  {contact.companyName}
-                </p>
-              )}
             </div>
 
             <DropdownMenu>
@@ -132,22 +126,6 @@ export function ContactCard({ contact, currentUserId, isAdmin, compact = false }
             </DropdownMenu>
           </div>
 
-          {/* Badges */}
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <ContactTypeBadge type={contact.type} />
-            <Badge
-              variant="outline"
-              className="text-xs"
-              style={
-                contact.category.color
-                  ? { borderColor: contact.category.color + "80", color: contact.category.color, backgroundColor: contact.category.color + "15" }
-                  : undefined
-              }
-            >
-              {contact.category.name}
-            </Badge>
-          </div>
-
           {/* Details */}
           {!compact && (
             <div className="mt-3 space-y-1">
@@ -159,18 +137,6 @@ export function ContactCard({ contact, currentUserId, isAdmin, compact = false }
                     <><span className="text-gray-300">|</span>
                     <a href={`tel:${contact.altPhone}`} className="hover:text-gray-900 hover:underline">{contact.altPhone}</a></>
                   )}
-                </p>
-              )}
-              {contact.email && (
-                <p className="flex items-center gap-1.5 text-xs text-gray-500">
-                  <Mail className="h-3 w-3 shrink-0" />
-                  <a href={`mailto:${contact.email}`} className="truncate hover:text-gray-900 hover:underline">{contact.email}</a>
-                </p>
-              )}
-              {contact.address && (
-                <p className="flex items-start gap-1.5 text-xs text-gray-500">
-                  <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
-                  <span className="line-clamp-2">{contact.address}</span>
                 </p>
               )}
             </div>
