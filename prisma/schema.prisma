@@ -37,6 +37,11 @@ enum AttachmentType {
   VIDEO
 }
 
+enum ContactType {
+  INDIVIDUAL
+  COMPANY
+}
+
 enum UserStatus {
   PENDING
   APPROVED
@@ -59,9 +64,10 @@ model User {
   updatedAt      DateTime   @updatedAt
 
   // Relations
-  createdIssues  Issue[]         @relation("CreatedBy")
-  assignedIssues Issue[]         @relation("AssignedTo")
-  statusChanges  StatusHistory[]
+  createdIssues   Issue[]         @relation("CreatedBy")
+  assignedIssues  Issue[]         @relation("AssignedTo")
+  statusChanges   StatusHistory[]
+  contactsCreated Contact[]       @relation("ContactsCreated")
 
   @@index([email])
   @@index([role])
@@ -153,4 +159,47 @@ model StatusHistory {
 
   @@index([issueId])
   @@index([createdAt])
+}
+
+model ContactCategory {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  icon      String?
+  color     String?
+  order     Int       @default(0)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  contacts  Contact[]
+
+  @@index([slug])
+}
+
+model Contact {
+  id          String      @id @default(cuid())
+  name        String
+  type        ContactType @default(INDIVIDUAL)
+  companyName String?
+
+  phone    String?
+  altPhone String?
+  email    String?
+  address  String?
+  website  String?
+  notes    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  categoryId  String
+  createdById String
+
+  category  ContactCategory @relation(fields: [categoryId], references: [id])
+  createdBy User            @relation("ContactsCreated", fields: [createdById], references: [id])
+
+  @@index([categoryId])
+  @@index([createdById])
+  @@index([name])
 }

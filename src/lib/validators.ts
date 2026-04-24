@@ -64,3 +64,47 @@ export const changePasswordSchema = z
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
+
+// ─── Contacts feature ──────────────────────────────────────────────────────
+
+const indianMobileRegex = /^[6-9]\d{9}$/;
+
+export const contactSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").max(100),
+  type: z.enum(["INDIVIDUAL", "COMPANY"]),
+  companyName: z.string().max(100).optional().or(z.literal("")),
+  categoryId: z.string().min(1, "Please select a category"),
+  phone: z
+    .string()
+    .regex(indianMobileRegex, "Enter a valid 10-digit mobile number")
+    .optional()
+    .or(z.literal("")),
+  altPhone: z
+    .string()
+    .regex(indianMobileRegex, "Enter a valid 10-digit mobile number")
+    .optional()
+    .or(z.literal("")),
+  email: z.string().email("Enter a valid email address").optional().or(z.literal("")),
+  address: z.string().max(300).optional().or(z.literal("")),
+  website: z.string().url("Enter a valid URL (include https://)").optional().or(z.literal("")),
+  notes: z.string().max(500).optional().or(z.literal("")),
+});
+
+export const contactCategorySchema = z.object({
+  name: z.string().min(2).max(50),
+  slug: z
+    .string()
+    .min(2)
+    .max(50)
+    .regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers and hyphens"),
+  icon: z.string().max(50).optional().or(z.literal("")),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Enter a valid hex color e.g. #f59e0b")
+    .optional()
+    .or(z.literal("")),
+  order: z.coerce.number().int().min(0).default(0),
+});
+
+export type ContactFormValues = z.infer<typeof contactSchema>;
+export type ContactCategoryFormValues = z.infer<typeof contactCategorySchema>;
