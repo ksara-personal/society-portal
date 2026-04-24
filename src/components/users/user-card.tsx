@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { format } from "date-fns";
 import { Phone, User as UserIcon, Shield, KeyRound, CheckCircle2, XCircle, Clock } from "lucide-react";
@@ -63,7 +64,9 @@ export function UserCard({
       <div className="group relative rounded-lg border bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-gray-900">{user.name}</p>
+            <Link href={`/admin/users/${user.id}`} className="truncate text-sm font-semibold text-gray-900 hover:underline">
+              {user.name}
+            </Link>
             <p className="text-xs text-gray-500">{user.email}</p>
             <p className="mt-2 text-xs text-gray-500">
               {user.wing && user.flatNo ? `${user.wing}-${user.flatNo}` : "Flat not assigned"}
@@ -121,6 +124,11 @@ export function UserCard({
           <p className="flex items-center gap-2 text-xs text-gray-400">
             <KeyRound className="h-3.5 w-3.5" /> Joined {format(new Date(user.createdAt), "dd MMM yyyy")}
           </p>
+          <div className="mt-3">
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/admin/users/${user.id}`}>View details</Link>
+            </Button>
+          </div>
         </div>
 
         <div className="mt-4 border-t pt-3">

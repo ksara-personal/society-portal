@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
+import { updateProfileSchema } from "@/lib/validators";
 
 export async function getUsers() {
   await requireAdmin();
@@ -40,6 +41,55 @@ export async function getPendingUsers() {
     },
     orderBy: { createdAt: "asc" },
   });
+}
+
+export async function getUserById(userId: string) {
+  await requireAdmin();
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      wing: true,
+      flatNo: true,
+      phone: true,
+      isActive: true,
+      approvalStatus: true,
+      createdAt: true,
+      _count: { select: { createdIssues: true } },
+    },
+  });
+}
+
+export async function updateUser(userId: string, formData: FormData) {
+  await requireAdmin();
+
+  const parsed = updateProfileSchema.safeParse({
+    name: formData.get("name"),
+    phone: formData.get("phone") || undefined,
+    wing: formData.get("wing") || undefined,
+    flatNo: formData.get("flatNo") || undefined,
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.errors[0].message };
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      name: parsed.data.name,
+      phone: parsed.data.phone ?? null,
+      wing: parsed.data.wing ?? null,
+      flatNo: parsed.data.flatNo ?? null,
+    },
+  });
+
+  revalidatePath("/admin/users");
+  revalidatePath(`/admin/users/${userId}`);
+  return { success: true };
 }
 
 export async function getPendingUsersCount() {
