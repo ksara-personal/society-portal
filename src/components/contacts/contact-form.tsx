@@ -161,7 +161,7 @@ export function ContactForm({ categories, defaultValues }: ContactFormProps) {
           <FormField control={form.control} name="phone" render={({ field }) => (
             <FormItem>
               <FormLabel>Phone</FormLabel>
-              <FormControl><Input type="tel" placeholder="98765 43210" {...field} /></FormControl>
+              <FormControl><Input type="tel" placeholder="9876543210" {...field} /></FormControl>
               <FormMessage />
             </FormItem>
           )} />
