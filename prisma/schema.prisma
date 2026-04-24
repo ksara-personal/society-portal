@@ -8,6 +8,141 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
+model User {
+  id              String          @id @default(cuid())
+  name            String
+  email           String          @unique
+  password        String
+  role            Role            @default(RESIDENT)
+  phone           String?
+  wing            String?
+  flatNo          String?
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  approvalStatus  UserStatus      @default(PENDING)
+  approvedAt      DateTime?
+  contactsCreated Contact[]       @relation("ContactsCreated")
+  assignedIssues  Issue[]         @relation("AssignedTo")
+  createdIssues   Issue[]         @relation("CreatedBy")
+  statusChanges   StatusHistory[]
+
+  @@index([email])
+  @@index([role])
+  @@index([approvalStatus])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  issues      Issue[]
+
+  @@index([slug])
+}
+
+model Issue {
+  id            String          @id @default(cuid())
+  title         String
+  description   String
+  status        IssueStatus     @default(PENDING)
+  priority      Priority        @default(MEDIUM)
+  wing          String?
+  location      String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  resolvedAt    DateTime?
+  categoryId    String
+  createdById   String
+  assignedToId  String?
+  flatNo        String?
+  issueType     IssueType       @default(SOCIETY)
+  attachments   Attachment[]
+  assignedTo    User?           @relation("AssignedTo", fields: [assignedToId], references: [id])
+  category      Category        @relation(fields: [categoryId], references: [id])
+  createdBy     User            @relation("CreatedBy", fields: [createdById], references: [id])
+  statusHistory StatusHistory[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([createdById])
+  @@index([createdAt])
+  @@index([wing])
+  @@index([issueType])
+}
+
+model Attachment {
+  id        String         @id @default(cuid())
+  url       String
+  type      AttachmentType
+  filename  String
+  size      Int
+  createdAt DateTime       @default(now())
+  issueId   String
+  issue     Issue          @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@index([issueId])
+}
+
+model StatusHistory {
+  id          String       @id @default(cuid())
+  fromStatus  IssueStatus?
+  toStatus    IssueStatus
+  note        String?
+  createdAt   DateTime     @default(now())
+  issueId     String
+  changedById String
+  changedBy   User         @relation(fields: [changedById], references: [id])
+  issue       Issue        @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@index([issueId])
+  @@index([createdAt])
+}
+
+model ContactCategory {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  icon      String?
+  color     String?
+  order     Int       @default(0)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  contacts  Contact[]
+
+  @@index([slug])
+}
+
+model Contact {
+  id          String          @id @default(cuid())
+  name        String
+  type        ContactType     @default(INDIVIDUAL)
+  companyName String?
+  phone       String?
+  altPhone    String?
+  email       String?
+  address     String?
+  website     String?
+  notes       String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  categoryId  String
+  createdById String
+  category    ContactCategory @relation(fields: [categoryId], references: [id])
+  createdBy   User            @relation("ContactsCreated", fields: [createdById], references: [id])
+
+  @@index([categoryId])
+  @@index([createdById])
+  @@index([name])
+  @@unique([phone])
+}
+
 enum Role {
   ADMIN
   RESIDENT
@@ -46,160 +181,4 @@ enum UserStatus {
   PENDING
   APPROVED
   REJECTED
-}
-
-model User {
-  id             String     @id @default(cuid())
-  name           String
-  email          String     @unique
-  password       String
-  role           Role       @default(RESIDENT)
-  approvalStatus UserStatus @default(PENDING)
-  approvedAt     DateTime?
-  phone          String?
-  wing           String?
-  flatNo         String?
-  isActive       Boolean    @default(true)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-
-  // Relations
-  createdIssues   Issue[]         @relation("CreatedBy")
-  assignedIssues  Issue[]         @relation("AssignedTo")
-  statusChanges   StatusHistory[]
-  contactsCreated Contact[]       @relation("ContactsCreated")
-
-  @@index([email])
-  @@index([role])
-  @@index([approvalStatus])
-}
-
-model Category {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  slug        String   @unique
-  description String?
-  icon        String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  issues Issue[]
-
-  @@index([slug])
-}
-
-model Issue {
-  id           String      @id @default(cuid())
-  title        String
-  description  String
-  status       IssueStatus @default(PENDING)
-  priority     Priority    @default(MEDIUM)
-  issueType    IssueType   @default(SOCIETY)
-  wing         String?
-  flatNo       String?
-  location     String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  resolvedAt   DateTime?
-
-  // Foreign keys
-  categoryId   String
-  createdById  String
-  assignedToId String?
-
-  // Relations
-  category      Category        @relation(fields: [categoryId], references: [id])
-  createdBy     User            @relation("CreatedBy", fields: [createdById], references: [id])
-  assignedTo    User?           @relation("AssignedTo", fields: [assignedToId], references: [id])
-  attachments   Attachment[]
-  statusHistory StatusHistory[]
-
-  @@index([status])
-  @@index([categoryId])
-  @@index([createdById])
-  @@index([assignedToId])
-  @@index([createdAt])
-  @@index([wing])
-  @@index([issueType])
-}
-
-model Attachment {
-  id        String         @id @default(cuid())
-  url       String
-  type      AttachmentType
-  filename  String
-  size      Int
-  createdAt DateTime       @default(now())
-
-  // Foreign keys
-  issueId   String
-
-  // Relations
-  issue     Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
-
-  @@index([issueId])
-}
-
-model StatusHistory {
-  id          String       @id @default(cuid())
-  fromStatus  IssueStatus?
-  toStatus    IssueStatus
-  note        String?
-  createdAt   DateTime     @default(now())
-
-  // Foreign keys
-  issueId     String
-  changedById String
-
-  // Relations
-  issue       Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
-  changedBy   User  @relation(fields: [changedById], references: [id])
-
-  @@index([issueId])
-  @@index([createdAt])
-}
-
-model ContactCategory {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  slug      String    @unique
-  icon      String?
-  color     String?
-  order     Int       @default(0)
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  contacts  Contact[]
-
-  @@index([slug])
-}
-
-model Contact {
-  id          String      @id @default(cuid())
-  name        String
-  type        ContactType @default(INDIVIDUAL)
-  companyName String?
-
-  phone    String?
-  altPhone String?
-  email    String?
-  address  String?
-  website  String?
-  notes    String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  categoryId  String
-  createdById String
-
-  category  ContactCategory @relation(fields: [categoryId], references: [id])
-  createdBy User            @relation("ContactsCreated", fields: [createdById], references: [id])
-
-  @@index([categoryId])
-  @@index([createdById])
-  @@index([name])
 }

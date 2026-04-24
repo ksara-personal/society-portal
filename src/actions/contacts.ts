@@ -143,6 +143,16 @@ export async function createContact(formData: FormData) {
     return { error: parsed.error.errors[0].message };
   }
 
+  if (parsed.data.phone) {
+    const duplicate = await prisma.contact.findFirst({
+      where: { phone: parsed.data.phone },
+      select: { id: true },
+    });
+    if (duplicate) {
+      return { error: "This mobile number is already registered for another contact." };
+    }
+  }
+
   const contact = await prisma.contact.create({
     data: { ...parsed.data, createdById: user.id },
   });
@@ -173,6 +183,19 @@ export async function updateContact(id: string, formData: FormData) {
   const parsed = contactSchema.safeParse(raw);
   if (!parsed.success) {
     return { error: parsed.error.errors[0].message };
+  }
+
+  if (parsed.data.phone) {
+    const duplicate = await prisma.contact.findFirst({
+      where: {
+        phone: parsed.data.phone,
+        NOT: { id },
+      },
+      select: { id: true },
+    });
+    if (duplicate) {
+      return { error: "This mobile number is already registered for another contact." };
+    }
   }
 
   const contact = await prisma.contact.update({

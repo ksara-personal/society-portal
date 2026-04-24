@@ -74,16 +74,20 @@ export const contactSchema = z.object({
   type: z.enum(["INDIVIDUAL", "COMPANY"]),
   companyName: z.string().max(100).optional().or(z.literal("")),
   categoryId: z.string().min(1, "Please select a category"),
-  phone: z
-    .string()
-    .regex(indianMobileRegex, "Enter a valid 10-digit mobile number")
-    .optional()
-    .or(z.literal("")),
-  altPhone: z
-    .string()
-    .regex(indianMobileRegex, "Enter a valid 10-digit mobile number")
-    .optional()
-    .or(z.literal("")),
+  phone: z.preprocess(
+    (val) => (typeof val === "string" ? val.replace(/\D/g, "") : val),
+    z.string()
+      .regex(indianMobileRegex, "Enter a valid 10-digit mobile number without country code")
+      .optional()
+      .or(z.literal(""))
+  ),
+  altPhone: z.preprocess(
+    (val) => (typeof val === "string" ? val.replace(/\D/g, "") : val),
+    z.string()
+      .regex(indianMobileRegex, "Enter a valid 10-digit mobile number without country code")
+      .optional()
+      .or(z.literal(""))
+  ),
   email: z.string().email("Enter a valid email address").optional().or(z.literal("")),
   address: z.string().max(300).optional().or(z.literal("")),
   website: z.string().url("Enter a valid URL (include https://)").optional().or(z.literal("")),
