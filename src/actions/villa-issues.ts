@@ -166,11 +166,26 @@ export async function getVillaIssues(
   userId: string,
   searchParams: Record<string, string> = {}
 ) {
-  // Always scoped to the current user — both residents and admins
-  // see only their own villa issues on the /villa-issues page.
+  // Scope to the flat: find all users sharing the same wing + flatNo,
+  // so flatmates see each other's issues. Falls back to userId-only if
+  // the user has no wing/flatNo set.
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { wing: true, flatNo: true },
+  });
+
+  let flatmateIds: string[] = [userId];
+  if (currentUser?.wing && currentUser?.flatNo) {
+    const flatmates = await prisma.user.findMany({
+      where: { wing: currentUser.wing, flatNo: currentUser.flatNo },
+      select: { id: true },
+    });
+    flatmateIds = flatmates.map((f) => f.id);
+  }
+
   const where: Record<string, unknown> = {
     issueType: "VILLA",
-    createdById: userId,
+    createdById: { in: flatmateIds },
   };
 
   if (searchParams.status) where.status = searchParams.status;
