@@ -12,9 +12,9 @@ export default async function AdminContactCategoriesPage() {
   return (
     <div className="space-y-5 max-w-3xl mx-auto">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Contact Categories</h1>
+        <h1 className="text-xl font-bold text-gray-900">Service Contact Categories</h1>
         <p className="text-sm text-gray-500">
-          Manage the categories shown on the contacts directory and kanban board.
+          Manage the categories shown in the Service Contacts directory.
         </p>
       </div>
       <ContactCategoryTable categories={categories} />

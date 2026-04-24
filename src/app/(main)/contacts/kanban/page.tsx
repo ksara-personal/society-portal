@@ -39,7 +39,7 @@ export default async function ContactsKanbanPage({ searchParams }: PageProps) {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Contacts</h1>
+          <h1 className="text-xl font-bold text-gray-900">Service Contacts</h1>
           <p className="text-sm text-gray-500">
             {totalContacts} service provider{totalContacts !== 1 ? "s" : ""} across {rawCategories.length} categories
             {isAdmin && <span className="ml-2 text-xs">· Drag cards to re-categorise</span>}
@@ -53,7 +53,7 @@ export default async function ContactsKanbanPage({ searchParams }: PageProps) {
       </div>
 
       <Suspense>
-        <ContactFilters categories={allCategories} view="kanban" />
+        <ContactFilters categories={allCategories} />
       </Suspense>
 
       <ContactKanban
