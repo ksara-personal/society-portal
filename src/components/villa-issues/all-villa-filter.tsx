@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { WINGS, FLAT_NUMBERS } from "@/lib/utils";
+import { WINGS, getFlatsForWing } from "@/lib/utils";
 import { SlidersHorizontal, X } from "lucide-react";
 
 export function AllVillaFilter() {
@@ -46,7 +46,7 @@ export function AllVillaFilter() {
       </div>
 
       <div className="w-36">
-        <Select value={wing} onValueChange={setWing}>
+        <Select value={wing} onValueChange={(v) => { setWing(v); setFlatNo(""); }}>
           <SelectTrigger className="h-9 text-sm">
             <SelectValue placeholder="All wings" />
           </SelectTrigger>
@@ -66,7 +66,7 @@ export function AllVillaFilter() {
             <SelectValue placeholder="All flats" />
           </SelectTrigger>
           <SelectContent>
-            {FLAT_NUMBERS.map((f) => (
+            {getFlatsForWing(wing).map((f) => (
               <SelectItem key={f} value={f}>
                 Flat {f}
               </SelectItem>
