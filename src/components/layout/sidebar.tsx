@@ -41,13 +41,40 @@ const serviceDirectoryItems = [
   { href: "/contacts", label: "Service Contacts", icon: BookUser },
 ];
 
-const adminItems = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+};
+
+const adminItems: NavItem[] = [
   { href: "/admin/villa-dashboard", label: "Villa Dashboard", icon: BarChart2 },
   { href: "/admin/all-villa-issues", label: "All Villa Issues", icon: Building2 },
-  { href: "/admin/categories", label: "Categories", icon: Tag },
-  { href: "/admin/contacts/categories", label: "Service Contact Categories", icon: BookUser },
   { href: "/admin/users", label: "Users", icon: Users },
 ];
+
+const adminMasterDataItems: NavItem[] = [
+  { href: "/admin/categories", label: "Categories", icon: Tag },
+  { href: "/admin/contacts/categories", label: "Service Contact Categories", icon: BookUser },
+];
+
+function renderSidebarLink(item: NavItem, isActive: boolean) {
+  return (
+    <Link
+      key={item.href}
+      href={item.href}
+      className={cn(
+        "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+        isActive
+          ? "bg-primary/10 text-primary"
+          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+      )}
+    >
+      <item.icon className="h-4 w-4 shrink-0" />
+      {item.label}
+    </Link>
+  );
+}
 
 export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
   const pathname = usePathname();
@@ -82,21 +109,7 @@ export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
                 (pathname.startsWith("/issues") &&
                   !pathname.startsWith("/issues/new"))
               : pathname === item.href || pathname.startsWith(item.href + "/");
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-              )}
-            >
-              <item.icon className="h-4 w-4 shrink-0" />
-              {item.label}
-            </Link>
-          );
+          return renderSidebarLink(item, isActive);
         })}
 
         {/* Service Directory group */}
@@ -107,21 +120,7 @@ export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
         </p>
         {serviceDirectoryItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-              )}
-            >
-              <item.icon className="h-4 w-4 shrink-0" />
-              {item.label}
-            </Link>
-          );
+          return renderSidebarLink(item, isActive);
         })}
 
         {/* Admin group */}
@@ -134,21 +133,22 @@ export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
             </p>
             {adminItems.map((item) => {
               const isActive = pathname.startsWith(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                  )}
-                >
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  {item.label}
-                </Link>
-              );
+              return renderSidebarLink(item, isActive);
+            })}
+          </>
+        )}
+
+        {/* Admin Master Data group */}
+        {isAdmin && (
+          <>
+            <Separator className="my-2" />
+            <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+              <Shield className="h-3 w-3" />
+              Master Data
+            </p>
+            {adminMasterDataItems.map((item) => {
+              const isActive = pathname.startsWith(item.href);
+              return renderSidebarLink(item, isActive);
             })}
           </>
         )}
