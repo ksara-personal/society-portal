@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { UserAccordion } from "@/components/users/user-accordion";
 import {
   Dialog,
   DialogContent,
@@ -238,6 +239,38 @@ export default function UsersPage() {
 
   const approvedUsers = users.filter((u) => u.approvalStatus !== "PENDING");
 
+  const wingGroups = Object.entries(
+    approvedUsers.reduce<Record<string, FullUser[]>>((groups, user) => {
+      const wing = user.wing || "Unassigned";
+      if (!groups[wing]) groups[wing] = [];
+      groups[wing].push(user);
+      return groups;
+    }, {})
+  )
+    .sort(([wingA], [wingB]) => {
+      if (wingA === "Unassigned") return 1;
+      if (wingB === "Unassigned") return -1;
+      return wingA.localeCompare(wingB);
+    })
+    .map(([wing, users]) => ({
+      id: wing,
+      name: wing === "Unassigned" ? "No wing assigned" : `Wing ${wing}`,
+      label: `${users.length} resident${users.length !== 1 ? "s" : ""}`,
+      items: users.map((user) => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        wing: user.wing,
+        flatNo: user.flatNo,
+        phone: user.phone,
+        isActive: user.isActive,
+        approvalStatus: user.approvalStatus,
+        createdAt: user.createdAt,
+        issueCount: user._count.createdIssues,
+      })),
+    }));
+
   return (
     <div className="max-w-5xl mx-auto space-y-5">
       <div>
@@ -351,118 +384,17 @@ export default function UsersPage() {
       {/* All users tab */}
       {activeTab === "all" && (
         <div className="rounded-lg border bg-white overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Flat</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Approval</TableHead>
-                <TableHead>Issues</TableHead>
-                <TableHead>Joined</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {approvedUsers.map((user) => {
-                const isSelf = session?.user?.id === user.id;
-                return (
-                  <TableRow
-                    key={user.id}
-                    className={!user.isActive ? "opacity-60" : ""}
-                  >
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell className="text-sm text-gray-600">{user.email}</TableCell>
-                    <TableCell className="text-sm">
-                      {user.wing && user.flatNo ? `${user.wing}-${user.flatNo}` : "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={
-                          user.role === "ADMIN"
-                            ? "border-green-300 text-green-700 bg-green-50"
-                            : "border-gray-200 text-gray-600"
-                        }
-                      >
-                        {user.role === "ADMIN" ? (
-                          <><Shield className="h-3 w-3 mr-1" />Admin</>
-                        ) : (
-                          <><User className="h-3 w-3 mr-1" />Resident</>
-                        )}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <ApprovalStatusBadge status={user.approvalStatus} />
-                    </TableCell>
-                    <TableCell className="text-sm">{user._count.createdIssues}</TableCell>
-                    <TableCell className="text-sm text-gray-500">
-                      {format(new Date(user.createdAt), "dd MMM yy")}
-                    </TableCell>
-                    <TableCell>
-                      {!isSelf ? (
-                        <div className="flex gap-1.5 flex-wrap">
-                          {user.approvalStatus === "REJECTED" && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs text-green-600 hover:bg-green-50"
-                              onClick={() => handleApprove(user.id)}
-                            >
-                              Approve
-                            </Button>
-                          )}
-                          {user.role === "RESIDENT" ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={() => handlePromote(user.id)}
-                            >
-                              Make Admin
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={() => handleDemote(user.id)}
-                            >
-                              Demote
-                            </Button>
-                          )}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className={`h-7 text-xs ${
-                              user.isActive
-                                ? "text-red-600 hover:bg-red-50"
-                                : "text-green-600 hover:bg-green-50"
-                            }`}
-                            onClick={() => handleToggleActive(user.id, user.isActive)}
-                          >
-                            {user.isActive ? "Deactivate" : "Activate"}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs text-gray-600 hover:bg-gray-50"
-                            onClick={() => setResetTarget({ id: user.id, name: user.name })}
-                          >
-                            <KeyRound className="h-3 w-3 mr-1" />
-                            Reset Password
-                          </Button>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-400">You</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+          <div className="p-4">
+            <UserAccordion
+              groups={wingGroups}
+              currentUserId={session?.user?.id}
+              onApprove={handleApprove}
+              onPromote={handlePromote}
+              onDemote={handleDemote}
+              onToggleActive={handleToggleActive}
+              onResetPassword={(userId) => setResetTarget({ id: userId, name: users.find((u) => u.id === userId)?.name ?? "" })}
+            />
+          </div>
         </div>
       )}
 
