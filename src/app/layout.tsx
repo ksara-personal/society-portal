@@ -6,8 +6,8 @@ import { Providers } from "@/components/providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Amber Meadows – Issue Tracker",
-  description: "Complaint and issue management for Amber Meadows",
+  title: "Amber Meadows – Community Portal",
+  description: "Community portal for Amber Meadows residents",
 };
 
 export default function RootLayout({
