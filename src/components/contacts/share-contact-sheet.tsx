@@ -26,11 +26,13 @@ interface ContactForShare {
   category: { name: string };
 }
 
-interface ShareContactSheetProps {
+export interface ShareContactSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   contact: ContactForShare;
 }
+
+export type { ContactForShare };
 
 function buildPlainText(c: ContactForShare): string {
   const lines: string[] = [];
