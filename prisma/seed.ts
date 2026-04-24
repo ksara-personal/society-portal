@@ -79,33 +79,36 @@ async function main() {
 
   // Create contact categories
   const contactCategories = [
-    { name: "Electrician",      slug: "electrician",      icon: "zap",             color: "#f59e0b", order: 1 },
-    { name: "Plumber",          slug: "plumber",          icon: "wrench",          color: "#3b82f6", order: 2 },
-    { name: "Carpenter",        slug: "carpenter",        icon: "hammer",          color: "#78716c", order: 3 },
-    { name: "Tile Work",        slug: "tile-work",        icon: "grid-3x3",        color: "#8b5cf6", order: 4 },
-    { name: "Painting",         slug: "painting",         icon: "paintbrush",      color: "#ec4899", order: 5 },
-    { name: "Curtain Provider", slug: "curtain-provider", icon: "blinds",          color: "#06b6d4", order: 6 },
-    { name: "Pest Control",     slug: "pest-control",     icon: "bug",             color: "#22c55e", order: 7 },
-    { name: "Cleaning Service", slug: "cleaning-service", icon: "sparkles",        color: "#f97316", order: 8 },
-    { name: "AC / Appliance",   slug: "ac-appliance",     icon: "thermometer",     color: "#64748b", order: 9 },
-    { name: "Other",            slug: "other",            icon: "more-horizontal", color: "#94a3b8", order: 10 },
+  const contactCategories = [
+    { name: "Electrician",     slug: "electrician",     icon: "zap",       color: "#f59e0b", order: 1 },
+    { name: "Plumber",         slug: "plumber",         icon: "droplets",  color: "#3b82f6", order: 2 },
+    { name: "Carpenter",       slug: "carpenter",       icon: "hammer",    color: "#a16207", order: 3 },
+    { name: "Tile Work",       slug: "tile-work",       icon: "grid",      color: "#6366f1", order: 4 },
+    { name: "Painting",        slug: "painting",        icon: "paintbrush",color: "#ec4899", order: 5 },
+    { name: "Curtain Provider",slug: "curtain-provider",icon: "layout",    color: "#8b5cf6", order: 6 },
+    { name: "Pest Control",    slug: "pest-control",    icon: "bug",       color: "#10b981", order: 7 },
+    { name: "Cleaning Service",slug: "cleaning-service",icon: "sparkles",  color: "#06b6d4", order: 8 },
+    { name: "AC/Appliance",    slug: "ac-appliance",    icon: "wind",      color: "#0ea5e9", order: 9 },
+    { name: "Other",           slug: "other",           icon: "more-horizontal", color: "#6b7280", order: 10 },
   ];
 
   for (const cat of contactCategories) {
     await prisma.contactCategory.upsert({
       where: { slug: cat.slug },
       update: {},
-      create: cat,
+      create: { ...cat, isActive: true },
     });
   }
   console.log(`✅ ${contactCategories.length} contact categories created`);
-
-  console.log("\n🎉 Seed complete!");
 }
 
 main()
+  .then(() => {
+    console.log("✅ Seeding complete");
+    process.exit(0);
+  })
   .catch((e) => {
-    console.error("❌ Seed failed:", e);
+    console.error("❌ Seeding failed:", e);
     process.exit(1);
   })
   .finally(() => prisma.$disconnect());
