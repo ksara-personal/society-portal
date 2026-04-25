@@ -18,7 +18,7 @@
  * Example - single block, units 101-215:
  *   NEXT_PUBLIC_WINGS_CONFIG='[{"name":"Main","flatStart":101,"flatEnd":215}]'
  *
- * If the env var is absent or invalid JSON, the default Amber Meadows layout
+ * If the env var is absent or invalid JSON, the default Society Portal layout
  * is used as a fallback (Wings A-E).
  */
 

@@ -1,4 +1,4 @@
-# Amber Meadows — Community Portal
+# Society/Community Portal
 
 A full-stack community portal for housing societies. Residents submit society and villa-specific issues with photos and videos; the admin team tracks and resolves them through a status workflow. The portal also includes a shared service contacts directory and per-flat shared issue views for family members.
 
@@ -65,7 +65,7 @@ A full-stack community portal for housing societies. Residents submit society an
 
 ```bash
 git clone <your-repo-url>
-cd amber-meadows-tracker
+cd society-portal
 npm install
 ```
 
@@ -112,8 +112,8 @@ This creates the admin account and default complaint categories.
 **Default admin credentials:**
 | Field | Value |
 |---|---|
-| Email | `admin@ambermeadows.com` |
-| Password | `AmberMeadows@2026` |
+| Email | `admin@community.com` |
+| Password | `community@2026` |
 
 ### 5. Start the dev server
 
@@ -163,7 +163,7 @@ Go to **Settings → Environment Variables** and add:
 | Name | Value |
 |---|---|
 | `AUTH_SECRET` | Random 32-char string — generate at [generate-secret.vercel.app/32](https://generate-secret.vercel.app/32) |
-| `NEXTAUTH_URL` | Your Vercel deployment URL, e.g. `https://amber-meadows-tracker.vercel.app` |
+| `NEXTAUTH_URL` | Your Vercel deployment URL, e.g. `https://society-portal.vercel.app` |
 
 ### 6. Deploy
 
@@ -203,7 +203,7 @@ Visit your deployment URL and log in with the admin credentials above.
 ## Project Structure
 
 ```
-amber-meadows-tracker/
+society-portal/
 ├── prisma/
 │   ├── schema.prisma        # Database schema (User, Issue, Category, Attachment, StatusHistory, Contact, ContactCategory)
 │   └── seed.ts              # Seeds admin user and default categories

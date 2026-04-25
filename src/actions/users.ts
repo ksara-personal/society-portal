@@ -177,7 +177,6 @@ export async function getResidents() {
   return prisma.user.findMany({
     where: {
       approvalStatus: "APPROVED",
-      role: "RESIDENT",
     },
     select: {
       id: true,

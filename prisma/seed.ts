@@ -9,11 +9,11 @@ async function main() {
   // Create admin user (secretary)
   const adminPassword = await bcrypt.hash("Not Used", 12);
   const admin = await prisma.user.upsert({
-    where: { email: "admin@ambermeadows.com" },
+    where: { email: "admin@community.com" },
     update: {},
     create: {
       name: "Society Secretary",
-      email: "admin@ambermeadows.com",
+      email: "admin@community.com",
       password: adminPassword,
       role: Role.ADMIN,
       approvalStatus: UserStatus.APPROVED,
@@ -22,7 +22,7 @@ async function main() {
   });
   console.log(`✅ Admin created: ${admin.email}`);
 
-  // Create categories relevant to Amber Meadows
+  // Create categories relevant to Society Portal
   const categories = [
     {
       name: "Plumbing",

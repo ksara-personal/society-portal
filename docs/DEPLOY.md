@@ -1,11 +1,11 @@
-# 🏢 Amber Meadows — Issue Tracker
+# Society/Community Portal
 ## Deployment Guide (Vercel Free Tier)
 
 ---
 
 ## What's Built
 
-A full-stack complaint & issue tracker for **Amber Meadows** with:
+A full-stack complaint & issue tracker for **Society Portal** with:
 - **4 wings (A, B, C, D, E)** × **50 flats each**
 - **8 categories**: Plumbing, Electrical, Elevator, Parking, Housekeeping, Common Areas, Security, Structural
 - **Resident portal**: Submit complaints with photos/video, track status
@@ -41,7 +41,7 @@ cp .env.local.example .env.local
 
 1. In Vercel dashboard → your project → **Storage** tab
 2. Click **"Create Database"** → choose **Postgres**
-3. Name it `amber-meadows-db` → click **Create & Continue**
+3. Name it `society-portal-db` → click **Create & Continue**
 4. Click **"Connect"** to link it to your project
 5. Vercel auto-populates these env vars:
    - `POSTGRES_URL`
@@ -54,7 +54,7 @@ cp .env.local.example .env.local
 
 1. In Vercel dashboard → **Storage** tab
 2. Click **"Create Database"** → choose **Blob**
-3. Name it `amber-meadows-uploads` → click **Create**
+3. Name it `society-portal-uploads` → click **Create**
 4. Click **"Connect"** to link to your project
 5. Vercel auto-populates `BLOB_READ_WRITE_TOKEN`
 
