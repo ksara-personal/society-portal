@@ -75,11 +75,11 @@ export default async function VillaDashboardPage() {
         {/* Recent villa issues */}
         <Card>
           <CardHeader className="pb-3">
-<CardTitle className="text-base">Recent {BRANDING.unitLabel} Issues</CardTitle>
+            <CardTitle className="text-base">{`Recent ${BRANDING.unitLabel} Issues`}</CardTitle>
           </CardHeader>
           <CardContent>
             {stats.recentIssues.length === 0 ? (
-<p className="text-sm text-gray-400 text-center py-8">No {BRANDING.unitLabel.toLowerCase()} issues yet</p>
+              <p className="text-sm text-gray-400 text-center py-8">{`No ${BRANDING.unitLabel.toLowerCase()} issues yet`}</p>
             ) : (
               <div className="space-y-3">
                 {stats.recentIssues.map((issue: any) => (
@@ -102,4 +102,16 @@ export default async function VillaDashboardPage() {
                       </div>
                       <div className="flex flex-col items-end gap-1 shrink-0">
                         <StatusBadge status={issue.status} />
-                        <PriorityBadge pr
+                        <PriorityBadge priority={issue.priority} />
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

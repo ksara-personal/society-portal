@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BRANDING } from "@/config/branding";
 import {
   LineChart,
   Line,
@@ -10,7 +11,6 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { BRANDING } from "@/config/branding";
 
 interface TrendChartProps {
   data: { date: string; count: number }[];
@@ -21,7 +21,7 @@ export function VillaTrendChart({ data }: TrendChartProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{BRANDING.unitLabel} Issues — Last 30 Days</CardTitle>
+          <CardTitle className="text-base">{`${BRANDING.unitLabel} Issues — Last 30 Days`}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[220px] flex items-center justify-center text-sm text-gray-400">
@@ -35,7 +35,7 @@ export function VillaTrendChart({ data }: TrendChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">{BRANDING.unitLabel} Issues — Last 30 Days</CardTitle>
+        <CardTitle className="text-base">{`${BRANDING.unitLabel} Issues — Last 30 Days`}</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={220}>
@@ -56,4 +56,8 @@ export function VillaTrendChart({ data }: TrendChartProps) {
               activeDot={{ r: 5 }}
             />
           </LineChart>
-        </Resp
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}

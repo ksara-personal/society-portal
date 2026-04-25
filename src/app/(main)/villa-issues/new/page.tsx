@@ -21,6 +21,7 @@ import { createVillaIssue } from "@/actions/villa-issues";
 import { useToast } from "@/components/ui/use-toast";
 import { WINGS, getFlatsForWing } from "@/lib/utils";
 import { ArrowLeft, Home } from "lucide-react";
+import { BRANDING, myUnitIssuesLabel } from "@/config/branding";
 
 interface Category {
   id: string;
@@ -47,7 +48,6 @@ export default function NewVillaIssuePage() {
   }, []);
 
   // Pre-fill wing/flatNo from profile once session is authenticated
-import { BRANDING, myUnitIssuesLabel, allUnitIssuesLabel } from "@/config/branding";
   useEffect(() => {
     if (status !== "authenticated" || !session?.user) return;
     const profileWing = session.user.wing ?? "";
@@ -85,7 +85,7 @@ import { BRANDING, myUnitIssuesLabel, allUnitIssuesLabel } from "@/config/brandi
       <Button variant="ghost" size="sm" asChild className="mb-4">
         <Link href="/villa-issues" className="gap-1">
           <ArrowLeft className="h-4 w-4" />
-          Back to {myUnitIssuesLabel()}
+          {myUnitIssuesLabel()}
         </Link>
       </Button>
 
@@ -165,7 +165,7 @@ import { BRANDING, myUnitIssuesLabel, allUnitIssuesLabel } from "@/config/brandi
 
         <Card>
           <CardHeader className="pb-3">
-<CardTitle className="text-base">{BRANDING.unitLabel} Location</CardTitle>
+            <CardTitle className="text-base">{BRANDING.unitLabel} Location</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -222,4 +222,15 @@ import { BRANDING, myUnitIssuesLabel, allUnitIssuesLabel } from "@/config/brandi
           </CardContent>
         </Card>
 
-        <div className="f
+        <div className="flex gap-3 justify-end">
+          <Button type="button" variant="outline" onClick={() => router.back()}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? "Saving…" : "Log Issue"}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}

@@ -44,7 +44,7 @@ export function VillaKpiCards({
     {
       title: `${BRANDING.unitLabel}s Reporting`,
       value: uniqueVillasCount,
-      subtitle: `distinct ${BRANDING.memberLabel.toLowerCase()}s`,
+      subtitle: "distinct residents",
       icon: Users,
       color: "text-blue-700",
       bg: "bg-blue-100",
@@ -73,4 +73,10 @@ export function VillaKpiCards({
             <p className="text-2xl font-bold">{card.value}</p>
             {card.subtitle && (
               <p className="text-xs text-gray-400 mt-0.5">{card.subtitle}</p>
-          
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}

@@ -50,7 +50,7 @@ export function ShareVillaListButton({ issues }: ShareVillaListButtonProps) {
     window.open(`https://wa.me/?text=${waText}`, "_blank");
   };
 
-  return (
+   return (
     <Button
       variant="outline"
       size="sm"
@@ -58,4 +58,8 @@ export function ShareVillaListButton({ issues }: ShareVillaListButtonProps) {
       disabled={issues.length === 0}
       className="gap-1.5"
     >
-      <Share2 cl
+      <Share2 className="h-4 w-4" />
+      Share List
+    </Button>
+  );
+}

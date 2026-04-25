@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth, requireAdmin } from "@/lib/session";
 import { IssueStatus } from "@prisma/client";
 import { z } from "zod";
+import { BRANDING } from "@/config/branding";
 
 const villaIssueSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters").max(200),
@@ -72,7 +73,7 @@ export async function createVillaIssue(formData: FormData) {
         fromStatus: null,
         toStatus: IssueStatus.PENDING,
         changedById: user.id,
-        note: "Issue reported",
+        note: `${BRANDING.unitLabel} issue reported`,
       },
     });
 
@@ -132,7 +133,7 @@ export async function resolveVillaIssue(issueId: string, resolve: boolean) {
 
   if (!issue) return { error: "Issue not found" };
   if (issue.createdById !== user.id) {
-    return { error: "Only the owner can resolve their own issues" };
+    return { error: `Only the owner can resolve their ${BRANDING.unitLabel.toLowerCase()} issues` };
   }
 
   const newStatus = resolve ? IssueStatus.COMPLETED : IssueStatus.PENDING;
@@ -286,4 +287,33 @@ export async function getVillaIssuesByUserId(
       where,
       include: {
         category: true,
-        
+        createdBy: { select: { name: true, wing: true, flatNo: true } },
+        attachments: { take: 1 },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { name: true, wing: true, flatNo: true },
+    }),
+  ]);
+
+  return { issues, resident };
+}
+
+export async function getVillaIssueById(id: string) {
+  return prisma.issue.findUnique({
+    where: { id, issueType: "VILLA" },
+    include: {
+      category: true,
+      createdBy: {
+        select: { id: true, name: true, email: true, wing: true, flatNo: true },
+      },
+      attachments: true,
+      statusHistory: {
+        include: { changedBy: { select: { name: true, role: true } } },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+}

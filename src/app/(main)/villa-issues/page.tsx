@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Home, MapPin, ImageIcon, Calendar } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ShareVillaListButton } from "@/components/villa-issues/share-villa-list-button";
-import { BRANDING, myUnitIssuesLabel, allUnitIssuesLabel } from "@/config/branding";
+import { BRANDING, myUnitIssuesLabel } from "@/config/branding";
 
 interface PageProps {
   searchParams: { [key: string]: string | string[] | undefined };
@@ -63,7 +63,7 @@ export default async function VillaIssuesPage({ searchParams }: PageProps) {
       {issues.length === 0 ? (
         <div className="text-center py-16">
           <Home className="h-12 w-12 text-gray-200 mx-auto mb-3" />
-<p className="text-gray-400 text-lg">No {BRANDING.unitLabel.toLowerCase()} issues found.</p>
+          <p className="text-gray-400 text-lg">No {BRANDING.unitLabel.toLowerCase()} issues found.</p>
           {!isAdmin && (
             <p className="text-gray-400 text-sm mt-1">
               <Link href="/villa-issues/new" className="text-primary hover:underline">
@@ -159,4 +159,12 @@ function VillaStatusFilter({ current }: { current?: string }) {
           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
             current === s.value || (!current && !s.value)
               ? "bg-primary text-white"
-              : 
+              : "bg-white border border-gray-200 text-gray-600 hover:border-primary/50"
+          }`}
+        >
+          {s.label}
+        </Link>
+      ))}
+    </div>
+  );
+}

@@ -73,7 +73,7 @@ export default function EditVillaIssuePage() {
         </Link>
       </Button>
 
-<h1 className="text-xl font-bold mb-5">Edit {BRANDING.unitLabel} Issue</h1>
+      <h1 className="text-xl font-bold mb-5">{`Edit ${BRANDING.unitLabel} Issue`}</h1>
 
       <form onSubmit={onSubmit} className="space-y-5">
         <Card>
@@ -134,7 +134,7 @@ export default function EditVillaIssuePage() {
 
         <Card>
           <CardHeader className="pb-3">
-<CardTitle className="text-base">{BRANDING.unitLabel} Location</CardTitle>
+            <CardTitle className="text-base">{BRANDING.unitLabel} Location</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -184,4 +184,14 @@ export default function EditVillaIssuePage() {
         </Card>
 
         <div className="flex gap-3 justify-end">
-          <Butt
+          <Button type="button" variant="outline" onClick={() => router.back()}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={saving}>
+            {saving ? "Saving…" : "Save Changes"}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
