@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { BRANDING, myUnitIssuesLabel, unitDashboardLabel, allUnitIssuesLabel, membersLabel } from "@/config/branding";
 
 function getTitle(pathname: string): string {
   if (pathname === "/dashboard") return "Dashboard";
@@ -9,18 +10,18 @@ function getTitle(pathname: string): string {
   if (pathname.match(/\/issues\/[^/]+\/edit/)) return "Edit Issue";
   if (pathname.match(/\/issues\/[^/]+/)) return "Issue Details";
   if (pathname === "/issues") return "All Issues";
-  if (pathname === "/villa-issues/new") return "Log Villa Issue";
-  if (pathname.match(/\/villa-issues\/[^/]+\/edit/)) return "Edit Villa Issue";
-  if (pathname.match(/\/villa-issues\/[^/]+/)) return "Villa Issue Details";
-  if (pathname === "/villa-issues") return "My Villa Issues";
-  if (pathname === "/admin/villa-dashboard") return "Villa Issues Dashboard";
-  if (pathname === "/admin/all-villa-issues") return "All Villa Issues";
-  if (pathname.match(/\/admin\/all-villa-issues\/.+/)) return "Villa Issue Detail";
+  if (pathname === "/villa-issues/new") return `Log ${BRANDING.unitLabel} Issue`;
+  if (pathname.match(/\/villa-issues\/[^/]+\/edit/)) return `Edit ${BRANDING.unitLabel} Issue`;
+  if (pathname.match(/\/villa-issues\/[^/]+/)) return `${BRANDING.unitLabel} Issue Details`;
+  if (pathname === "/villa-issues") return myUnitIssuesLabel();
+  if (pathname === "/admin/villa-dashboard") return `${unitDashboardLabel()} Dashboard`;
+  if (pathname === "/admin/all-villa-issues") return allUnitIssuesLabel();
+  if (pathname.match(/\/admin\/all-villa-issues\/.+/)) return `${BRANDING.unitLabel} Issue Detail`;
   if (pathname === "/admin/categories") return "Manage Categories";
   if (pathname === "/admin/users") return "Manage Users";
-  if (pathname === "/admin/residents") return "Residents Directory";
+  if (pathname === "/admin/residents") return `${membersLabel()} Directory`;
   if (pathname === "/profile") return "My Profile";
-  return "Amber Meadows";
+  return BRANDING.communityName;
 }
 
 export default async function MainLayout({
@@ -48,7 +49,7 @@ export default async function MainLayout({
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header
-          title="Amber Meadows"
+          title={BRANDING.communityName}
           userRole={session.user.role}
           userName={session.user.name ?? "User"}
         />

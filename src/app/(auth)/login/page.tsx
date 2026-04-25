@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Building2, Clock, XCircle } from "lucide-react";
 import { checkApprovalStatus } from "@/actions/auth";
+import { BRANDING } from "@/config/branding";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -76,7 +77,7 @@ export default function LoginPage() {
           </div>
         </div>
         <div>
-          <CardTitle className="text-2xl">Amber Meadows</CardTitle>
+          <CardTitle className="text-2xl">{BRANDING.communityName}</CardTitle>
           <CardDescription>
             Sign in to access the community portal
           </CardDescription>
@@ -117,7 +118,7 @@ export default function LoginPage() {
           </Button>
         </form>
         <p className="mt-4 text-center text-sm text-gray-600">
-          New resident?{" "}
+          New {BRANDING.memberLabel.toLowerCase()}?{" "}
           <Link
             href="/register"
             className="text-primary hover:underline font-medium"

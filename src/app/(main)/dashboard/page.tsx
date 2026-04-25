@@ -1,4 +1,5 @@
 import { getDashboardStats } from "@/actions/dashboard";
+import { BRANDING, membersLabel } from "@/config/branding";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { StatusChart } from "@/components/dashboard/status-chart";
 import { CategoryChart } from "@/components/dashboard/category-chart";
@@ -19,7 +20,7 @@ export default async function DashboardPage() {
         </h1>
         <p className="text-sm text-gray-500 mt-1">
           {isAdmin
-            ? "Here's an overview of all issues across Amber Meadows residents."
+            ? `Here's an overview of all issues across ${BRANDING.communityName} ${membersLabel().toLowerCase()}.`
             : "Here's a summary of your reported issues."}
         </p>
       </div>

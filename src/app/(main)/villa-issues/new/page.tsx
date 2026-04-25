@@ -47,6 +47,7 @@ export default function NewVillaIssuePage() {
   }, []);
 
   // Pre-fill wing/flatNo from profile once session is authenticated
+import { BRANDING, myUnitIssuesLabel, allUnitIssuesLabel } from "@/config/branding";
   useEffect(() => {
     if (status !== "authenticated" || !session?.user) return;
     const profileWing = session.user.wing ?? "";
@@ -73,7 +74,7 @@ export default function NewVillaIssuePage() {
     }
 
     toast({
-      title: "Villa issue logged!",
+      title: `${BRANDING.unitLabel} issue logged!`,
       description: "Your issue has been saved and only you can see it.",
     });
     router.push(`/villa-issues/${result.issueId}`);
@@ -84,17 +85,17 @@ export default function NewVillaIssuePage() {
       <Button variant="ghost" size="sm" asChild className="mb-4">
         <Link href="/villa-issues" className="gap-1">
           <ArrowLeft className="h-4 w-4" />
-          Back to Villa Issues
+          Back to {myUnitIssuesLabel()}
         </Link>
       </Button>
 
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
           <Home className="h-5 w-5 text-primary" />
-          Log a Villa Issue
+          Log a {BRANDING.unitLabel} Issue
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          Track issues specific to your villa. Only you (and admins) can see these.
+          Track issues specific to your {BRANDING.unitLabel.toLowerCase()}. Only you (and admins) can see these.
         </p>
       </div>
 
@@ -164,7 +165,7 @@ export default function NewVillaIssuePage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Villa Location</CardTitle>
+<CardTitle className="text-base">{BRANDING.unitLabel} Location</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -221,15 +222,4 @@ export default function NewVillaIssuePage() {
           </CardContent>
         </Card>
 
-        <div className="flex gap-3 justify-end">
-          <Button type="button" variant="outline" onClick={() => router.back()}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Saving…" : "Log Issue"}
-          </Button>
-        </div>
-      </form>
-    </div>
-  );
-}
+        <div className="f

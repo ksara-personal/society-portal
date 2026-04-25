@@ -25,28 +25,31 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { BRANDING, myUnitIssuesLabel, unitDashboardLabel, allUnitIssuesLabel, membersLabel } from "@/config/branding";
 
 interface MobileNavProps {
   userRole: string;
   userName: string;
 }
 
-const navItems = [
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
+
+const navItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/issues", label: "All Issues", icon: ClipboardList },
   { href: "/issues/new", label: "Report Issue", icon: PlusCircle },
-  { href: "/villa-issues", label: "My Villa Issues", icon: Home },
-  { href: "/residents", label: "Residents", icon: Users },
+  { href: "/villa-issues", label: myUnitIssuesLabel(), icon: Home },
+  { href: "/residents", label: membersLabel(), icon: Users },
   { href: "/profile", label: "My Profile", icon: UserCircle },
 ];
 
-const serviceDirectoryItems = [
+const serviceDirectoryItems: NavItem[] = [
   { href: "/contacts", label: "Service Contacts", icon: BookUser },
 ];
 
-const adminItems = [
-  { href: "/admin/villa-dashboard", label: "Villa Dashboard", icon: BarChart2 },
-  { href: "/admin/all-villa-issues", label: "All Villa Issues", icon: Building2 },
+const adminItems: NavItem[] = [
+  { href: "/admin/villa-dashboard", label: unitDashboardLabel(), icon: BarChart2 },
+  { href: "/admin/all-villa-issues", label: allUnitIssuesLabel(), icon: Building2 },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/categories", label: "Categories", icon: Tag },
   { href: "/admin/contacts/categories", label: "Service Contact Categories", icon: BookUser },
@@ -68,15 +71,21 @@ export function MobileNav({ userRole, userName }: MobileNavProps) {
           <SheetHeader className="p-4 border-b shrink-0">
             <SheetTitle asChild>
               <Link href="/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2">
-                <Image
-                  src="/amber-meadows.png"
-                  alt="Amber Meadows"
-                  width={140}
-                  height={44}
-                  className="h-9 w-auto object-contain"
-                  priority
-                />
-                <span className="font-semibold text-sm text-gray-900">Amber Meadows</span>
+                {BRANDING.logoPath ? (
+                  <Image
+                    src={BRANDING.logoPath}
+                    alt={BRANDING.communityName}
+                    width={140}
+                    height={44}
+                    className="h-9 w-auto object-contain"
+                    priority
+                  />
+                ) : (
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary shrink-0">
+                    <Building2 className="h-5 w-5 text-white" />
+                  </div>
+                )}
+                <span className="font-semibold text-sm text-gray-900">{BRANDING.communityName}</span>
               </Link>
             </SheetTitle>
           </SheetHeader>

@@ -5,6 +5,7 @@ import { AllVillaFilter } from "@/components/villa-issues/all-villa-filter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Home, ChevronRight, Building2 } from "lucide-react";
+import { BRANDING, myUnitIssuesLabel, allUnitIssuesLabel } from "@/config/branding";
 
 interface PageProps {
   searchParams: { [key: string]: string | string[] | undefined };
@@ -27,10 +28,10 @@ export default async function AllVillaIssuesPage({ searchParams }: PageProps) {
       <div>
         <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
           <Building2 className="h-5 w-5 text-primary" />
-          All Villa Issues
+          {allUnitIssuesLabel()}
         </h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          {villas.length} villa{villas.length !== 1 ? "s" : ""} with reported issues
+          {villas.length} {BRANDING.unitLabel.toLowerCase()}{villas.length !== 1 ? "s" : ""} with reported issues
           {activeWing || activeFlatNo
             ? ` — filtered by${activeWing ? ` Wing ${activeWing}` : ""}${activeFlatNo ? ` Flat ${activeFlatNo}` : ""}`
             : ""}
@@ -46,8 +47,8 @@ export default async function AllVillaIssuesPage({ searchParams }: PageProps) {
       {villas.length === 0 ? (
         <div className="text-center py-20">
           <Home className="h-12 w-12 text-gray-200 mx-auto mb-3" />
-          <p className="text-gray-400 text-lg">No villas match the current filter.</p>
-          <p className="text-gray-400 text-sm mt-1">Try clearing the filter to see all villas.</p>
+<p className="text-gray-400 text-lg">No {BRANDING.unitLabel.toLowerCase()}s match the current filter.</p>
+<p className="text-gray-400 text-sm mt-1">Try clearing the filter to see all {BRANDING.unitLabel.toLowerCase()}s.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -75,7 +76,7 @@ export default async function AllVillaIssuesPage({ searchParams }: PageProps) {
                             ? `Wing ${villa.wing}`
                             : villa.flatNo
                             ? `Flat ${villa.flatNo}`
-                            : "Villa"}
+                            : BRANDING.unitLabel}
                         </span>
                         <Badge
                           variant="secondary"
@@ -93,11 +94,4 @@ export default async function AllVillaIssuesPage({ searchParams }: PageProps) {
                     <ChevronRight className="h-5 w-5 text-gray-400 shrink-0" />
                   </div>
                 </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+    

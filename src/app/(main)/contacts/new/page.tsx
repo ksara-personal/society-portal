@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { ContactForm } from "@/components/contacts/contact-form";
 import { getContactCategories } from "@/actions/contacts";
+import { BRANDING } from "@/config/branding";
 
 export default async function NewContactPage() {
   const user = await getCurrentUser();
@@ -24,7 +25,7 @@ export default async function NewContactPage() {
       <div>
         <h1 className="text-xl font-bold text-gray-900">Add a contact</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Add a service provider to the community directory. Everyone in Amber Meadows can see and share this contact.
+          Add a service provider to the community directory. Everyone in {BRANDING.communityName} can see and share this contact.
         </p>
       </div>
 

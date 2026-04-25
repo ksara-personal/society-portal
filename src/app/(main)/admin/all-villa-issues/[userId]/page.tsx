@@ -18,6 +18,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { BRANDING, myUnitIssuesLabel, allUnitIssuesLabel } from "@/config/branding";
 
 interface PageProps {
   params: { userId: string };
@@ -47,7 +48,7 @@ export default async function VillaDrilldownPage({ params, searchParams }: PageP
       ? `Wing ${resident.wing}`
       : resident.flatNo
       ? `Flat ${resident.flatNo}`
-      : "Villa";
+: BRANDING.unitLabel;
 
   // Summary counts
   const counts = issues.reduce(
@@ -71,7 +72,7 @@ export default async function VillaDrilldownPage({ params, searchParams }: PageP
         <Button variant="ghost" size="sm" asChild className="mb-3">
           <Link href="/admin/all-villa-issues" className="gap-1">
             <ArrowLeft className="h-4 w-4" />
-            All Villa Issues
+            {allUnitIssuesLabel()}
           </Link>
         </Button>
 
@@ -140,7 +141,7 @@ export default async function VillaDrilldownPage({ params, searchParams }: PageP
                           variant="outline"
                           className="text-[10px] px-1.5 py-0 border-amber-300 text-amber-700 bg-amber-50"
                         >
-                          Villa
+                          {BRANDING.unitLabel}
                         </Badge>
                       </div>
                       <h3 className="font-medium text-sm line-clamp-2">{issue.title}</h3>
@@ -172,14 +173,4 @@ export default async function VillaDrilldownPage({ params, searchParams }: PageP
                     <div className="flex flex-col items-end gap-1.5 shrink-0">
                       <StatusBadge status={issue.status} />
                       <PriorityBadge priority={issue.priority} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+        
