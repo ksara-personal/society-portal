@@ -18,7 +18,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { BRANDING, myUnitIssuesLabel, allUnitIssuesLabel } from "@/config/branding";
+import { BRANDING, allUnitIssuesLabel } from "@/config/branding";
 
 interface PageProps {
   params: { userId: string };
@@ -48,7 +48,7 @@ export default async function VillaDrilldownPage({ params, searchParams }: PageP
       ? `Wing ${resident.wing}`
       : resident.flatNo
       ? `Flat ${resident.flatNo}`
-: BRANDING.unitLabel;
+      : BRANDING.unitLabel;
 
   // Summary counts
   const counts = issues.reduce(
@@ -173,4 +173,14 @@ export default async function VillaDrilldownPage({ params, searchParams }: PageP
                     <div className="flex flex-col items-end gap-1.5 shrink-0">
                       <StatusBadge status={issue.status} />
                       <PriorityBadge priority={issue.priority} />
-        
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

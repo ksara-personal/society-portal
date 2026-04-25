@@ -15,6 +15,7 @@ import { ShareIssueButton } from "@/components/issues/share-issue-button";
 import { deleteVillaIssue, resolveVillaIssue } from "@/actions/villa-issues";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { BRANDING, myUnitIssuesLabel } from "@/config/branding";
 import {
   MapPin,
   User,
@@ -27,7 +28,6 @@ import {
   RotateCcw,
   Home,
 } from "lucide-react";
-import { BRANDING } from "@/config/branding";
 
 export default function VillaIssueDetailPage() {
   const params = useParams();
@@ -93,7 +93,7 @@ export default function VillaIssueDetailPage() {
       <div className="text-center py-16">
         <p className="text-gray-400">Issue not found or you don&apos;t have access.</p>
         <Link href="/villa-issues" className="text-primary hover:underline text-sm mt-2 block">
-          ← Back to {BRANDING.unitLabel.toLowerCase()} issues
+          ← Back to {myUnitIssuesLabel()}
         </Link>
       </div>
     );
@@ -235,4 +235,12 @@ export default function VillaIssueDetailPage() {
       {/* Activity timeline */}
       <Card>
         <CardHeader className="pb-3">
- 
+          <CardTitle className="text-base">Activity Timeline</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <StatusTimeline history={issue.statusHistory || []} />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
