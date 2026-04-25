@@ -134,7 +134,7 @@ export default function ResidentsPage() {
   const orderedKeys = [
     ...configuredWings.filter((w) => allWingKeys.includes(w)),
     ...allWingKeys.filter(
-      (k) => k !== "__unassigned__" && !configuredWings.includes(k)
+      (k) => k !== "__unassigned__" && !(configuredWings as string[]).includes(k)
     ),
     ...(allWingKeys.includes("__unassigned__") ? ["__unassigned__"] : []),
   ];
