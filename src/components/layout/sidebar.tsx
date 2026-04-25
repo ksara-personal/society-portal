@@ -34,7 +34,7 @@ const navItems = [
   { href: "/issues", label: "All Issues", icon: ClipboardList },
   { href: "/issues/new", label: "Report Issue", icon: PlusCircle },
   { href: "/villa-issues", label: "My Villa Issues", icon: Home },
-  { href: "/admin/residents", label: "Residents", icon: Users },
+  { href: "/residents", label: "Residents", icon: Users },
   { href: "/profile", label: "My Profile", icon: UserCircle },
 ];
 
