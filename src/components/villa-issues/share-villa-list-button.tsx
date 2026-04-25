@@ -2,6 +2,7 @@
 
 import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BRANDING } from "@/config/branding";
 
 interface Issue {
   title: string;
@@ -25,7 +26,7 @@ export function ShareVillaListButton({ issues }: ShareVillaListButtonProps) {
     if (issues.length === 0) return;
 
     const lines: string[] = [];
-    lines.push(`🏠 *My Villa Issues (${issues.length})*`);
+    lines.push(`🏠 *My ${BRANDING.unitLabel} Issues (${issues.length})*`);
     lines.push("");
 
     issues.forEach((issue, i) => {
@@ -37,7 +38,7 @@ export function ShareVillaListButton({ issues }: ShareVillaListButtonProps) {
 
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ title: "My Villa Issues", text: shareText });
+        await navigator.share({ title: `My ${BRANDING.unitLabel} Issues`, text: shareText });
         return;
       } catch {
         // cancelled or unsupported — fall through
@@ -57,8 +58,4 @@ export function ShareVillaListButton({ issues }: ShareVillaListButtonProps) {
       disabled={issues.length === 0}
       className="gap-1.5"
     >
-      <Share2 className="h-4 w-4" />
-      Share List
-    </Button>
-  );
-}
+      <Share2 cl

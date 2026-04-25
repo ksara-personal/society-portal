@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Home, AlertCircle, CheckCircle2, Clock, Users } from "lucide-react";
+import { BRANDING } from "@/config/branding";
 
 interface VillaKpiCardsProps {
   total: number;
@@ -18,7 +19,7 @@ export function VillaKpiCards({
 
   const cards = [
     {
-      title: "Total Villa Issues",
+      title: `Total ${BRANDING.unitLabel} Issues`,
       value: total,
       icon: Home,
       color: "text-amber-700",
@@ -41,9 +42,9 @@ export function VillaKpiCards({
       bg: "bg-green-100",
     },
     {
-      title: "Villas Reporting",
+      title: `${BRANDING.unitLabel}s Reporting`,
       value: uniqueVillasCount,
-      subtitle: "distinct residents",
+      subtitle: `distinct ${BRANDING.memberLabel.toLowerCase()}s`,
       icon: Users,
       color: "text-blue-700",
       bg: "bg-blue-100",
@@ -72,10 +73,4 @@ export function VillaKpiCards({
             <p className="text-2xl font-bold">{card.value}</p>
             {card.subtitle && (
               <p className="text-xs text-gray-400 mt-0.5">{card.subtitle}</p>
-            )}
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
+          

@@ -27,6 +27,7 @@ import {
   RotateCcw,
   Home,
 } from "lucide-react";
+import { BRANDING } from "@/config/branding";
 
 export default function VillaIssueDetailPage() {
   const params = useParams();
@@ -55,7 +56,7 @@ export default function VillaIssueDetailPage() {
   }, [params.id]);
 
   async function handleDelete() {
-    if (!confirm("Are you sure you want to delete this villa issue?")) return;
+    if (!confirm(`Are you sure you want to delete this ${BRANDING.unitLabel.toLowerCase()} issue?`)) return;
     const result = await deleteVillaIssue(params.id as string);
     if ("error" in result) {
       toast({ title: "Error", description: result.error, variant: "destructive" });
@@ -92,7 +93,7 @@ export default function VillaIssueDetailPage() {
       <div className="text-center py-16">
         <p className="text-gray-400">Issue not found or you don&apos;t have access.</p>
         <Link href="/villa-issues" className="text-primary hover:underline text-sm mt-2 block">
-          ← Back to villa issues
+          ← Back to {BRANDING.unitLabel.toLowerCase()} issues
         </Link>
       </div>
     );
@@ -166,7 +167,7 @@ export default function VillaIssueDetailPage() {
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="outline" className="text-xs px-2 border-amber-300 text-amber-700 bg-amber-50">
                   <Home className="h-3 w-3 mr-1" />
-                  Villa Issue
+                  {BRANDING.unitLabel} Issue
                 </Badge>
               </div>
               <h1 className="text-xl font-bold text-gray-900">{issue.title}</h1>
@@ -234,12 +235,4 @@ export default function VillaIssueDetailPage() {
       {/* Activity timeline */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Activity Timeline</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <StatusTimeline history={issue.statusHistory || []} />
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+ 

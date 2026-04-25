@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/issues/status-badge";
 import { PriorityBadge } from "@/components/issues/priority-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Home, MapPin } from "lucide-react";
+import { BRANDING, unitDashboardLabel } from "@/config/branding";
 
 export default async function VillaDashboardPage() {
   const stats = await getVillaDashboardStats();
@@ -19,10 +20,10 @@ export default async function VillaDashboardPage() {
       <div>
         <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
           <Home className="h-5 w-5 text-amber-600" />
-          Villa Issues Dashboard
+          {unitDashboardLabel()}
         </h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          Overview of all resident villa-specific issues across Amber Meadows
+          Overview of all {BRANDING.memberLabel.toLowerCase()} {BRANDING.unitLabel.toLowerCase()}-specific issues across {BRANDING.communityName}
         </p>
       </div>
 
@@ -74,11 +75,11 @@ export default async function VillaDashboardPage() {
         {/* Recent villa issues */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Recent Villa Issues</CardTitle>
+<CardTitle className="text-base">Recent {BRANDING.unitLabel} Issues</CardTitle>
           </CardHeader>
           <CardContent>
             {stats.recentIssues.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-8">No villa issues yet</p>
+<p className="text-sm text-gray-400 text-center py-8">No {BRANDING.unitLabel.toLowerCase()} issues yet</p>
             ) : (
               <div className="space-y-3">
                 {stats.recentIssues.map((issue: any) => (
@@ -101,16 +102,4 @@ export default async function VillaDashboardPage() {
                       </div>
                       <div className="flex flex-col items-end gap-1 shrink-0">
                         <StatusBadge status={issue.status} />
-                        <PriorityBadge priority={issue.priority} />
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
+                        <PriorityBadge pr

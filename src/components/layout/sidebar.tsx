@@ -22,6 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { BRANDING, myUnitIssuesLabel, unitDashboardLabel, allUnitIssuesLabel, membersLabel } from "@/config/branding";
 
 interface SidebarProps {
   userRole: string;
@@ -29,30 +30,34 @@ interface SidebarProps {
   userEmail: string;
 }
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/issues", label: "All Issues", icon: ClipboardList },
-  { href: "/issues/new", label: "Report Issue", icon: PlusCircle },
-  { href: "/villa-issues", label: "My Villa Issues", icon: Home },
-  { href: "/residents", label: "Residents", icon: Users },
-  { href: "/profile", label: "My Profile", icon: UserCircle },
-];
-
-const serviceDirectoryItems = [
-  { href: "/contacts", label: "Service Contacts", icon: BookUser },
-];
-
 type NavItem = {
   href: string;
   label: string;
   icon: typeof LayoutDashboard;
 };
 
-const adminItems: NavItem[] = [
-  { href: "/admin/villa-dashboard", label: "Villa Dashboard", icon: BarChart2 },
-  { href: "/admin/all-villa-issues", label: "All Villa Issues", icon: Building2 },
-  { href: "/admin/users", label: "Users", icon: Users },
+function buildNavItems(): NavItem[] {
+  return [
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/issues", label: "All Issues", icon: ClipboardList },
+    { href: "/issues/new", label: "Report Issue", icon: PlusCircle },
+    { href: "/villa-issues", label: myUnitIssuesLabel(), icon: Home },
+    { href: "/residents", label: membersLabel(), icon: Users },
+    { href: "/profile", label: "My Profile", icon: UserCircle },
+  ];
+}
+
+const serviceDirectoryItems: NavItem[] = [
+  { href: "/contacts", label: "Service Contacts", icon: BookUser },
 ];
+
+function buildAdminItems(): NavItem[] {
+  return [
+    { href: "/admin/villa-dashboard", label: unitDashboardLabel(), icon: BarChart2 },
+    { href: "/admin/all-villa-issues", label: allUnitIssuesLabel(), icon: Building2 },
+    { href: "/admin/users", label: "Users", icon: Users },
+  ];
+}
 
 const adminMasterDataItems: NavItem[] = [
   { href: "/admin/categories", label: "Categories", icon: Tag },
@@ -80,23 +85,31 @@ function renderSidebarLink(item: NavItem, isActive: boolean) {
 export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
   const pathname = usePathname();
   const isAdmin = userRole === "ADMIN";
+  const navItems = buildNavItems();
+  const adminItems = buildAdminItems();
 
   return (
     <aside className="flex flex-col h-full w-64 border-r bg-white">
       {/* Logo */}
       <div className="p-4 border-b">
         <Link href="/dashboard" className="flex items-center gap-3">
-          <Image
-            src="/amber-meadows.png"
-            alt="Amber Meadows"
-            width={160}
-            height={48}
-            className="h-10 w-auto object-contain"
-            priority
-          />
+          {BRANDING.logoPath ? (
+            <Image
+              src={BRANDING.logoPath}
+              alt={BRANDING.communityName}
+              width={160}
+              height={48}
+              className="h-10 w-auto object-contain"
+              priority
+            />
+          ) : (
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary shrink-0">
+              <Building2 className="h-5 w-5 text-white" />
+            </div>
+          )}
           <div>
-            <p className="font-semibold text-sm leading-tight">Amber Meadows</p>
-            <p className="text-xs text-gray-500 leading-tight">Residences</p>
+            <p className="font-semibold text-sm leading-tight">{BRANDING.communityName}</p>
+            <p className="text-xs text-gray-500 leading-tight">{BRANDING.communitySubtitle}</p>
           </div>
         </Link>
       </div>

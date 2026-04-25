@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Home, MapPin, ImageIcon, Calendar } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ShareVillaListButton } from "@/components/villa-issues/share-villa-list-button";
+import { BRANDING, myUnitIssuesLabel, allUnitIssuesLabel } from "@/config/branding";
 
 interface PageProps {
   searchParams: { [key: string]: string | string[] | undefined };
@@ -36,10 +37,10 @@ export default async function VillaIssuesPage({ searchParams }: PageProps) {
         <div>
           <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <Home className="h-5 w-5 text-primary" />
-            My Villa Issues
+            {myUnitIssuesLabel()}
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {pagination.total} issue{pagination.total !== 1 ? "s" : ""} in your villa
+            {pagination.total} issue{pagination.total !== 1 ? "s" : ""} in your {BRANDING.unitLabel.toLowerCase()}
           </p>
         </div>
         <div className="flex gap-2">
@@ -47,7 +48,7 @@ export default async function VillaIssuesPage({ searchParams }: PageProps) {
           <Button asChild>
             <Link href="/villa-issues/new" className="gap-2">
               <PlusCircle className="h-4 w-4" />
-              Log Villa Issue
+              Log {BRANDING.unitLabel} Issue
             </Link>
           </Button>
         </div>
@@ -62,11 +63,11 @@ export default async function VillaIssuesPage({ searchParams }: PageProps) {
       {issues.length === 0 ? (
         <div className="text-center py-16">
           <Home className="h-12 w-12 text-gray-200 mx-auto mb-3" />
-          <p className="text-gray-400 text-lg">No villa issues found.</p>
+<p className="text-gray-400 text-lg">No {BRANDING.unitLabel.toLowerCase()} issues found.</p>
           {!isAdmin && (
             <p className="text-gray-400 text-sm mt-1">
               <Link href="/villa-issues/new" className="text-primary hover:underline">
-                Log your first villa issue
+                Log your first {BRANDING.unitLabel.toLowerCase()} issue
               </Link>
             </p>
           )}
@@ -81,7 +82,7 @@ export default async function VillaIssuesPage({ searchParams }: PageProps) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
                         <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-300 text-amber-700 bg-amber-50">
-                          Villa
+                          {BRANDING.unitLabel}
                         </Badge>
                       </div>
                       <h3 className="font-medium text-sm line-clamp-2">{issue.title}</h3>
@@ -158,12 +159,4 @@ function VillaStatusFilter({ current }: { current?: string }) {
           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
             current === s.value || (!current && !s.value)
               ? "bg-primary text-white"
-              : "bg-white border border-gray-200 text-gray-600 hover:border-primary/50"
-          }`}
-        >
-          {s.label}
-        </Link>
-      ))}
-    </div>
-  );
-}
+              : 

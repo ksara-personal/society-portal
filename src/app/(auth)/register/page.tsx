@@ -22,6 +22,7 @@ import {
 import { Building2, CheckCircle2, Clock } from "lucide-react";
 import { registerUser } from "@/actions/auth";
 import { WINGS, getFlatsForWing } from "@/lib/utils";
+import { BRANDING } from "@/config/branding";
 
 export default function RegisterPage() {
   const [error, setError] = useState("");
@@ -94,7 +95,7 @@ export default function RegisterPage() {
         <div>
           <CardTitle className="text-2xl">Create Account</CardTitle>
           <CardDescription>
-            Register as a Amber Meadows resident
+            Register as a {BRANDING.communityName} {BRANDING.memberLabel.toLowerCase()}
           </CardDescription>
         </div>
       </CardHeader>
