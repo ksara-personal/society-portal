@@ -20,6 +20,7 @@ model User {
   isActive        Boolean         @default(true)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+  lastLoginAt     DateTime?
   approvalStatus  UserStatus      @default(PENDING)
   approvedAt      DateTime?
   contactsCreated Contact[]       @relation("ContactsCreated")

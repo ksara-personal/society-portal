@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MobileNav } from "./mobile-nav";
+import { SignOutButton } from "./sign-out-button";
 import { Badge } from "@/components/ui/badge";
 
 interface HeaderProps {
@@ -15,15 +16,19 @@ export function Header({ title, userRole, userName }: HeaderProps) {
         <MobileNav userRole={userRole} userName={userName} />
       </div>
       <h1 className="font-semibold text-gray-900 flex-1">{title}</h1>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {userRole === "ADMIN" && (
           <Badge variant="outline" className="text-xs hidden sm:flex border-primary/30 text-primary">
             Admin
           </Badge>
         )}
-        <Link href="/issues/new" className="hidden sm:flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90 transition-colors">
+        <Link
+          href="/issues/new"
+          className="hidden sm:flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90 transition-colors"
+        >
           + Report Issue
         </Link>
+        <SignOutButton />
       </div>
     </header>
   );

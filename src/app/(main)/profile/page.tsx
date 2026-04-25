@@ -72,9 +72,20 @@ export default function ProfilePage() {
     setProfileLoading(true);
     setProfileError("");
 
+    if (!wing) {
+      setProfileError("Please select a wing.");
+      setProfileLoading(false);
+      return;
+    }
+    if (!flatNo) {
+      setProfileError("Please select a flat number.");
+      setProfileLoading(false);
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
-    if (wing) formData.set("wing", wing);
-    if (flatNo) formData.set("flatNo", flatNo);
+    formData.set("wing", wing);
+    formData.set("flatNo", flatNo);
 
     const result = await updateProfile(formData);
 
@@ -171,7 +182,9 @@ export default function ProfilePage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Edit Profile</CardTitle>
-          <CardDescription>Update your name, phone number, and flat details.</CardDescription>
+          <CardDescription>
+            Fields marked <span className="text-red-500">*</span> are required.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleProfileSubmit} className="space-y-4">
@@ -182,7 +195,7 @@ export default function ProfilePage() {
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="name">Full name *</Label>
+              <Label htmlFor="name">Full name <span className="text-red-500">*</span></Label>
               <Input
                 id="name"
                 name="name"
@@ -204,19 +217,21 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="phone">Phone number</Label>
+              <Label htmlFor="phone">Phone number <span className="text-red-500">*</span></Label>
               <Input
                 id="phone"
                 name="phone"
                 type="tel"
                 defaultValue={profile.phone ?? ""}
                 placeholder="9876543210"
+                required
               />
+              <p className="text-xs text-gray-400">10-digit Indian mobile number, no country code.</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Wing</Label>
+                <Label>Wing <span className="text-red-500">*</span></Label>
                 <Select value={wing} onValueChange={(v) => { setWing(v); setFlatNo(""); }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select wing" />
@@ -229,7 +244,7 @@ export default function ProfilePage() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Flat No.</Label>
+                <Label>Flat No. <span className="text-red-500">*</span></Label>
                 <Select value={flatNo} onValueChange={setFlatNo} disabled={!wing}>
                   <SelectTrigger>
                     <SelectValue placeholder={wing ? "Select flat" : "Select wing first"} />

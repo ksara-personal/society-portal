@@ -49,9 +49,12 @@ export const registerSchema = z.object({
 
 export const updateProfileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  phone: z.string().optional(),
-  wing: z.string().optional(),
-  flatNo: z.string().optional(),
+  phone: z.preprocess(
+    (val) => (typeof val === "string" ? val.replace(/\D/g, "") : val),
+    z.string().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit mobile number (e.g. 9876543210)")
+  ),
+  wing: z.string().min(1, "Please select a wing"),
+  flatNo: z.string().min(1, "Please select a flat number"),
 });
 
 export const changePasswordSchema = z
@@ -65,7 +68,7 @@ export const changePasswordSchema = z
     path: ["confirmPassword"],
   });
 
-// ─── Contacts feature ──────────────────────────────────────────────────────
+// Contacts feature
 
 const indianMobileRegex = /^[6-9]\d{9}$/;
 

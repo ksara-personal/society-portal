@@ -36,6 +36,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (user.approvalStatus === "PENDING") return null;
         if (user.approvalStatus === "REJECTED") return null;
 
+        // Record last login time (fire-and-forget, don't block auth)
+        prisma.user.update({
+          where: { id: user.id },
+          data: { lastLoginAt: new Date() },
+        }).catch(() => {});
+
         return {
           id: user.id,
           name: user.name,

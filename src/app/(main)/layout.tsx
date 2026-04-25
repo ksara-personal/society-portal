@@ -3,7 +3,6 @@ import { auth } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 
-// Map pathnames to page titles
 function getTitle(pathname: string): string {
   if (pathname === "/dashboard") return "Dashboard";
   if (pathname === "/issues/new") return "Report New Issue";
@@ -19,6 +18,7 @@ function getTitle(pathname: string): string {
   if (pathname.match(/\/admin\/all-villa-issues\/.+/)) return "Villa Issue Detail";
   if (pathname === "/admin/categories") return "Manage Categories";
   if (pathname === "/admin/users") return "Manage Users";
+  if (pathname === "/admin/residents") return "Residents Directory";
   if (pathname === "/profile") return "My Profile";
   return "Amber Meadows";
 }
