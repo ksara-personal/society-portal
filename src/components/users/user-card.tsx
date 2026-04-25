@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { format } from "date-fns";
-import { Phone, User as UserIcon, Shield, KeyRound, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Phone, User as UserIcon, Shield, KeyRound, CheckCircle2, XCircle, Clock, LogIn } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -21,6 +21,7 @@ export type UserCardData = {
   isActive: boolean;
   approvalStatus: string;
   createdAt: Date;
+  lastLoginAt: Date | null;
   issueCount: number;
 };
 
@@ -124,6 +125,12 @@ export function UserCard({
           <p className="flex items-center gap-2 text-xs text-gray-400">
             <KeyRound className="h-3.5 w-3.5" /> Joined {format(new Date(user.createdAt), "dd MMM yyyy")}
           </p>
+          <p className="flex items-center gap-2 text-xs text-gray-400">
+            <LogIn className="h-3.5 w-3.5" />
+            {user.lastLoginAt
+              ? <>Last login {format(new Date(user.lastLoginAt), "dd MMM yyyy, h:mm a")}</>
+              : <>Never logged in</>}
+          </p>
           <div className="mt-3">
             <Button variant="outline" size="sm" asChild>
               <Link href={`/admin/users/${user.id}`}>View details</Link>
@@ -184,9 +191,7 @@ export function UserCard({
                 variant="outline"
                 size="sm"
                 className="h-8 text-xs text-gray-600 hover:bg-gray-50"
-                onClick={() => {
-                  onResetPassword();
-                }}
+                onClick={() => onResetPassword()}
               >
                 <KeyRound className="h-3 w-3 mr-1" /> Reset Password
               </Button>

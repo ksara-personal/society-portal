@@ -59,6 +59,7 @@ type FullUser = {
   approvalStatus: string;
   approvedAt: Date | null;
   createdAt: Date;
+  lastLoginAt: Date | null;
   _count: { createdIssues: number };
 };
 
@@ -202,7 +203,6 @@ export default function UsersPage() {
 
   useEffect(() => { load(); }, []);
 
-  // Switch to pending tab when there are pending users
   useEffect(() => {
     if (pendingUsers.length > 0) setActiveTab("pending");
   }, [pendingUsers.length]);
@@ -268,6 +268,7 @@ export default function UsersPage() {
         isActive: user.isActive,
         approvalStatus: user.approvalStatus,
         createdAt: user.createdAt,
+        lastLoginAt: user.lastLoginAt,
         issueCount: user._count.createdIssues,
       })),
     }));

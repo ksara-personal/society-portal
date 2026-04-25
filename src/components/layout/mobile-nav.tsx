@@ -64,8 +64,8 @@ export function MobileNav({ userRole, userName }: MobileNavProps) {
       </Button>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" className="w-72 p-0">
-          <SheetHeader className="p-4 border-b">
+        <SheetContent side="left" className="w-72 p-0 flex flex-col">
+          <SheetHeader className="p-4 border-b shrink-0">
             <SheetTitle asChild>
               <Link href="/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2">
                 <Image
@@ -81,7 +81,7 @@ export function MobileNav({ userRole, userName }: MobileNavProps) {
             </SheetTitle>
           </SheetHeader>
 
-          <nav className="p-3 space-y-1">
+          <nav className="flex-1 overflow-y-auto p-3 space-y-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
               return (
@@ -153,7 +153,7 @@ export function MobileNav({ userRole, userName }: MobileNavProps) {
             )}
           </nav>
 
-          <div className="border-t p-3">
+          <div className="border-t p-3 shrink-0">
             <p className="text-xs uppercase tracking-wider text-gray-500">Signed in as</p>
             <p className="font-semibold">{userName}</p>
             <Button variant="ghost" className="mt-3 w-full" onClick={() => signOut()}>

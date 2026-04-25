@@ -72,7 +72,6 @@ export default function ResidentsPage() {
   const [residents, setResidents] = useState<Resident[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Filter state
   const [wingFilter, setWingFilter] = useState("all");
   const [flatFilter, setFlatFilter] = useState("");
   const [nameFilter, setNameFilter] = useState("");
@@ -98,7 +97,6 @@ export default function ResidentsPage() {
     setPhoneFilter("");
   }
 
-  // Apply filters then sort
   const filtered = useMemo(() => {
     const name = nameFilter.trim().toLowerCase();
     const flat = flatFilter.trim().toLowerCase();
@@ -120,7 +118,6 @@ export default function ResidentsPage() {
       });
   }, [residents, wingFilter, flatFilter, nameFilter, phoneFilter]);
 
-  // Group filtered results by wing in configured order
   const byWing = useMemo(() => {
     return filtered.reduce<Record<string, Resident[]>>((acc, r) => {
       const key = r.wing ?? "__unassigned__";
@@ -143,19 +140,15 @@ export default function ResidentsPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-5">
-      {/* Header */}
       <div>
         <h1 className="text-xl font-bold">Residents Directory</h1>
         <p className="text-sm text-gray-500">
-          {loading
-            ? "Loading…"
-            : `${totalActive} active resident${totalActive !== 1 ? "s" : ""}`}
+          {loading ? "Loading…" : `${totalActive} active resident${totalActive !== 1 ? "s" : ""}`}
         </p>
       </div>
 
       {/* Filters */}
       <div className="rounded-lg border bg-white p-3 flex flex-wrap gap-2 items-center">
-        {/* Wing selector */}
         <select
           value={wingFilter}
           onChange={(e) => setWingFilter(e.target.value)}
@@ -163,13 +156,10 @@ export default function ResidentsPage() {
         >
           <option value="all">All Wings</option>
           {configuredWings.map((w) => (
-            <option key={w} value={w}>
-              Wing {w}
-            </option>
+            <option key={w} value={w}>Wing {w}</option>
           ))}
         </select>
 
-        {/* Flat no */}
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
           <Input
@@ -180,7 +170,6 @@ export default function ResidentsPage() {
           />
         </div>
 
-        {/* Name search */}
         <div className="relative flex-1 min-w-[160px]">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
           <Input
@@ -191,7 +180,6 @@ export default function ResidentsPage() {
           />
         </div>
 
-        {/* Phone search */}
         <div className="relative w-40">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
           <Input
@@ -202,7 +190,6 @@ export default function ResidentsPage() {
           />
         </div>
 
-        {/* Clear button */}
         {hasActiveFilter && (
           <button
             onClick={clearFilters}
@@ -214,14 +201,12 @@ export default function ResidentsPage() {
         )}
       </div>
 
-      {/* Results summary when filtering */}
       {hasActiveFilter && !loading && (
         <p className="text-sm text-gray-500">
           Showing {filtered.length} of {residents.length} resident{residents.length !== 1 ? "s" : ""}
         </p>
       )}
 
-      {/* Content */}
       {loading ? (
         <div className="rounded-lg border bg-white p-12 text-center text-gray-400">
           <p className="text-sm">Loading residents…</p>
@@ -247,8 +232,7 @@ export default function ResidentsPage() {
         <div className="space-y-8">
           {orderedKeys.map((wingKey) => {
             const wingResidents = byWing[wingKey];
-            const label =
-              wingKey === "__unassigned__" ? "No Wing Assigned" : `Wing ${wingKey}`;
+            const label = wingKey === "__unassigned__" ? "No Wing Assigned" : `Wing ${wingKey}`;
 
             return (
               <section key={wingKey}>

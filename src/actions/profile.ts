@@ -30,9 +30,9 @@ export async function updateProfile(formData: FormData) {
 
   const parsed = updateProfileSchema.safeParse({
     name: formData.get("name"),
-    phone: formData.get("phone") || undefined,
-    wing: formData.get("wing") || undefined,
-    flatNo: formData.get("flatNo") || undefined,
+    phone: formData.get("phone"),
+    wing: formData.get("wing"),
+    flatNo: formData.get("flatNo"),
   });
 
   if (!parsed.success) {
@@ -43,9 +43,9 @@ export async function updateProfile(formData: FormData) {
     where: { id: sessionUser.id },
     data: {
       name: parsed.data.name,
-      phone: parsed.data.phone ?? null,
-      wing: parsed.data.wing ?? null,
-      flatNo: parsed.data.flatNo ?? null,
+      phone: parsed.data.phone,
+      wing: parsed.data.wing,
+      flatNo: parsed.data.flatNo,
     },
   });
 

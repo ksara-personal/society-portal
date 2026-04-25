@@ -20,6 +20,7 @@ export async function getUsers() {
       approvalStatus: true,
       approvedAt: true,
       createdAt: true,
+      lastLoginAt: true,
       _count: { select: { createdIssues: true } },
     },
     orderBy: [{ role: "asc" }, { name: "asc" }],
