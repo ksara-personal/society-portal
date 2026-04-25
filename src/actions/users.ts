@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdmin, requireAuth } from "@/lib/session";
 import { updateProfileSchema } from "@/lib/validators";
 
 export async function getUsers() {
@@ -169,4 +169,24 @@ export async function toggleUserActive(userId: string, isActive: boolean) {
   });
   revalidatePath("/admin/users");
   return { success: true };
+}
+
+export async function getResidents() {
+  await requireAuth();
+  return prisma.user.findMany({
+    where: {
+      approvalStatus: "APPROVED",
+      role: "RESIDENT",
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      wing: true,
+      flatNo: true,
+      isActive: true,
+    },
+    orderBy: [{ wing: "asc" }, { flatNo: "asc" }],
+  });
 }

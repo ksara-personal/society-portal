@@ -36,6 +36,7 @@ const navItems = [
   { href: "/issues", label: "All Issues", icon: ClipboardList },
   { href: "/issues/new", label: "Report Issue", icon: PlusCircle },
   { href: "/villa-issues", label: "My Villa Issues", icon: Home },
+  { href: "/admin/residents", label: "Residents", icon: Users },
   { href: "/profile", label: "My Profile", icon: UserCircle },
 ];
 
@@ -46,9 +47,9 @@ const serviceDirectoryItems = [
 const adminItems = [
   { href: "/admin/villa-dashboard", label: "Villa Dashboard", icon: BarChart2 },
   { href: "/admin/all-villa-issues", label: "All Villa Issues", icon: Building2 },
+  { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/categories", label: "Categories", icon: Tag },
   { href: "/admin/contacts/categories", label: "Service Contact Categories", icon: BookUser },
-  { href: "/admin/users", label: "Users", icon: Users },
 ];
 
 export function MobileNav({ userRole, userName }: MobileNavProps) {
