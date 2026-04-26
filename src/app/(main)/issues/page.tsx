@@ -1,10 +1,10 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { getIssuesGrouped, getCategories } from "@/actions/issues";
-import { IssueCard } from "@/components/issues/issue-card";
+import { IssueAccordion, type IssueItem } from "@/components/issues/issue-accordion";
+import { type AccordionGroup } from "@/components/ui/accordion";
 import { IssueFilters } from "@/components/issues/issue-filters";
 import { Button } from "@/components/ui/button";
-import { SectionGroup } from "@/components/ui/section-group";
 import { PlusCircle, ClipboardList } from "lucide-react";
 
 interface PageProps {
@@ -21,6 +21,14 @@ export default async function IssuesPage({ searchParams }: PageProps) {
     getIssuesGrouped(params),
     getCategories(),
   ]);
+
+  // Map grouped data to AccordionGroup format
+  const issueGroups: AccordionGroup<IssueItem>[] = grouped.map(({ category, issues }) => ({
+    id: category.id,
+    name: category.name,
+    label: `${issues.length} issue${issues.length !== 1 ? "s" : ""}`,
+    items: issues,
+  }));
 
   return (
     <div className="space-y-5 max-w-5xl mx-auto">
@@ -56,23 +64,7 @@ export default async function IssuesPage({ searchParams }: PageProps) {
           </p>
         </div>
       ) : (
-        <div className="space-y-8">
-          {grouped.map(({ category, issues }) => (
-            <SectionGroup
-              key={category.id}
-              icon={category.name.charAt(0).toUpperCase()}
-              label={category.name}
-              count={issues.length}
-              countLabel="issue"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {issues.map((issue) => (
-                  <IssueCard key={issue.id} issue={issue as any} />
-                ))}
-              </div>
-            </SectionGroup>
-          ))}
-        </div>
+        <IssueAccordion groups={issueGroups} />
       )}
     </div>
   );
