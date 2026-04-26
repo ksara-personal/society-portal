@@ -1,36 +1,23 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getVillaIssuesByUserId } from "@/actions/villa-issues";
-import { StatusBadge } from "@/components/issues/status-badge";
-import { PriorityBadge } from "@/components/issues/priority-badge";
+import { IssueAccordion, type IssueItem } from "@/components/issues/issue-accordion";
+import { type AccordionGroup } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
   Home,
-  MapPin,
-  ImageIcon,
-  Calendar,
+  AlertCircle,
   CheckCircle2,
   Clock,
-  AlertCircle,
   XCircle,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 import { BRANDING, allUnitIssuesLabel } from "@/config/branding";
 
 interface PageProps {
   params: { userId: string };
   searchParams: { [key: string]: string | string[] | undefined };
 }
-
-const STATUS_ICONS: Record<string, React.ElementType> = {
-  PENDING: AlertCircle,
-  IN_PROGRESS: Clock,
-  COMPLETED: CheckCircle2,
-  REJECTED: XCircle,
-};
 
 export default async function VillaDrilldownPage({ params, searchParams }: PageProps) {
   const spParams: Record<string, string> = {};
@@ -64,6 +51,19 @@ export default async function VillaDrilldownPage({ params, searchParams }: PageP
     { value: "REJECTED", label: "Rejected" },
   ];
   const currentStatus = spParams.status ?? "";
+
+  // Group issues by category for the accordion
+  const groupMap = new Map<string, AccordionGroup<IssueItem>>();
+  for (const issue of issues) {
+    const key = issue.category.id;
+    if (!groupMap.has(key)) {
+      groupMap.set(key, { id: key, name: issue.category.name, items: [] });
+    }
+    groupMap.get(key)!.items.push(issue);
+  }
+  const issueGroups = Array.from(groupMap.values()).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
 
   return (
     <div className="space-y-5 max-w-4xl mx-auto">
@@ -123,64 +123,12 @@ export default async function VillaDrilldownPage({ params, searchParams }: PageP
         ))}
       </div>
 
-      {/* Issue list */}
-      {issues.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-gray-400">No issues match the selected filter.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {issues.map((issue) => (
-            <Link key={issue.id} href={`/villa-issues/${issue.id}`}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] px-1.5 py-0 border-amber-300 text-amber-700 bg-amber-50"
-                        >
-                          {BRANDING.unitLabel}
-                        </Badge>
-                      </div>
-                      <h3 className="font-medium text-sm line-clamp-2">{issue.title}</h3>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {issue.category.name} ·{" "}
-                        {formatDistanceToNow(new Date(issue.createdAt), { addSuffix: true })}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-500">
-                        {(issue.wing || issue.flatNo) && (
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {issue.wing ? `Wing ${issue.wing}` : ""}
-                            {issue.flatNo ? ` Flat ${issue.flatNo}` : ""}
-                          </span>
-                        )}
-                        {issue.attachments.length > 0 && (
-                          <span className="flex items-center gap-1">
-                            <ImageIcon className="h-3 w-3" />
-                            {issue.attachments.length} photo
-                            {issue.attachments.length > 1 ? "s" : ""}
-                          </span>
-                        )}
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(issue.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-1.5 shrink-0">
-                      <StatusBadge status={issue.status} />
-                      <PriorityBadge priority={issue.priority} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
+      {/* Issues grouped by category */}
+      <IssueAccordion
+        groups={issueGroups}
+        getHref={(issue) => `/villa-issues/${issue.id}`}
+        emptyStateText="No issues match the selected filter."
+      />
     </div>
   );
 }

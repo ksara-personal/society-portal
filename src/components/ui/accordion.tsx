@@ -16,12 +16,14 @@ interface AccordionProps<T> {
   groups: AccordionGroup<T>[];
   renderItem: (item: T) => ReactNode;
   emptyStateText?: string;
+  gridClassName?: string;
 }
 
 export function Accordion<T>({
   groups,
   renderItem,
   emptyStateText = "No items found.",
+  gridClassName,
 }: AccordionProps<T>) {
   const [openIds, setOpenIds] = useState<Set<string>>(
     new Set(groups.map((group) => group.id))
@@ -85,7 +87,7 @@ export function Accordion<T>({
 
             {isOpen && (
               <div className="border-t px-4 py-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className={cn("grid", gridClassName ?? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4")}>
                   {group.items.map((item) => renderItem(item))}
                 </div>
               </div>

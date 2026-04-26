@@ -288,9 +288,10 @@ export async function getVillaIssuesByUserId(
       include: {
         category: true,
         createdBy: { select: { name: true, wing: true, flatNo: true } },
+        assignedTo: { select: { name: true } },
         attachments: { take: 1 },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ category: { name: "asc" } }, { createdAt: "desc" }],
     }),
     prisma.user.findUnique({
       where: { id: targetUserId },

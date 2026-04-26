@@ -16,14 +16,15 @@ interface IssueCardProps {
     createdAt: Date;
     category: { name: string; icon: string | null };
     createdBy: { name: string; wing: string | null; flatNo: string | null };
-    assignedTo: { name: string } | null;
+    assignedTo?: { name: string } | null;
     attachments: { url: string }[];
   };
+  href?: string;
 }
 
-export function IssueCard({ issue }: IssueCardProps) {
+export function IssueCard({ issue, href }: IssueCardProps) {
   return (
-    <Link href={`/issues/${issue.id}`}>
+    <Link href={href ?? `/issues/${issue.id}`}>
       <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-3">
@@ -57,7 +58,7 @@ export function IssueCard({ issue }: IssueCardProps) {
                 )}
                 <span className="flex items-center gap-1">
                   <UserCheck className="h-3 w-3" />
-                  {issue.assignedTo ? issue.assignedTo.name : "Unassigned"}
+                  {issue.assignedTo?.name ?? "Unassigned"}
                 </span>
               </div>
             </div>
