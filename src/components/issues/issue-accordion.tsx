@@ -1,3 +1,5 @@
+"use client";
+
 import { Accordion, type AccordionGroup } from "@/components/ui/accordion";
 import { IssueCard } from "./issue-card";
 
@@ -17,21 +19,24 @@ export type IssueItem = {
 
 interface IssueAccordionProps {
   groups: AccordionGroup<IssueItem>[];
-  /** Override the link target per issue. Defaults to /issues/:id */
-  getHref?: (issue: IssueItem) => string;
+  /**
+   * Path prefix used to build card links: `${issueLinkPrefix}/${issue.id}`.
+   * Defaults to "/issues".
+   */
+  issueLinkPrefix?: string;
   emptyStateText?: string;
 }
 
 export function IssueAccordion({
   groups,
-  getHref,
+  issueLinkPrefix = "/issues",
   emptyStateText = "No issues found.",
 }: IssueAccordionProps) {
   return (
     <Accordion
       groups={groups}
       renderItem={(issue) => (
-        <IssueCard issue={issue} href={getHref?.(issue)} />
+        <IssueCard issue={issue} href={`${issueLinkPrefix}/${issue.id}`} />
       )}
       emptyStateText={emptyStateText}
       gridClassName="grid-cols-1 md:grid-cols-2 gap-3"
