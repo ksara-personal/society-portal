@@ -60,7 +60,7 @@ export default async function IssuesPage({ searchParams }: PageProps) {
           {grouped.map(({ category, issues }) => (
             <SectionGroup
               key={category.id}
-              icon={category.icon ?? category.name.charAt(0).toUpperCase()}
+              icon={category.name.charAt(0).toUpperCase()}
               label={category.name}
               count={issues.length}
               countLabel="issue"
