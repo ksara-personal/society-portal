@@ -6,6 +6,7 @@ import { BUILDING_CONFIG } from "@/config/building";
 import { Phone, Mail, UserCheck, UserX, Search, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { SectionGroup } from "@/components/ui/section-group";
 
 type Resident = {
   id: string;
@@ -233,28 +234,22 @@ export default function ResidentsPage() {
           {orderedKeys.map((wingKey) => {
             const wingResidents = byWing[wingKey];
             const label = wingKey === "__unassigned__" ? "No Wing Assigned" : `Wing ${wingKey}`;
+            const icon = wingKey === "__unassigned__" ? "?" : wingKey;
 
             return (
-              <section key={wingKey}>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm shrink-0">
-                    {wingKey === "__unassigned__" ? "?" : wingKey}
-                  </div>
-                  <div>
-                    <h2 className="font-semibold text-base">{label}</h2>
-                    <p className="text-xs text-gray-400">
-                      {wingResidents.length} resident{wingResidents.length !== 1 ? "s" : ""}
-                    </p>
-                  </div>
-                  <div className="flex-1 border-t border-gray-100 ml-2" />
-                </div>
-
+              <SectionGroup
+                key={wingKey}
+                icon={icon}
+                label={label}
+                count={wingResidents.length}
+                countLabel="resident"
+              >
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   {wingResidents.map((resident) => (
                     <ResidentCard key={resident.id} resident={resident} />
                   ))}
                 </div>
-              </section>
+              </SectionGroup>
             );
           })}
         </div>

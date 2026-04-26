@@ -258,6 +258,58 @@ export async function getIssueById(id: string) {
   return issue;
 }
 
+export async function getIssuesGrouped(searchParams: Record<string, string>) {
+  await requireAuth();
+  const filters = issueFilterSchema.parse(searchParams);
+
+  const where: Record<string, unknown> = { issueType: "SOCIETY" };
+
+  if (filters.status) where.status = filters.status;
+  if (filters.categoryId) where.categoryId = filters.categoryId;
+  if (filters.priority) where.priority = filters.priority;
+  if (filters.wing) where.wing = filters.wing;
+  if (filters.unassigned) where.assignedToId = null;
+  if (filters.search) {
+    where.OR = [
+      { title: { contains: filters.search, mode: "insensitive" } },
+      { description: { contains: filters.search, mode: "insensitive" } },
+    ];
+  }
+
+  const issues = await prisma.issue.findMany({
+    where,
+    include: {
+      category: true,
+      createdBy: { select: { name: true, wing: true, flatNo: true } },
+      assignedTo: { select: { name: true } },
+      attachments: { take: 1 },
+    },
+    orderBy: [{ category: { name: "asc" } }, { createdAt: "desc" }],
+  });
+
+  const groupMap = new Map<
+    string,
+    {
+      category: { id: string; name: string; icon: string | null };
+      issues: typeof issues;
+    }
+  >();
+
+  for (const issue of issues) {
+    const key = issue.category.id;
+    if (!groupMap.has(key)) {
+      groupMap.set(key, { category: issue.category, issues: [] });
+    }
+    groupMap.get(key)!.issues.push(issue);
+  }
+
+  const grouped = Array.from(groupMap.values()).sort((a, b) =>
+    a.category.name.localeCompare(b.category.name)
+  );
+
+  return { grouped, total: issues.length };
+}
+
 export async function getCategories() {
   return prisma.category.findMany({
     where: { isActive: true },
