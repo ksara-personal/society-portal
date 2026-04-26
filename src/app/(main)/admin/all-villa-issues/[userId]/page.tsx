@@ -126,7 +126,7 @@ export default async function VillaDrilldownPage({ params, searchParams }: PageP
       {/* Issues grouped by category */}
       <IssueAccordion
         groups={issueGroups}
-        getHref={(issue) => `/villa-issues/${issue.id}`}
+        issueLinkPrefix="/villa-issues"
         emptyStateText="No issues match the selected filter."
       />
     </div>
