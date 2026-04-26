@@ -172,6 +172,30 @@ export async function toggleUserActive(userId: string, isActive: boolean) {
   return { success: true };
 }
 
+export async function getDailyLoginUsers() {
+  await requireAdmin();
+
+  const twoDaysAgo = new Date();
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+  twoDaysAgo.setHours(0, 0, 0, 0);
+
+  return prisma.user.findMany({
+    where: {
+      lastLoginAt: { gte: twoDaysAgo },
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      wing: true,
+      flatNo: true,
+      lastLoginAt: true,
+    },
+    orderBy: { lastLoginAt: "desc" },
+  });
+}
+
 export async function getResidents() {
   await requireAuth();
   return prisma.user.findMany({

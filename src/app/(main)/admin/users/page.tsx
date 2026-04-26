@@ -26,6 +26,7 @@ import {
 import {
   getUsers,
   getPendingUsers,
+  getDailyLoginUsers,
   promoteToAdmin,
   demoteToResident,
   toggleUserActive,
@@ -35,7 +36,7 @@ import {
 } from "@/actions/users";
 import { useToast } from "@/components/ui/use-toast";
 import { useSession } from "next-auth/react";
-import { Shield, User, Clock, CheckCircle2, XCircle, Users, KeyRound, UserX } from "lucide-react";
+import { Shield, User, Clock, CheckCircle2, XCircle, Users, KeyRound, UserX, LogIn } from "lucide-react";
 
 type PendingUser = {
   id: string;
@@ -45,6 +46,16 @@ type PendingUser = {
   flatNo: string | null;
   phone: string | null;
   createdAt: Date;
+};
+
+type DailyLoginUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  wing: string | null;
+  flatNo: string | null;
+  lastLoginAt: Date | null;
 };
 
 type FullUser = {
@@ -189,13 +200,19 @@ export default function UsersPage() {
   const { toast } = useToast();
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
   const [users, setUsers] = useState<FullUser[]>([]);
+  const [dailyLoginUsers, setDailyLoginUsers] = useState<DailyLoginUser[]>([]);
   const [resetTarget, setResetTarget] = useState<{ id: string; name: string } | null>(null);
-  const [activeTab, setActiveTab] = useState<"pending" | "all" | "deactivated">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "all" | "deactivated" | "daily-logins">("pending");
 
   async function load() {
-    const [pending, all] = await Promise.all([getPendingUsers(), getUsers()]);
+    const [pending, all, daily] = await Promise.all([
+      getPendingUsers(),
+      getUsers(),
+      getDailyLoginUsers(),
+    ]);
     setPendingUsers(pending as PendingUser[]);
     setUsers(all as FullUser[]);
+    setDailyLoginUsers(daily as DailyLoginUser[]);
     if (pending.length === 0 && activeTab === "pending") {
       setActiveTab("all");
     }
@@ -322,6 +339,22 @@ export default function UsersPage() {
           {deactivatedUsers.length > 0 && (
             <span className="inline-flex items-center justify-center rounded-full bg-gray-100 text-gray-600 text-xs font-semibold px-2 py-0.5 min-w-[20px]">
               {deactivatedUsers.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab("daily-logins")}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "daily-logins"
+              ? "border-primary text-primary"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <LogIn className="h-4 w-4" />
+          Daily Logins
+          {dailyLoginUsers.length > 0 && (
+            <span className="inline-flex items-center justify-center rounded-full bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-0.5 min-w-[20px]">
+              {dailyLoginUsers.length}
             </span>
           )}
         </button>
@@ -483,6 +516,88 @@ export default function UsersPage() {
           </div>
         </div>
       )}
+
+      {/* Daily Logins tab */}
+      {activeTab === "daily-logins" && (() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        const todayUsers = dailyLoginUsers.filter(
+          (u) => u.lastLoginAt && new Date(u.lastLoginAt) >= today
+        );
+        const yesterdayUsers = dailyLoginUsers.filter(
+          (u) => u.lastLoginAt && new Date(u.lastLoginAt) >= yesterday && new Date(u.lastLoginAt) < today
+        );
+
+        const DaySection = ({
+          label,
+          date,
+          users: dayUsers,
+        }: {
+          label: string;
+          date: Date;
+          users: DailyLoginUser[];
+        }) => (
+          <div className="rounded-lg border bg-white overflow-hidden">
+            <div className="px-4 py-3 bg-blue-50 border-b border-blue-100 flex items-center gap-2">
+              <LogIn className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-800">
+                {label} — {format(date, "dd MMM yyyy")}
+              </span>
+              <span className="ml-auto inline-flex items-center justify-center rounded-full bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-0.5 min-w-[20px]">
+                {dayUsers.length} logged in
+              </span>
+            </div>
+            {dayUsers.length === 0 ? (
+              <div className="p-8 text-center text-gray-400 text-sm">No logins recorded for this day.</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Flat</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Login Time</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {dayUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">{user.name}</TableCell>
+                      <TableCell className="text-sm text-gray-600">{user.email}</TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {user.wing && user.flatNo ? `${user.wing}-${user.flatNo}` : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs gap-1">
+                          {user.role === "ADMIN" ? (
+                            <><Shield className="h-3 w-3" /> Admin</>
+                          ) : (
+                            <><User className="h-3 w-3" /> Resident</>
+                          )}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {user.lastLoginAt ? format(new Date(user.lastLoginAt), "h:mm a") : "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        );
+
+        return (
+          <div className="space-y-4">
+            <DaySection label="Today" date={today} users={todayUsers} />
+            <DaySection label="Yesterday" date={yesterday} users={yesterdayUsers} />
+          </div>
+        );
+      })()}
 
       <ResetPasswordDialog
         user={resetTarget}
