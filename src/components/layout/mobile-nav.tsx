@@ -55,13 +55,47 @@ const adminItems: NavItem[] = [
   { href: "/admin/villa-dashboard", label: unitDashboardLabel(), icon: BarChart2 },
   { href: "/admin/all-villa-issues", label: allUnitIssuesLabel(), icon: Building2 },
   { href: "/admin/users", label: "Users", icon: Users },
+];
+
+const adminMasterDataItems: NavItem[] = [
   { href: "/admin/categories", label: "Categories", icon: Tag },
   { href: "/admin/contacts/categories", label: "Service Contact Categories", icon: BookUser },
-  { label: "Payments", href: "/admin/payments", icon: IndianRupee },
   { label: "Quarters", href: "/admin/quarters", icon: CalendarRange },
-  { label: "Dues", href: "/admin/dues", icon: AlertTriangle },
-
 ];
+
+const adminFinanceItems: NavItem[] = [
+  { label: "Payments", href: "/admin/payments", icon: IndianRupee },
+  { label: "Dues", href: "/admin/dues", icon: AlertTriangle },
+];
+
+function renderSideBarItems(setOpen: (open: boolean) => void, pathname: string, category:string, navItems: NavItem[]) {
+  return(
+  <>
+    <Separator className="my-2" />
+    <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+      <Shield className="h-3 w-3" />
+      {category}
+    </p>
+    {navItems.map((item) => {
+      const isActive = pathname.startsWith(item.href);
+      return (
+        <Link
+          key={item.href}
+          href={item.href}
+          onClick={() => setOpen(false)}
+          className={cn(
+            "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+            isActive ? "bg-primary/10 text-primary" : "text-gray-600 hover:bg-gray-100"
+          )}
+        >
+          <item.icon className="h-4 w-4" />
+          {item.label}
+        </Link>
+      );
+    })}
+    </>
+  );
+};
 
 export function MobileNav({ userRole, userName }: MobileNavProps) {
   const [open, setOpen] = useState(false);
@@ -143,31 +177,14 @@ export function MobileNav({ userRole, userName }: MobileNavProps) {
 
             {/* Admin group */}
             {isAdmin && (
-              <>
-                <Separator className="my-2" />
-                <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                  <Shield className="h-3 w-3" />
-                  Admin
-                </p>
-                {adminItems.map((item) => {
-                  const isActive = pathname.startsWith(item.href);
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-                        isActive ? "bg-primary/10 text-primary" : "text-gray-600 hover:bg-gray-100"
-                      )}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {item.label}
-                    </Link>
-                  );
-                })}
-              </>
+              renderSideBarItems(setOpen, pathname, "Admin", adminItems)
             )}
+            {isAdmin && (
+              renderSideBarItems(setOpen, pathname, "Master Data", adminMasterDataItems)
+            )}
+            {isAdmin && (
+              renderSideBarItems(setOpen, pathname, "Finance Mgmt", adminFinanceItems)
+            )} 
           </nav>
 
           <div className="border-t p-3 shrink-0">

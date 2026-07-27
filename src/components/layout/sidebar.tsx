@@ -59,16 +59,19 @@ function buildAdminItems(): NavItem[] {
   return [
     { href: "/admin/villa-dashboard", label: unitDashboardLabel(), icon: BarChart2 },
     { href: "/admin/all-villa-issues", label: allUnitIssuesLabel(), icon: Building2 },
-    { href: "/admin/users", label: "Users", icon: Users },
-    { label: "Payments", href: "/admin/payments", icon: IndianRupee },
-    { label: "Quarters", href: "/admin/quarters", icon: CalendarRange },
-    { label: "Dues", href: "/admin/dues", icon: AlertTriangle },
+    { href: "/admin/users", label: "Users", icon: Users }
   ];
 }
 
 const adminMasterDataItems: NavItem[] = [
   { href: "/admin/categories", label: "Categories", icon: Tag },
   { href: "/admin/contacts/categories", label: "Service Contact Categories", icon: BookUser },
+  { label: "Quarters", href: "/admin/quarters", icon: CalendarRange },
+];
+
+const adminFinanceItems: NavItem[] = [
+  { label: "Payments", href: "/admin/payments", icon: IndianRupee },
+  { label: "Dues", href: "/admin/dues", icon: AlertTriangle },
 ];
 
 function renderSidebarLink(item: NavItem, isActive: boolean) {
@@ -168,6 +171,21 @@ export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
               Master Data
             </p>
             {adminMasterDataItems.map((item) => {
+              const isActive = pathname.startsWith(item.href);
+              return renderSidebarLink(item, isActive);
+            })}
+          </>
+        )}
+
+        {/* Admin Finance Mgmt group */}
+        {isAdmin && (
+          <>
+            <Separator className="my-2" />
+            <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+              <Shield className="h-3 w-3" />
+              Finance Management
+            </p>
+            {adminFinanceItems.map((item) => {
               const isActive = pathname.startsWith(item.href);
               return renderSidebarLink(item, isActive);
             })}
