@@ -27,6 +27,7 @@ model User {
   assignedIssues  Issue[]         @relation("AssignedTo")
   createdIssues   Issue[]         @relation("CreatedBy")
   statusChanges   StatusHistory[]
+  payments Payment[]
 
   @@index([email])
   @@index([role])
@@ -144,6 +145,48 @@ model Contact {
   @@unique([phone])
 }
 
+model PaymentQuarter {
+  id        String   @id @default(cuid())
+  name      String   // e.g. "Q1 2026", "Apr-Jun 2026"
+  slug      String   @unique
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  year      Int
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  payments  Payment[]
+
+  @@index([year])
+  @@index([isActive])
+  @@index([order])
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  amount        Decimal       @db.Decimal(10, 2)
+  status        PaymentStatus @default(PENDING)
+  quarterId     String
+  userId        String?
+  wing          String
+  flatNo        String
+  paidAt        DateTime?
+  paymentMethod String?
+  transactionId String?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  quarter       PaymentQuarter @relation(fields: [quarterId], references: [id], onDelete: Cascade)
+  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([quarterId])
+  @@index([userId])
+  @@index([wing, flatNo])
+  @@index([createdAt])
+}
+
 enum Role {
   ADMIN
   RESIDENT
@@ -182,4 +225,11 @@ enum UserStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  WAIVED
 }

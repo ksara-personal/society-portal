@@ -98,15 +98,33 @@ async function main() {
     { name: "Gas Pipe Setup", slug: "gas-pipe-setup", icon: "flame", color: "#dc2626", order: 17 },
     { name: "Other",           slug: "other",           icon: "more-horizontal", color: "#6b7280", order: 18 },
   ];
-
+/*
   for (const cat of contactCategories) {
     await prisma.contactCategory.upsert({
       where: { slug: cat.slug },
-      update: {},
+      update: { ...cat, isActive: true},
       create: { ...cat, isActive: true },
     });
   }
   console.log(`✅ ${contactCategories.length} contact categories created`);
+*/
+  // Add quarters
+  const currentYear = 2026;
+  const quarters = [
+    { name: `Q1 ${currentYear}`, slug: `q1-${currentYear}`, startDate: `${currentYear}-01-01T00:00:00Z`, endDate: `${currentYear}-03-31T23:59:59Z`, year: currentYear, order: 1 },
+    { name: `Q2 ${currentYear}`, slug: `q2-${currentYear}`, startDate: `${currentYear}-04-01T00:00:00Z`, endDate: `${currentYear}-06-30T23:59:59Z`, year: currentYear, order: 2 },
+    { name: `Q3 ${currentYear}`, slug: `q3-${currentYear}`, startDate: `${currentYear}-07-01T00:00:00Z`, endDate: `${currentYear}-09-30T23:59:59Z`, year: currentYear, order: 3 },
+    { name: `Q4 ${currentYear}`, slug: `q4-${currentYear}`, startDate: `${currentYear}-10-01T00:00:00Z`, endDate: `${currentYear}-12-31T23:59:59Z`, year: currentYear, order: 4 },
+  ];
+
+  for (const q of quarters) {
+    await prisma.paymentQuarter.upsert({
+      where: { slug: q.slug },
+      update: {},
+      create: q,
+    });
+  }
+  console.log(`✅ ${quarters.length} payment quarters seeded`);
 }
 
 main()

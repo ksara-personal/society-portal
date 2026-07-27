@@ -18,6 +18,9 @@ import {
   Building2,
   BookUser,
   FolderOpen,
+  IndianRupee,
+  CalendarRange,
+  AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -44,6 +47,7 @@ function buildNavItems(): NavItem[] {
     { href: "/villa-issues", label: myUnitIssuesLabel(), icon: Home },
     { href: "/residents", label: membersLabel(), icon: Users },
     { href: "/profile", label: "My Profile", icon: UserCircle },
+    { href: "/payments", label: "My Payments", icon: IndianRupee },
   ];
 }
 
@@ -56,6 +60,9 @@ function buildAdminItems(): NavItem[] {
     { href: "/admin/villa-dashboard", label: unitDashboardLabel(), icon: BarChart2 },
     { href: "/admin/all-villa-issues", label: allUnitIssuesLabel(), icon: Building2 },
     { href: "/admin/users", label: "Users", icon: Users },
+    { label: "Payments", href: "/admin/payments", icon: IndianRupee },
+    { label: "Quarters", href: "/admin/quarters", icon: CalendarRange },
+    { label: "Dues", href: "/admin/dues", icon: AlertTriangle },
   ];
 }
 

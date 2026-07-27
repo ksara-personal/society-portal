@@ -113,5 +113,35 @@ export const contactCategorySchema = z.object({
   order: z.coerce.number().int().min(0).default(0),
 });
 
+export const quarterSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").max(100),
+  startDate: z.string().min(1, "Start date is required"),
+  endDate: z.string().min(1, "End date is required"),
+  year: z.coerce.number().int().min(2000).max(2100),
+  order: z.coerce.number().int().min(0).default(0),
+  isActive: z.coerce.boolean().default(true),
+});
+
+export const paymentSchema = z.object({
+  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  quarterId: z.string().min(1, "Please select a quarter"),
+  wing: z.string().min(1, "Wing is required"),
+  flatNo: z.string().min(1, "Flat number is required"),
+  status: z.enum(["PENDING", "PAID", "OVERDUE", "WAIVED"]).default("PENDING"),
+  paidAt: z.string().optional().or(z.literal("")),
+  paymentMethod: z.string().max(50).optional().or(z.literal("")),
+  transactionId: z.string().max(100).optional().or(z.literal("")),
+  notes: z.string().max(500).optional().or(z.literal("")),
+});
+
+export const bulkPaymentSchema = z.object({
+  quarterId: z.string().min(1, "Select a quarter"),
+  amount: z.coerce.number().positive(),
+  wing: z.string().optional(), // optional = all wings
+  flatNos: z.array(z.string()).min(1, "Select at least one flat"),
+});
+
+export type QuarterFormValues = z.infer<typeof quarterSchema>;
+export type PaymentFormValues = z.infer<typeof paymentSchema>;
 export type ContactFormValues = z.infer<typeof contactSchema>;
 export type ContactCategoryFormValues = z.infer<typeof contactCategorySchema>;

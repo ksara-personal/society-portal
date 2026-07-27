@@ -20,6 +20,9 @@ import {
   Building2,
   BookUser,
   FolderOpen,
+  IndianRupee,
+  CalendarRange,
+  AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -41,6 +44,7 @@ const navItems: NavItem[] = [
   { href: "/villa-issues", label: myUnitIssuesLabel(), icon: Home },
   { href: "/residents", label: membersLabel(), icon: Users },
   { href: "/profile", label: "My Profile", icon: UserCircle },
+  { href: "/payments", label: "My Payments", icon: IndianRupee },
 ];
 
 const serviceDirectoryItems: NavItem[] = [
@@ -53,6 +57,10 @@ const adminItems: NavItem[] = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/categories", label: "Categories", icon: Tag },
   { href: "/admin/contacts/categories", label: "Service Contact Categories", icon: BookUser },
+  { label: "Payments", href: "/admin/payments", icon: IndianRupee },
+  { label: "Quarters", href: "/admin/quarters", icon: CalendarRange },
+  { label: "Dues", href: "/admin/dues", icon: AlertTriangle },
+
 ];
 
 export function MobileNav({ userRole, userName }: MobileNavProps) {

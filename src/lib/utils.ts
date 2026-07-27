@@ -59,3 +59,10 @@ export const PRIORITY_LABELS: Record<string, string> = {
   HIGH: "High",
   URGENT: "Urgent",
 };
+
+export const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Pending",
+  PAID: "Paid",
+  OVERDUE: "Overdue",
+  WAIVED: "Waived",
+};
