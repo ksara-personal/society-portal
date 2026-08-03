@@ -15,15 +15,16 @@ import { ShareVillaListButton } from "@/components/villa-issues/share-villa-list
 import { BRANDING, myUnitIssuesLabel } from "@/config/branding";
 
 interface PageProps {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function VillaIssuesPage({ searchParams }: PageProps) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
+  const resolvedSearchParams = await searchParams;
   const params: Record<string, string> = {};
-  for (const [key, value] of Object.entries(searchParams)) {
+  for (const [key, value] of Object.entries(resolvedSearchParams)) {
     if (typeof value === "string") params[key] = value;
   }
 
