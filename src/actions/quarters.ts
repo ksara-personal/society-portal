@@ -24,6 +24,12 @@ export async function getActiveQuarters() {
   });
 }
 
+function parseQuarterDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) throw new Error("Invalid date");
+  return date;
+}
+
 export async function createQuarter(formData: FormData): Promise<ActionResult> {
   await requireAdmin();
 
@@ -42,8 +48,14 @@ export async function createQuarter(formData: FormData): Promise<ActionResult> {
   const existing = await prisma.paymentQuarter.findUnique({ where: { slug } });
   if (existing) return { error: "A quarter with this name and year already exists" };
 
+  const data = {
+    ...parsed.data,
+    startDate: parseQuarterDate(parsed.data.startDate),
+    endDate: parseQuarterDate(parsed.data.endDate),
+  };
+
   await prisma.paymentQuarter.create({
-    data: { ...parsed.data, slug },
+    data: { ...data, slug },
   });
 
   revalidatePath("/admin/quarters");
@@ -65,9 +77,15 @@ export async function updateQuarter(id: string, formData: FormData): Promise<Act
 
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
+  const data = {
+    ...parsed.data,
+    startDate: parseQuarterDate(parsed.data.startDate),
+    endDate: parseQuarterDate(parsed.data.endDate),
+  };
+
   await prisma.paymentQuarter.update({
     where: { id },
-    data: parsed.data,
+    data,
   });
 
   revalidatePath("/admin/quarters");

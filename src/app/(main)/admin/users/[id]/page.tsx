@@ -8,11 +8,13 @@ import { getUserById } from "@/actions/users";
 import AdminUserEditForm, { type AdminUserEditData } from "@/components/users/admin-user-edit-form";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function AdminUserDetailPage({ params }: PageProps) {
-  const user = await getUserById(params.id);
+  const resolvedParams = await params;
+  if (!resolvedParams?.id) notFound();
+  const user = await getUserById(resolvedParams.id);
   if (!user) notFound();
 
   const userData: AdminUserEditData = {
