@@ -37,6 +37,7 @@ export default function PaymentsPage() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [selectedWing, setSelectedWing] = useState("");
   const [selectedFlats, setSelectedFlats] = useState<string[]>([]);
+  const [selectedQuarterId, setSelectedQuarterId] = useState("");
 
   useEffect(() => { loadQuarters(); }, []);
   useEffect(() => { load(); }, [page, filters]);
@@ -111,7 +112,7 @@ export default function PaymentsPage() {
               <form onSubmit={handleBulk} className="space-y-4">
                 <div>
                   <Label>Quarter</Label>
-                  <Select name="quarterId" required>
+                  <Select name="quarterId" required value={selectedQuarterId} onValueChange={setSelectedQuarterId}>
                     <SelectTrigger><SelectValue placeholder="Select quarter" /></SelectTrigger>
                     <SelectContent>
                       {quarters.map(q => <SelectItem key={q.id} value={q.id}>{q.name}</SelectItem>)}
@@ -120,7 +121,13 @@ export default function PaymentsPage() {
                 </div>
                 <div>
                   <Label>Amount (₹)</Label>
-                  <Input name="amount" type="number" step="0.01" required />
+                  <Input
+                    name="amount"
+                    type="number"
+                    step="0.01"
+                    defaultValue={selectedQuarterId ? String(quarters.find(q => q.id === selectedQuarterId)?.defaultAmount ?? "") : ""}
+                    placeholder="Uses quarter default if left blank"
+                  />
                 </div>
                 <div>
                   <Label>Wing (optional)</Label>
@@ -170,7 +177,7 @@ export default function PaymentsPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <Label>Quarter</Label>
-                  <Select name="quarterId" defaultValue={editing?.quarterId}>
+                  <Select name="quarterId" defaultValue={editing?.quarterId} value={editing?.quarterId ?? selectedQuarterId} onValueChange={(value) => setSelectedQuarterId(value)}>
                     <SelectTrigger><SelectValue placeholder="Select quarter" /></SelectTrigger>
                     <SelectContent>
                       {quarters.map(q => <SelectItem key={q.id} value={q.id}>{q.name}</SelectItem>)}
@@ -188,7 +195,13 @@ export default function PaymentsPage() {
                 </div>
                 <div>
                   <Label>Amount (₹)</Label>
-                  <Input name="amount" type="number" step="0.01" defaultValue={editing?.amount} required />
+                  <Input
+                    name="amount"
+                    type="number"
+                    step="0.01"
+                    defaultValue={editing?.amount ?? (selectedQuarterId ? String(quarters.find(q => q.id === selectedQuarterId)?.defaultAmount ?? "") : "")}
+                    placeholder="Uses quarter default if left blank"
+                  />
                 </div>
                 <div>
                   <Label>Status</Label>

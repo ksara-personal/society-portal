@@ -108,6 +108,18 @@ export default function QuartersPage() {
                   <Input id="order" name="order" type="number" defaultValue={editing?.order ?? 0} required />
                 </div>
               </div>
+              <div>
+                <Label htmlFor="defaultAmount">Default Amount (₹)</Label>
+                <Input
+                  id="defaultAmount"
+                  name="defaultAmount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  defaultValue={editing?.defaultAmount ? editing.defaultAmount.toString() : "0"}
+                  required
+                />
+              </div>
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
@@ -135,6 +147,7 @@ export default function QuartersPage() {
             <TableHead>Duration</TableHead>
             <TableHead>Year</TableHead>
             <TableHead>Order</TableHead>
+            <TableHead>Default Amount</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="w-[120px]">Actions</TableHead>
           </TableRow>
@@ -148,6 +161,7 @@ export default function QuartersPage() {
               </TableCell>
               <TableCell>{q.year}</TableCell>
               <TableCell>{q.order}</TableCell>
+              <TableCell>₹{Number(q.defaultAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</TableCell>
               <TableCell>{q.isActive ? "Active" : "Inactive"}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">

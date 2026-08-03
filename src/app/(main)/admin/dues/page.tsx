@@ -317,7 +317,13 @@ export default function DuesPage() {
                           </div>
                           <div>
                             <Label>Amount (₹)</Label>
-                            <Input name="amount" type="number" step="0.01" required />
+                            <Input
+                              name="amount"
+                              type="number"
+                              step="0.01"
+                              defaultValue={data.quarter.defaultAmount ? String(data.quarter.defaultAmount) : ""}
+                              placeholder="Uses quarter default if left blank"
+                            />
                           </div>
                           <div>
                             <Label>Paid Date</Label>

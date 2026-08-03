@@ -59,6 +59,7 @@ export async function updateQuarter(id: string, formData: FormData): Promise<Act
     endDate: formData.get("endDate"),
     year: formData.get("year"),
     order: formData.get("order"),
+    defaultAmount: formData.get("defaultAmount"),
     isActive: formData.get("isActive"),
   });
 

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, getCurrentUser } from "@/lib/session";
 import { paymentSchema, bulkPaymentSchema } from "@/lib/validators";
+import { summarizeFlatPayment } from "@/lib/payment-summary";
 
 type ActionResult = { success: boolean; count?: number } | { error: string };
 
@@ -56,9 +57,15 @@ export async function getMyPayments() {
 export async function createPayment(formData: FormData): Promise<ActionResult> {
   await requireAdmin();
 
+  const quarterId = String(formData.get("quarterId") || "");
+  const fallbackQuarter = quarterId
+    ? await prisma.paymentQuarter.findUnique({ where: { id: quarterId }, select: { defaultAmount: true } })
+    : null;
+  const amountValue = formData.get("amount") ? String(formData.get("amount")) : String(fallbackQuarter?.defaultAmount ?? 0);
+
   const parsed = paymentSchema.safeParse({
-    amount: formData.get("amount"),
-    quarterId: formData.get("quarterId"),
+    amount: amountValue,
+    quarterId,
     wing: formData.get("wing"),
     flatNo: formData.get("flatNo"),
     status: formData.get("status"),
@@ -124,9 +131,15 @@ export async function deletePayment(id: string): Promise<ActionResult> {
 export async function generateBulkPayments(formData: FormData): Promise<ActionResult> {
   await requireAdmin();
 
+  const quarterIdValue = String(formData.get("quarterId") || "");
+  const quarter = quarterIdValue
+    ? await prisma.paymentQuarter.findUnique({ where: { id: quarterIdValue }, select: { defaultAmount: true } })
+    : null;
+  const amountValue = formData.get("amount") ? String(formData.get("amount")) : String(quarter?.defaultAmount ?? 0);
+
   const parsed = bulkPaymentSchema.safeParse({
-    quarterId: formData.get("quarterId"),
-    amount: formData.get("amount"),
+    quarterId: quarterIdValue,
+    amount: amountValue,
     wing: formData.get("wing") || undefined,
     flatNos: JSON.parse((formData.get("flatNos") as string) || "[]"),
   });
@@ -134,6 +147,7 @@ export async function generateBulkPayments(formData: FormData): Promise<ActionRe
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
   const { quarterId, amount, wing, flatNos } = parsed.data;
+  const effectiveAmount = amount ?? Number(quarter?.defaultAmount ?? 0);
 
   const users = await prisma.user.findMany({
     where: {
@@ -155,7 +169,7 @@ export async function generateBulkPayments(formData: FormData): Promise<ActionRe
   const toCreate = users
     .filter((u) => !existingSet.has(`${u.wing}-${u.flatNo}`))
     .map((u) => ({
-      amount,
+      amount: effectiveAmount,
       quarterId,
       wing: u.wing!,
       flatNo: u.flatNo!,
@@ -208,8 +222,10 @@ export async function getCurrentQuarterDues(filters?: {
   const flatMap = new Map<string, { residents: typeof allResidents; wing: string; flatNo: string }>();
   for (const r of allResidents) {
     const key = `${r.wing}-${r.flatNo}`;
+    const wing = r.wing ?? "";
+    const flatNo = r.flatNo ?? "";
     if (!flatMap.has(key)) {
-      flatMap.set(key, { residents: [], wing: r.wing, flatNo: r.flatNo });
+      flatMap.set(key, { residents: [], wing, flatNo });
     }
     flatMap.get(key)!.residents.push(r);
   }
@@ -225,32 +241,38 @@ export async function getCurrentQuarterDues(filters?: {
     select: { wing: true, flatNo: true, status: true, amount: true, userId: true, id: true },
   });
 
-  const paymentMap = new Map(
-    existingPayments.map((p) => [`${p.wing}-${p.flatNo}`, p])
-  );
+  const paymentsByFlat = new Map<string, Array<(typeof existingPayments)[number]>>();
+  for (const payment of existingPayments) {
+    const key = `${payment.wing}-${payment.flatNo}`;
+    const current = paymentsByFlat.get(key) ?? [];
+    current.push(payment);
+    paymentsByFlat.set(key, current);
+  }
 
   // Build dues list: flats without a PAID payment for current quarter
   const dues = uniqueFlats
     .map((flat) => {
       const key = `${flat.wing}-${flat.flatNo}`;
-      const payment = paymentMap.get(key);
+      const flatPayments = paymentsByFlat.get(key) ?? [];
+      const { payment, hasPaid } = summarizeFlatPayment(flatPayments);
+
       return {
         flat,
         primaryResident: flat.residents[0], // first registered resident
         allResidents: flat.residents,
         payment: payment || null,
-        hasPaid: payment?.status === "PAID",
+        hasPaid,
       };
     })
     .filter((d) => !d.hasPaid);
 
-  // Calculate totals
-  const totalDueAmount = dues.reduce((sum, d) => {
-    return sum + Number(d.payment?.amount || 0);
-  }, 0);
-
   const totalFlats = uniqueFlats.length;
   const paidCount = uniqueFlats.length - dues.length;
+  const unpaidCount = dues.length;
+  const totalDueAmount = dues.reduce((sum, due) => {
+    const paymentAmount = Number(due.payment?.amount ?? currentQuarter.defaultAmount ?? 0);
+    return sum + paymentAmount;
+  }, 0);
 
   return {
     quarter: currentQuarter,
@@ -258,7 +280,7 @@ export async function getCurrentQuarterDues(filters?: {
     summary: {
       totalFlats,
       paidCount,
-      unpaidCount: dues.length,
+      unpaidCount,
       totalDueAmount,
       collectionRate: totalFlats > 0 ? Math.round((paidCount / totalFlats) * 100) : 0,
     },
@@ -291,9 +313,15 @@ export async function markPaymentPaid(id: string, formData: FormData): Promise<A
 export async function createDuePayment(formData: FormData): Promise<ActionResult> {
   await requireAdmin();
 
+  const quarterId = String(formData.get("quarterId") || "");
+  const fallbackQuarter = quarterId
+    ? await prisma.paymentQuarter.findUnique({ where: { id: quarterId }, select: { defaultAmount: true } })
+    : null;
+  const amountValue = formData.get("amount") ? String(formData.get("amount")) : String(fallbackQuarter?.defaultAmount ?? 0);
+
   const parsed = paymentSchema.safeParse({
-    amount: formData.get("amount"),
-    quarterId: formData.get("quarterId"),
+    amount: amountValue,
+    quarterId,
     wing: formData.get("wing"),
     flatNo: formData.get("flatNo"),
     status: "PENDING",

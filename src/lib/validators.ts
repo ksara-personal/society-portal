@@ -119,6 +119,7 @@ export const quarterSchema = z.object({
   endDate: z.string().min(1, "End date is required"),
   year: z.coerce.number().int().min(2000).max(2100),
   order: z.coerce.number().int().min(0).default(0),
+  defaultAmount: z.coerce.number().nonnegative("Default amount must be 0 or greater").default(0),
   isActive: z.coerce.boolean().default(true),
 });
 
