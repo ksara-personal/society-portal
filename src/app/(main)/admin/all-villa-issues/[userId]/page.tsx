@@ -16,12 +16,13 @@ import { BRANDING, allUnitIssuesLabel } from "@/config/branding";
 
 interface PageProps {
   params: { userId: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function VillaDrilldownPage({ params, searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams;
   const spParams: Record<string, string> = {};
-  for (const [k, v] of Object.entries(searchParams)) {
+  for (const [k, v] of Object.entries(resolvedSearchParams)) {
     if (typeof v === "string") spParams[k] = v;
   }
 

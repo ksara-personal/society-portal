@@ -44,8 +44,9 @@ export async function getPendingUsers() {
   });
 }
 
-export async function getUserById(userId: string) {
+export async function getUserById(userId?: string) {
   await requireAdmin();
+  if (!userId) return null;
   return prisma.user.findUnique({
     where: { id: userId },
     select: {

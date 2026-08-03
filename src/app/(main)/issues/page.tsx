@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, ClipboardList } from "lucide-react";
 
 interface PageProps {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function IssuesPage({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams;
   const params: Record<string, string> = {};
-  for (const [key, value] of Object.entries(searchParams)) {
+  for (const [key, value] of Object.entries(resolvedSearchParams)) {
     if (typeof value === "string") params[key] = value;
   }
 

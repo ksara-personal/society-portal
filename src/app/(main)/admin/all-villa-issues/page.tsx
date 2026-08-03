@@ -8,12 +8,13 @@ import { Home, ChevronRight, Building2 } from "lucide-react";
 import { BRANDING, allUnitIssuesLabel } from "@/config/branding";
 
 interface PageProps {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function AllVillaIssuesPage({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams;
   const params: Record<string, string> = {};
-  for (const [k, v] of Object.entries(searchParams)) {
+  for (const [k, v] of Object.entries(resolvedSearchParams)) {
     if (typeof v === "string") params[k] = v;
   }
 
