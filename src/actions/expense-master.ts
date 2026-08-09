@@ -182,6 +182,13 @@ export async function updateExpenseType(id: string, formData: FormData): Promise
   return { success: true };
 }
 
+export async function deleteExpenseType(id: string): Promise<ActionResult> {
+  await requireAdmin();
+  await prisma.expenseType.delete({ where: { id } });
+  revalidatePath("/admin/expense-types");
+  return { success: true };
+}
+
 export async function getPaymentTypes() {
   return prisma.paymentType.findMany({ orderBy: { name: "asc" } });
 }
