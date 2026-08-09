@@ -142,6 +142,13 @@ export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
           return renderSidebarLink(item, isActive);
         })}
 
+        {/* Non-admin Quarterly Balances link */}
+        {!isAdmin && (() => {
+          const item: NavItem = { href: "/admin/quarterly-balances", label: "Quarterly Balances", icon: BarChart2 };
+          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          return renderSidebarLink(item, isActive);
+        })()}
+
         {/* Service Directory group */}
         <Separator className="my-2" />
         <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">

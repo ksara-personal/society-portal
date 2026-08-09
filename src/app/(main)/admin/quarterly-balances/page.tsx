@@ -10,7 +10,7 @@ interface PageProps {
 export default async function QuarterlyBalancesPage({ searchParams }: PageProps) {
   const resolved = await searchParams;
   const user = await getCurrentUser();
-  if (!user || user.role !== "ADMIN") redirect("/dashboard");
+  if (!user) redirect("/dashboard");
 
   const yearParam = Array.isArray(resolved.year) ? resolved.year[0] : resolved.year;
   const quarters = await getQuarters();
