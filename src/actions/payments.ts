@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin, getCurrentUser } from "@/lib/session";
 import { paymentSchema, bulkPaymentSchema } from "@/lib/validators";
 import { summarizeFlatPayment } from "@/lib/payment-summary";
+import { getFlatPairs } from "@/lib/utils";
 
 type ActionResult = { success: boolean; count?: number } | { error: string };
 
@@ -206,7 +207,7 @@ export async function getCurrentQuarterDues(filters?: {
     return { error: "No active quarter is configured for the current date range." };
   }
 
-  // Get all approved residents (may include multiple per flat)
+  // Get all approved residents for display details.
   const allResidents = await prisma.user.findMany({
     where: {
       role: "RESIDENT",
@@ -218,19 +219,18 @@ export async function getCurrentQuarterDues(filters?: {
     orderBy: [{ wing: "asc" }, { flatNo: "asc" }, { name: "asc" }],
   });
 
-  // Deduplicate by wing+flat — keep all resident names for display
-  const flatMap = new Map<string, { residents: typeof allResidents; wing: string; flatNo: string }>();
-  for (const r of allResidents) {
-    const key = `${r.wing}-${r.flatNo}`;
-    const wing = r.wing ?? "";
-    const flatNo = r.flatNo ?? "";
-    if (!flatMap.has(key)) {
-      flatMap.set(key, { residents: [], wing, flatNo });
-    }
-    flatMap.get(key)!.residents.push(r);
+  function normalizeFlatNo(flatNo?: string | null) {
+    const raw = String(flatNo ?? "").trim();
+    return /^\d+$/.test(raw) ? raw.padStart(3, "0") : raw;
   }
 
-  const uniqueFlats = Array.from(flatMap.values());
+  const residentMap = new Map<string, typeof allResidents>();
+  for (const resident of allResidents) {
+    const key = `${resident.wing}-${normalizeFlatNo(resident.flatNo)}`;
+    const existing = residentMap.get(key) ?? [];
+    existing.push(resident);
+    residentMap.set(key, existing);
+  }
 
   // Get existing payments for this quarter
   const existingPayments = await prisma.payment.findMany({
@@ -241,9 +241,31 @@ export async function getCurrentQuarterDues(filters?: {
     select: { wing: true, flatNo: true, status: true, amount: true, userId: true, id: true },
   });
 
+  // Use configured wing/flat ranges as the baseline for dues, then include any existing payment records.
+  const configuredFlats = getFlatPairs(filters?.wing).map((flat) => ({
+    ...flat,
+    flatNo: normalizeFlatNo(flat.flatNo),
+  }));
+
+  const allFlatKeys = new Set(configuredFlats.map((flat) => `${flat.wing}-${flat.flatNo}`));
+  for (const payment of existingPayments) {
+    allFlatKeys.add(`${payment.wing}-${normalizeFlatNo(payment.flatNo)}`);
+  }
+
+  const uniqueFlats = Array.from(allFlatKeys)
+    .map((key) => {
+      const [wing, flatNo] = key.split("-", 2);
+      return { wing, flatNo: normalizeFlatNo(flatNo) };
+    })
+    .sort((a, b) => {
+      const wingCompare = a.wing.localeCompare(b.wing);
+      if (wingCompare !== 0) return wingCompare;
+      return (parseInt(a.flatNo, 10) || 0) - (parseInt(b.flatNo, 10) || 0);
+    });
+
   const paymentsByFlat = new Map<string, Array<(typeof existingPayments)[number]>>();
   for (const payment of existingPayments) {
-    const key = `${payment.wing}-${payment.flatNo}`;
+    const key = `${payment.wing}-${normalizeFlatNo(payment.flatNo)}`;
     const current = paymentsByFlat.get(key) ?? [];
     current.push(payment);
     paymentsByFlat.set(key, current);
@@ -255,11 +277,12 @@ export async function getCurrentQuarterDues(filters?: {
       const key = `${flat.wing}-${flat.flatNo}`;
       const flatPayments = paymentsByFlat.get(key) ?? [];
       const { payment, hasPaid } = summarizeFlatPayment(flatPayments);
+      const residents = residentMap.get(key) ?? [];
 
       return {
         flat,
-        primaryResident: flat.residents[0], // first registered resident
-        allResidents: flat.residents,
+        primaryResident: residents[0] ?? null,
+        allResidents: residents,
         payment: payment || null,
         hasPaid,
       };

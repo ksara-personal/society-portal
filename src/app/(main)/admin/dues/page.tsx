@@ -6,14 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Accordion, type AccordionGroup } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -109,12 +102,12 @@ export default function DuesPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Select value={filters.wing} onValueChange={v => setFilters({ wing: v })}>
+          <Select value={filters.wing || "all"} onValueChange={v => setFilters({ wing: v === "all" ? "" : v })}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="All wings" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Wings">All wings</SelectItem>
+              <SelectItem value="all">All wings</SelectItem>
                 {WINGS.map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -176,191 +169,95 @@ export default function DuesPage() {
         </Card>
       </div>
 
-      {/* Dues Table */}
-      <div className="border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[80px]">Flat</TableHead>
-              <TableHead>Residents</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead className="text-right">Amount Due</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[160px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {dues.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
-                  <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-green-500" />
-                  All flats have paid for {quarter.name}!
-                </TableCell>
-              </TableRow>
-            )}
-            {dues.map((due: any) => (
-              <TableRow key={`${due.flat.wing}-${due.flat.flatNo}`}>
-                <TableCell className="font-medium">
-                  {due.flat.wing}-{due.flat.flatNo}
-                </TableCell>
-                <TableCell>
-                  {due.allResidents.length > 0 ? (
-                    <div className="space-y-0.5">
-                      {due.allResidents.map((r: any) => (
-                        <p key={r.id} className="text-sm">{r.name}</p>
-                      ))}
-                      <p className="text-xs text-muted-foreground">
-                        {due.allResidents[0].email}
-                      </p>
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground text-sm">Unregistered</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {due.primaryResident?.phone || "—"}
-                </TableCell>
-                <TableCell className="text-right font-mono">
-                  {due.payment ? (
-                    `₹${Number(due.payment.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
-                  ) : (
-                    <span className="text-muted-foreground text-sm">Not billed</span>
-                  )}
-                </TableCell>
-                <TableCell>
+      <div className="border rounded-lg bg-white p-4">
+        <Accordion
+          groups={Object.entries(
+            dues.reduce((groupMap: Record<string, any[]>, due: any) => {
+              const wing = due.flat.wing ?? "Unassigned";
+              groupMap[wing] = groupMap[wing] ?? [];
+              groupMap[wing].push(due);
+              return groupMap;
+            }, {})
+          )
+            .map(([wing, items]) => ({
+              id: wing,
+              name: `Wing ${wing}`,
+              label: `${items.length} unpaid`, 
+              items: items.sort((left, right) => {
+                const leftNum = parseInt(left.flat.flatNo ?? "0", 10);
+                const rightNum = parseInt(right.flat.flatNo ?? "0", 10);
+                return leftNum - rightNum;
+              }),
+            }))
+            .sort((a, b) => a.name.localeCompare(b.name))}
+          renderItem={(due: any) => (
+            <Card key={`${due.flat.wing}-${due.flat.flatNo}`} className="border">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {due.flat.wing}-{due.flat.flatNo}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {due.allResidents.length > 0
+                        ? due.allResidents.map((r: any) => r.name).join(", ")
+                        : "Unregistered"}
+                    </p>
+                  </div>
                   <Badge variant={due.payment?.status === "OVERDUE" ? "destructive" : "secondary"}>
                     {due.payment?.status || "NO RECORD"}
                   </Badge>
-                </TableCell>
-                <TableCell>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs uppercase text-muted-foreground">Contact</p>
+                    <p className="text-sm">{due.primaryResident?.phone || "—"}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs uppercase text-muted-foreground">Amount due</p>
+                    <p className="text-lg font-semibold">
+                      ₹{Number(due.payment?.amount ?? quarter.defaultAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-1 text-sm text-muted-foreground">
+                  {due.allResidents.length > 0 && (
+                    <p>{due.allResidents[0].email}</p>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   {due.payment ? (
                     <Dialog open={markingId === due.payment.id} onOpenChange={(open) => setMarkingId(open ? due.payment.id : null)}>
                       <DialogTrigger asChild>
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" className="w-full sm:w-auto">
                           <Pencil className="h-3 w-3 mr-1" />
                           Mark Paid
                         </Button>
                       </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Mark Payment as Paid</DialogTitle>
-                        </DialogHeader>
-                        <form
-                          onSubmit={(e) => handleMarkPaid(e, due.payment.id)}
-                          className="space-y-4"
-                        >
-                          <div>
-                            <Label>Flat</Label>
-                            <p className="text-sm font-medium">
-                              {due.flat.wing}-{due.flat.flatNo}
-                            </p>
-                          </div>
-                          <div>
-                            <Label>Amount</Label>
-                            <p className="text-sm font-medium">
-                              ₹{Number(due.payment.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                            </p>
-                          </div>
-                          <div>
-                            <Label>Paid Date</Label>
-                            <Input name="paidAt" type="date" defaultValue={new Date().toISOString().split("T")[0]} required />
-                          </div>
-                          <div>
-                            <Label>Payment Method</Label>
-                            <Select name="paymentMethod" defaultValue="Cash">
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Cash">Cash</SelectItem>
-                                <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
-                                <SelectItem value="UPI">UPI</SelectItem>
-                                <SelectItem value="Cheque">Cheque</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label>Transaction ID (optional)</Label>
-                            <Input name="transactionId" placeholder="e.g. UPI123456" />
-                          </div>
-                          <div>
-                            <Label>Notes (optional)</Label>
-                            <Input name="notes" placeholder="Any notes..." />
-                          </div>
-                          <Button type="submit" className="w-full">
-                            Confirm Payment
-                          </Button>
-                        </form>
-                      </DialogContent>
                     </Dialog>
                   ) : (
                     <Dialog open={createOpen && selectedDue?.flat.wing === due.flat.wing && selectedDue?.flat.flatNo === due.flat.flatNo} onOpenChange={(open) => {
                       if (!open) { setCreateOpen(false); setSelectedDue(null); }
                     }}>
                       <DialogTrigger asChild>
-                        <Button size="sm" variant="outline" onClick={() => { setSelectedDue(due); setCreateOpen(true); }}>
+                        <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => { setSelectedDue(due); setCreateOpen(true); }}>
                           <IndianRupee className="h-3 w-3 mr-1" />
                           Bill & Pay
                         </Button>
                       </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Create & Mark Payment</DialogTitle>
-                        </DialogHeader>
-                        <form
-                          onSubmit={(e) => handleMarkPaid(e, null)}
-                          className="space-y-4"
-                        >
-                          <div>
-                            <Label>Flat</Label>
-                            <p className="text-sm font-medium">
-                              {due.flat.wing}-{due.flat.flatNo}
-                            </p>
-                          </div>
-                          <div>
-                            <Label>Amount (₹)</Label>
-                            <Input
-                              name="amount"
-                              type="number"
-                              step="0.01"
-                              defaultValue={data.quarter.defaultAmount ? String(data.quarter.defaultAmount) : ""}
-                              placeholder="Uses quarter default if left blank"
-                            />
-                          </div>
-                          <div>
-                            <Label>Paid Date</Label>
-                            <Input name="paidAt" type="date" defaultValue={new Date().toISOString().split("T")[0]} required />
-                          </div>
-                          <div>
-                            <Label>Payment Method</Label>
-                            <Select name="paymentMethod" defaultValue="Cash">
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Cash">Cash</SelectItem>
-                                <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
-                                <SelectItem value="UPI">UPI</SelectItem>
-                                <SelectItem value="Cheque">Cheque</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label>Transaction ID (optional)</Label>
-                            <Input name="transactionId" placeholder="e.g. UPI123456" />
-                          </div>
-                          <div>
-                            <Label>Notes (optional)</Label>
-                            <Input name="notes" placeholder="Any notes..." />
-                          </div>
-                          <Button type="submit" className="w-full">
-                            Create & Confirm Payment
-                          </Button>
-                        </form>
-                      </DialogContent>
                     </Dialog>
                   )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          emptyStateText={`All flats have paid for ${quarter.name}!`}
+          gridClassName="grid-cols-1 lg:grid-cols-2 gap-4"
+        />
       </div>
     </div>
   );

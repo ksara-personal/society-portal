@@ -31,6 +31,19 @@ export function getFlatsForWing(wing?: string): string[] {
   );
 }
 
+export function getFlatPairs(wing?: string): Array<{ wing: string; flatNo: string }> {
+  const wings = wing
+    ? BUILDING_CONFIG.wings.filter((w) => w.name === wing)
+    : BUILDING_CONFIG.wings;
+
+  return wings.flatMap((config) =>
+    Array.from({ length: config.flatEnd - config.flatStart + 1 }, (_, i) => ({
+      wing: config.name,
+      flatNo: String(config.flatStart + i).padStart(3, "0"),
+    }))
+  );
+}
+
 export function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
   const k = 1024;
