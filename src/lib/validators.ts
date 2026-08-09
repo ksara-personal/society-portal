@@ -38,6 +38,26 @@ export const categorySchema = z.object({
   icon: z.string().max(50).optional(),
 });
 
+export const expenseCategorySchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").max(100),
+  description: z.string().max(200).optional(),
+  isActive: z.coerce.boolean().default(true),
+});
+
+export const expenseTypeSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").max(100),
+  isActive: z.coerce.boolean().default(true),
+});
+
+export const expenseItemSchema = z.object({
+  date: z.string().min(1, "Date is required"),
+  quarterId: z.string().min(1, "Quarter is required"),
+  expenseCategoryId: z.string().min(1, "Expense category is required"),
+  expenseTypeId: z.string().min(1, "Expense type is required"),
+  description: z.string().max(500).optional(),
+  amount: z.coerce.number().positive("Amount must be greater than 0"),
+});
+
 export const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
