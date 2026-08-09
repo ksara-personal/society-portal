@@ -456,3 +456,99 @@ export async function createDuePayment(formData: FormData): Promise<ActionResult
   revalidatePath("/admin/dues");
   return { success: true };
 }
+
+export async function getQuarterlyBalances(year?: number) {
+  await requireAdmin();
+
+  const quarters = await prisma.paymentQuarter.findMany({
+    where: typeof year === "number" ? { year } : {},
+    orderBy: [{ year: "asc" }, { order: "asc" }],
+  });
+
+  if (quarters.length === 0) return [];
+
+  const quarterIds = quarters.map((q) => q.id);
+
+  // load payment types map by slug
+  const paymentTypes = await prisma.paymentType.findMany({ select: { id: true, slug: true } });
+  const slugToId = new Map(paymentTypes.map((pt) => [pt.slug, pt.id]));
+
+  // group payments per quarter and paymentType
+  const paymentsByQuarterAndType = await prisma.payment.groupBy({
+    by: ["quarterId", "paymentTypeId"],
+    where: { quarterId: { in: quarterIds }, status: "PAID" },
+    _sum: { amount: true },
+  });
+
+  const paymentsTotalByQuarter = await prisma.payment.groupBy({
+    by: ["quarterId"],
+    where: { quarterId: { in: quarterIds }, status: "PAID" },
+    _sum: { amount: true },
+  });
+
+  const expensesByQuarter = await prisma.expenseItem.groupBy({
+    by: ["quarterId"],
+    where: { quarterId: { in: quarterIds } },
+    _sum: { amount: true },
+  });
+
+  // helper maps
+  const paymentsTypeMap = new Map<string, number>();
+  for (const entry of paymentsByQuarterAndType) {
+    const key = `${entry.quarterId}::${entry.paymentTypeId ?? "-"}`;
+    paymentsTypeMap.set(key, Number(entry._sum.amount ?? 0));
+  }
+
+  const paymentsTotalMap = new Map(paymentsTotalByQuarter.map((p) => [p.quarterId, Number(p._sum.amount ?? 0)]));
+  const expensesMap = new Map(expensesByQuarter.map((e) => [e.quarterId, Number(e._sum.amount ?? 0)]));
+
+  // For opening balance we compute cumulative sums from all quarters that end before this quarter's start
+  const results: Array<any> = [];
+
+  for (const q of quarters) {
+    // find previous quarters
+    const prevQuarters = await prisma.paymentQuarter.findMany({ where: { endDate: { lt: q.startDate } }, select: { id: true } });
+    const prevIds = prevQuarters.map((p) => p.id);
+
+    let prevPaymentsSum = 0;
+    let prevExpensesSum = 0;
+    if (prevIds.length > 0) {
+      const prevPay = await prisma.payment.aggregate({ where: { quarterId: { in: prevIds }, status: "PAID" }, _sum: { amount: true } });
+      const prevExp = await prisma.expenseItem.aggregate({ where: { quarterId: { in: prevIds } }, _sum: { amount: true } });
+      prevPaymentsSum = Number(prevPay._sum.amount ?? 0);
+      prevExpensesSum = Number(prevExp._sum.amount ?? 0);
+    }
+
+    const opening = prevPaymentsSum - prevExpensesSum;
+
+    const maintenanceId = slugToId.get("maintenance") ?? null;
+    const builderId = slugToId.get("builder-funds") ?? null;
+    const otherId = slugToId.get("other-income") ?? null;
+
+    const maintenance = maintenanceId ? Number(paymentsTypeMap.get(`${q.id}::${maintenanceId}`) ?? 0) : 0;
+    const builderFunds = builderId ? Number(paymentsTypeMap.get(`${q.id}::${builderId}`) ?? 0) : 0;
+    const otherIncome = otherId ? Number(paymentsTypeMap.get(`${q.id}::${otherId}`) ?? 0) : 0;
+
+    const totalExpenses = Number(expensesMap.get(q.id) ?? 0);
+    const receipts = Number(paymentsTotalMap.get(q.id) ?? 0);
+
+    const netMovement = receipts - totalExpenses;
+    const closing = opening + netMovement;
+
+    results.push({
+      quarterId: q.id,
+      name: q.name,
+      startDate: q.startDate,
+      endDate: q.endDate,
+      opening,
+      maintenance,
+      builderFunds,
+      otherIncome,
+      totalExpenses,
+      netMovement,
+      closing,
+    });
+  }
+
+  return results;
+}
