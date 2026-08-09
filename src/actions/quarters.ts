@@ -24,6 +24,19 @@ export async function getActiveQuarters() {
   });
 }
 
+export async function getCurrentQuarter() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return prisma.paymentQuarter.findFirst({
+    where: {
+      isActive: true,
+      startDate: { lte: today },
+      endDate: { gte: today },
+    },
+  });
+}
+
 function parseQuarterDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) throw new Error("Invalid date");

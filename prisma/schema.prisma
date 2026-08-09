@@ -75,6 +75,18 @@ model ExpenseType {
   @@index([slug])
 }
 
+model PaymentType {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  payments  Payment[]
+
+  @@index([slug])
+}
+
 model ExpenseItem {
   id                String          @id @default(cuid())
   date              DateTime        @db.Date
@@ -219,6 +231,7 @@ model Payment {
   amount        Decimal        @db.Decimal(10, 2)
   status        PaymentStatus  @default(PENDING)
   quarterId     String
+  paymentTypeId String?
   userId        String?
   wing          String
   flatNo        String
@@ -231,10 +244,12 @@ model Payment {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   quarter       PaymentQuarter @relation(fields: [quarterId], references: [id], onDelete: Cascade)
+  paymentType   PaymentType?   @relation(fields: [paymentTypeId], references: [id])
   user          User?          @relation("PaymentResident", fields: [userId], references: [id])
 
   @@index([status])
   @@index([quarterId])
+  @@index([paymentTypeId])
   @@index([userId])
   @@index([collectedById])
   @@index([wing, flatNo])

@@ -126,6 +126,23 @@ async function main() {
   }
   console.log(`✅ ${expenseTypes.length} expense types created`);
 
+  // Create payment types
+  const paymentTypes = [
+    { name: "Maintenance", slug: "maintenance" },
+    { name: "Builder Funds", slug: "builder-funds" },
+    { name: "Other Income", slug: "other-income" },
+    { name: "Internal Transfer", slug: "internal-transfer" },
+  ];
+
+  for (const paymentType of paymentTypes) {
+    await prisma.paymentType.upsert({
+      where: { slug: paymentType.slug },
+      update: {},
+      create: paymentType,
+    });
+  }
+  console.log(`✅ ${paymentTypes.length} payment types created`);
+
   // Create contact categories
   const contactCategories = [
     { name: "Electrician",     slug: "electrician",     icon: "zap",       color: "#f59e0b", order: 1 },

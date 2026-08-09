@@ -49,6 +49,11 @@ export const expenseTypeSchema = z.object({
   isActive: z.coerce.boolean().default(true),
 });
 
+export const paymentTypeSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").max(100),
+  isActive: z.coerce.boolean().default(true),
+});
+
 export const expenseItemSchema = z.object({
   date: z.string().min(1, "Date is required"),
   quarterId: z.string().min(1, "Quarter is required"),
@@ -146,6 +151,7 @@ export const quarterSchema = z.object({
 export const paymentSchema = z.object({
   amount: z.coerce.number().positive("Amount must be greater than 0"),
   quarterId: z.string().min(1, "Please select a quarter"),
+  paymentTypeId: z.string().min(1, "Payment type is required"),
   wing: z.string().min(1, "Wing is required"),
   flatNo: z.string().min(1, "Flat number is required"),
   status: z.enum(["PENDING", "PAID", "OVERDUE", "WAIVED"]).default("PENDING"),

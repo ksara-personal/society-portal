@@ -30,7 +30,12 @@ export async function getPayments(filters?: {
   const [items, total] = await Promise.all([
     prisma.payment.findMany({
       where,
-      include: { quarter: true, user: { select: { name: true, email: true } }, collectedBy: { select: { id: true, name: true } } },
+      include: {
+        quarter: true,
+        paymentType: true,
+        user: { select: { name: true, email: true } },
+        collectedBy: { select: { id: true, name: true } },
+      },
       orderBy: { createdAt: "desc" },
       skip,
       take: limit,
@@ -50,7 +55,7 @@ export async function getMyPayments() {
       wing: user.wing!,
       flatNo: user.flatNo!,
     },
-    include: { quarter: true },
+    include: { quarter: true, paymentType: true },
     orderBy: { createdAt: "desc" },
   });
 }
@@ -67,6 +72,7 @@ export async function createPayment(formData: FormData): Promise<ActionResult> {
   const parsed = paymentSchema.safeParse({
     amount: amountValue,
     quarterId,
+    paymentTypeId: formData.get("paymentTypeId"),
     wing: formData.get("wing"),
     flatNo: formData.get("flatNo"),
     status: formData.get("status"),
@@ -103,6 +109,7 @@ export async function updatePayment(id: string, formData: FormData): Promise<Act
 
   const parsed = paymentSchema.partial().safeParse({
     quarterId: formData.get("quarterId"),
+    paymentTypeId: formData.get("paymentTypeId"),
     amount: formData.get("amount"),
     status: formData.get("status"),
     paidAt: formData.get("paidAt") || undefined,
@@ -319,6 +326,70 @@ export async function getCurrentQuarterDues(filters?: {
       collectionRate: totalFlats > 0 ? Math.round((paidCount / totalFlats) * 100) : 0,
     },
   };
+}
+
+export async function getFinanceUserSummary(filters?: { quarterId?: string; userId?: string }) {
+  await requireAdmin();
+
+  const paymentWhere: any = {
+    status: "PAID",
+    collectedById: { not: null },
+  };
+  if (filters?.quarterId) paymentWhere.quarterId = filters.quarterId;
+  if (filters?.userId) paymentWhere.collectedById = filters.userId;
+
+  const paymentSummaries = await prisma.payment.groupBy({
+    by: ["collectedById"],
+    where: paymentWhere,
+    _sum: { amount: true },
+  });
+
+  const expenseWhere: any = {};
+  if (filters?.quarterId) expenseWhere.quarterId = filters.quarterId;
+  if (filters?.userId) expenseWhere.createdById = filters.userId;
+
+  const expenseSummaries = await prisma.expenseItem.groupBy({
+    by: ["createdById"],
+    where: expenseWhere,
+    _sum: { amount: true },
+  });
+
+  const userIds = new Set<string>();
+  paymentSummaries.forEach((entry) => {
+    if (entry.collectedById) userIds.add(entry.collectedById);
+  });
+  expenseSummaries.forEach((entry) => {
+    if (entry.createdById) userIds.add(entry.createdById);
+  });
+
+  const users = userIds.size > 0
+    ? await prisma.user.findMany({
+        where: { id: { in: Array.from(userIds) } },
+        select: { id: true, name: true, email: true },
+      })
+    : [];
+
+  const userMap = new Map(users.map((user) => [user.id, user]));
+
+  const rows = Array.from(new Set<string>([
+    ...paymentSummaries.map((entry) => entry.collectedById).filter(Boolean) as string[],
+    ...expenseSummaries.map((entry) => entry.createdById).filter(Boolean) as string[],
+  ]))
+    .map((userId) => {
+      const user = userMap.get(userId) ?? { id: userId, name: "Unknown", email: "" };
+      const collected = Number(paymentSummaries.find((entry) => entry.collectedById === userId)?._sum.amount ?? 0);
+      const expenses = Number(expenseSummaries.find((entry) => entry.createdById === userId)?._sum.amount ?? 0);
+      return {
+        userId,
+        user,
+        collected,
+        expenses,
+        remaining: collected - expenses,
+      };
+    })
+    .sort((left, right) => right.remaining - left.remaining);
+
+  return rows;
 }
 
 export async function markPaymentPaid(id: string, formData: FormData): Promise<ActionResult> {

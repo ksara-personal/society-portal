@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
-import { expenseCategorySchema, expenseItemSchema, expenseTypeSchema } from "@/lib/validators";
+import { expenseCategorySchema, expenseItemSchema, expenseTypeSchema, paymentTypeSchema } from "@/lib/validators";
 
 type ActionResult = { success: true } | { error: string };
 
@@ -182,9 +182,61 @@ export async function updateExpenseType(id: string, formData: FormData): Promise
   return { success: true };
 }
 
-export async function deleteExpenseType(id: string): Promise<ActionResult> {
+export async function getPaymentTypes() {
+  return prisma.paymentType.findMany({ orderBy: { name: "asc" } });
+}
+
+export async function createPaymentType(formData: FormData): Promise<ActionResult> {
   await requireAdmin();
-  await prisma.expenseType.delete({ where: { id } });
-  revalidatePath("/admin/expense-types");
+
+  const parsed = paymentTypeSchema.safeParse({
+    name: formData.get("name"),
+    isActive: formData.get("isActive"),
+  });
+
+  if (!parsed.success) return { error: parsed.error.errors[0].message };
+
+  const slug = toSlug(parsed.data.name);
+  const existing = await prisma.paymentType.findFirst({
+    where: { OR: [{ name: parsed.data.name }, { slug }] },
+  });
+  if (existing) return { error: "A payment type with this name already exists" };
+
+  await prisma.paymentType.create({ data: { ...parsed.data, slug } });
+  revalidatePath("/admin/payment-types");
+  return { success: true };
+}
+
+export async function updatePaymentType(id: string, formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+
+  const parsed = paymentTypeSchema.safeParse({
+    name: formData.get("name"),
+    isActive: formData.get("isActive"),
+  });
+
+  if (!parsed.success) return { error: parsed.error.errors[0].message };
+
+  const slug = toSlug(parsed.data.name);
+  const existing = await prisma.paymentType.findFirst({
+    where: {
+      AND: [{ id: { not: id } }, { OR: [{ name: parsed.data.name }, { slug }] }],
+    },
+  });
+  if (existing) return { error: "A payment type with this name already exists" };
+
+  await prisma.paymentType.update({
+    where: { id },
+    data: { ...parsed.data, slug },
+  });
+
+  revalidatePath("/admin/payment-types");
+  return { success: true };
+}
+
+export async function deletePaymentType(id: string): Promise<ActionResult> {
+  await requireAdmin();
+  await prisma.paymentType.delete({ where: { id } });
+  revalidatePath("/admin/payment-types");
   return { success: true };
 }
