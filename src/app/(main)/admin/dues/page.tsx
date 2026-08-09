@@ -173,14 +173,14 @@ export default function DuesPage() {
 
       <div className="border rounded-lg bg-white p-4">
         <Accordion
-          groups={Object.entries(
+          groups={(Object.entries(
             dues.reduce((groupMap: Record<string, any[]>, due: any) => {
               const wing = due.flat.wing ?? "Unassigned";
               groupMap[wing] = groupMap[wing] ?? [];
               groupMap[wing].push(due);
               return groupMap;
             }, {})
-          )
+          ) as [string, any[]][])
             .map(([wing, items]) => ({
               id: wing,
               name: `Wing ${wing}`,
