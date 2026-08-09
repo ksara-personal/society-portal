@@ -77,6 +77,72 @@ async function main() {
   }
   console.log(`✅ ${categories.length} categories created`);
 
+  // Create expense categories
+  const expenseCategories = [
+    { name: "Security", slug: "security", description: "Security service expense" },
+    { name: "Housekeeping", slug: "housekeeping", description: "Housekeeping and cleaning expenses" },
+    { name: "Gardening", slug: "gardening", description: "Gardening and landscaping expenses" },
+    { name: "Electricity", slug: "electricity", description: "Electricity supply and meter expenses" },
+    { name: "Diesel", slug: "diesel", description: "Diesel for generators and pumps" },
+    { name: "Water Tanker", slug: "water-tanker", description: "Water tanker charges" },
+    { name: "Water Softener", slug: "water-softener", description: "Water softener maintenance" },
+    { name: "WTP", slug: "wtp", description: "Water treatment plant expenses" },
+    { name: "Swimming Pool", slug: "swimming-pool", description: "Swimming pool maintenance" },
+    { name: "Garbage Pickup", slug: "garbage-pickup", description: "Garbage collection expenses" },
+    { name: "Fogging", slug: "fogging", description: "Pest and mosquito fogging services" },
+    { name: "Pneumatic Pump", slug: "pneumatic-pump", description: "Pneumatic pump maintenance" },
+    { name: "Motor Repair", slug: "motor-repair", description: "Motor repair and servicing" },
+    { name: "Tank Cleaning", slug: "tank-cleaning", description: "Water tank cleaning" },
+    { name: "Salary", slug: "salary", description: "Staff salary expenses" },
+    { name: "NoBroker", slug: "nobroker", description: "Brokerage-free service expense" },
+    { name: "Labour Water", slug: "labour-water", description: "Labor charges for water operations" },
+    { name: "Butane Gas", slug: "butane-gas", description: "Butane gas cylinder expenses" },
+    { name: "Pesticide", slug: "pesticide", description: "Pesticide and pest control supplies" },
+    { name: "Miscellaneous", slug: "miscellaneous", description: "Miscellaneous expense items" },
+    { name: "Other", slug: "other-expense", description: "Other expense items" },
+  ];
+
+  for (const cat of expenseCategories) {
+    await prisma.expenseCategory.upsert({
+      where: { slug: cat.slug },
+      update: {},
+      create: cat,
+    });
+  }
+  console.log(`✅ ${expenseCategories.length} expense categories created`);
+
+  // Create expense types
+  const expenseTypes = [
+    { name: "One Time", slug: "one-time" },
+    { name: "Regular", slug: "regular" },
+  ];
+
+  for (const expenseType of expenseTypes) {
+    await prisma.expenseType.upsert({
+      where: { slug: expenseType.slug },
+      update: {},
+      create: expenseType,
+    });
+  }
+  console.log(`✅ ${expenseTypes.length} expense types created`);
+
+  // Create payment types
+  const paymentTypes = [
+    { name: "Maintenance", slug: "maintenance" },
+    { name: "Builder Funds", slug: "builder-funds" },
+    { name: "Other Income", slug: "other-income" },
+    { name: "Internal Transfer", slug: "internal-transfer" },
+  ];
+
+  for (const paymentType of paymentTypes) {
+    await prisma.paymentType.upsert({
+      where: { slug: paymentType.slug },
+      update: {},
+      create: paymentType,
+    });
+  }
+  console.log(`✅ ${paymentTypes.length} payment types created`);
+
   // Create contact categories
   const contactCategories = [
     { name: "Electrician",     slug: "electrician",     icon: "zap",       color: "#f59e0b", order: 1 },

@@ -28,6 +28,7 @@ model User {
   createdIssues   Issue[]         @relation("CreatedBy")
   payments        Payment[]       @relation("PaymentResident")
   collectedPayments Payment[]     @relation("PaymentCollector")
+  expenseItems    ExpenseItem[]   @relation("ExpenseItemsCreated")
   statusChanges   StatusHistory[]
 
   @@index([email])
@@ -47,6 +48,66 @@ model Category {
   issues      Issue[]
 
   @@index([slug])
+}
+
+model ExpenseCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  expenseItems ExpenseItem[]
+
+  @@index([slug])
+}
+
+model ExpenseType {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  expenseItems ExpenseItem[]
+
+  @@index([slug])
+}
+
+model PaymentType {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  payments  Payment[]
+
+  @@index([slug])
+}
+
+model ExpenseItem {
+  id                String          @id @default(cuid())
+  date              DateTime        @db.Date
+  description       String
+  amount            Decimal         @db.Decimal(10, 2)
+  createdById       String
+  quarterId         String
+  expenseCategoryId String
+  expenseTypeId     String
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  createdBy       User           @relation("ExpenseItemsCreated", fields: [createdById], references: [id])
+  quarter         PaymentQuarter @relation(fields: [quarterId], references: [id], onDelete: Cascade)
+  expenseCategory ExpenseCategory @relation(fields: [expenseCategoryId], references: [id], onDelete: Cascade)
+  expenseType     ExpenseType    @relation(fields: [expenseTypeId], references: [id], onDelete: Cascade)
+
+  @@index([createdById])
+  @@index([quarterId])
+  @@index([expenseCategoryId])
+  @@index([expenseTypeId])
 }
 
 model Issue {
@@ -158,6 +219,7 @@ model PaymentQuarter {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   payments      Payment[]
+  expenseItems  ExpenseItem[]
 
   @@index([year])
   @@index([isActive])
@@ -169,6 +231,7 @@ model Payment {
   amount        Decimal        @db.Decimal(10, 2)
   status        PaymentStatus  @default(PENDING)
   quarterId     String
+  paymentTypeId String?
   userId        String?
   wing          String
   flatNo        String
@@ -181,10 +244,12 @@ model Payment {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   quarter       PaymentQuarter @relation(fields: [quarterId], references: [id], onDelete: Cascade)
+  paymentType   PaymentType?   @relation(fields: [paymentTypeId], references: [id])
   user          User?          @relation("PaymentResident", fields: [userId], references: [id])
 
   @@index([status])
   @@index([quarterId])
+  @@index([paymentTypeId])
   @@index([userId])
   @@index([collectedById])
   @@index([wing, flatNo])

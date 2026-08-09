@@ -18,6 +18,10 @@ function getTitle(pathname: string): string {
   if (pathname === "/admin/all-villa-issues") return allUnitIssuesLabel();
   if (pathname.match(/\/admin\/all-villa-issues\/.+/)) return `${BRANDING.unitLabel} Issue Detail`;
   if (pathname === "/admin/categories") return "Manage Categories";
+  if (pathname === "/admin/expense-categories") return "Expense Categories";
+  if (pathname === "/admin/expense-types") return "Expense Types";
+  if (pathname === "/admin/expense-items") return "Expense Items";
+  if (pathname === "/admin/finance-summary") return "Finance Summary";
   if (pathname === "/admin/users") return "Manage Users";
   if (pathname === "/admin/residents") return `${membersLabel()} Directory`;
   if (pathname === "/profile") return "My Profile";

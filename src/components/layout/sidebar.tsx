@@ -65,12 +65,17 @@ function buildAdminItems(): NavItem[] {
 
 const adminMasterDataItems: NavItem[] = [
   { href: "/admin/categories", label: "Categories", icon: Tag },
+  { href: "/admin/expense-categories", label: "Expense Categories", icon: Tag },
+  { href: "/admin/expense-types", label: "Expense Types", icon: FolderOpen },
+  { href: "/admin/payment-types", label: "Payment Types", icon: IndianRupee },
   { href: "/admin/contacts/categories", label: "Service Contact Categories", icon: BookUser },
   { label: "Quarters", href: "/admin/quarters", icon: CalendarRange },
 ];
 
 const adminFinanceItems: NavItem[] = [
   { label: "Payments", href: "/admin/payments", icon: IndianRupee },
+  { label: "Expense Items", href: "/admin/expense-items", icon: IndianRupee },
+  { label: "Collection Summary", href: "/admin/finance-summary", icon: IndianRupee },
   { label: "Dues", href: "/admin/dues", icon: AlertTriangle },
 ];
 

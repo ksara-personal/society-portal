@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { getPayments, createPayment, updatePayment, deletePayment, generateBulkPayments } from "@/actions/payments";
-import { getActiveQuarters } from "@/actions/quarters";
+import { getActiveQuarters, getCurrentQuarter } from "@/actions/quarters";
+import { getPaymentTypes } from "@/actions/expense-master";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,14 +40,27 @@ export default function PaymentsPage() {
   const [selectedWing, setSelectedWing] = useState("");
   const [selectedFlats, setSelectedFlats] = useState<string[]>([]);
   const [selectedQuarterId, setSelectedQuarterId] = useState("");
+  const [paymentTypes, setPaymentTypes] = useState<any[]>([]);
   const { data: session } = useSession();
 
-  useEffect(() => { loadQuarters(); }, []);
+  useEffect(() => { loadQuarters(); loadPaymentTypes(); }, []);
   useEffect(() => { load(); }, [page, filters]);
 
   async function loadQuarters() {
     const data = await getActiveQuarters();
     setQuarters(data);
+
+    const current = await getCurrentQuarter();
+    if (current?.id) {
+      setSelectedQuarterId(current.id);
+    } else if (data.length > 0 && !selectedQuarterId) {
+      setSelectedQuarterId(data[0].id);
+    }
+  }
+
+  async function loadPaymentTypes() {
+    const data = await getPaymentTypes();
+    setPaymentTypes(data);
   }
 
   async function load() {
@@ -186,6 +200,17 @@ export default function PaymentsPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label>Payment Type</Label>
+                  <Select name="paymentTypeId" defaultValue={editing?.paymentTypeId}>
+                    <SelectTrigger><SelectValue placeholder="Select payment type" /></SelectTrigger>
+                    <SelectContent>
+                      {paymentTypes.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div><Label>Wing</Label>
                     <Select name="wing" defaultValue={editing?.wing ?? ""}>
@@ -278,6 +303,7 @@ export default function PaymentsPage() {
           {payments.map((p) => (
             <TableRow key={p.id}>
               <TableCell>{p.quarter.name}</TableCell>
+              <TableCell>{p.paymentType?.name ?? "—"}</TableCell>
               <TableCell>{p.wing}-{p.flatNo}</TableCell>
               <TableCell>₹{Number(p.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</TableCell>
               <TableCell>
