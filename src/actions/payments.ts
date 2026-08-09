@@ -30,7 +30,7 @@ export async function getPayments(filters?: {
   const [items, total] = await Promise.all([
     prisma.payment.findMany({
       where,
-      include: { quarter: true, user: { select: { name: true, email: true } } },
+      include: { quarter: true, user: { select: { name: true, email: true } }, collectedBy: { select: { id: true, name: true } } },
       orderBy: { createdAt: "desc" },
       skip,
       take: limit,
@@ -83,11 +83,14 @@ export async function createPayment(formData: FormData): Promise<ActionResult> {
     select: { id: true },
   });
 
+  const admin = await getCurrentUser();
+
   await prisma.payment.create({
     data: {
       ...parsed.data,
       userId: resident?.id ?? null,
       paidAt: parsed.data.paidAt ? new Date(parsed.data.paidAt) : null,
+      collectedById: admin?.id ?? null,
     },
   });
 
@@ -110,12 +113,20 @@ export async function updatePayment(id: string, formData: FormData): Promise<Act
 
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
+  const admin = await getCurrentUser();
+
+  const updateData: any = {
+    ...parsed.data,
+    paidAt: parsed.data.paidAt ? new Date(parsed.data.paidAt) : null,
+  };
+
+  if (parsed.data.status === "PAID") {
+    updateData.collectedById = admin?.id ?? null;
+  }
+
   await prisma.payment.update({
     where: { id },
-    data: {
-      ...parsed.data,
-      paidAt: parsed.data.paidAt ? new Date(parsed.data.paidAt) : null,
-    },
+    data: updateData,
   });
 
   revalidatePath("/admin/payments");
@@ -326,6 +337,7 @@ export async function markPaymentPaid(id: string, formData: FormData): Promise<A
       paymentMethod: paymentMethod || "Cash",
       transactionId: transactionId || null,
       notes: notes || null,
+      collectedById: (await getCurrentUser())?.id ?? null,
     },
   });
 
@@ -362,6 +374,12 @@ export async function createDuePayment(formData: FormData): Promise<ActionResult
       ...parsed.data,
       userId: resident?.id ?? null,
     },
+  });
+
+  // set collectedBy to current admin when creating due-payment via Dues UI
+  await prisma.payment.updateMany({
+    where: { quarterId: parsed.data.quarterId, wing: parsed.data.wing as string, flatNo: parsed.data.flatNo as string, status: "PENDING" },
+    data: { collectedById: (await getCurrentUser())?.id ?? null },
   });
 
   revalidatePath("/admin/dues");

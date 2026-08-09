@@ -26,7 +26,8 @@ model User {
   contactsCreated Contact[]       @relation("ContactsCreated")
   assignedIssues  Issue[]         @relation("AssignedTo")
   createdIssues   Issue[]         @relation("CreatedBy")
-  payments        Payment[]
+  payments        Payment[]       @relation("PaymentResident")
+  collectedPayments Payment[]     @relation("PaymentCollector")
   statusChanges   StatusHistory[]
 
   @@index([email])
@@ -175,14 +176,17 @@ model Payment {
   paymentMethod String?
   transactionId String?
   notes         String?
+  collectedById String?
+  collectedBy   User?          @relation("PaymentCollector", fields: [collectedById], references: [id])
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   quarter       PaymentQuarter @relation(fields: [quarterId], references: [id], onDelete: Cascade)
-  user          User?          @relation(fields: [userId], references: [id])
+  user          User?          @relation("PaymentResident", fields: [userId], references: [id])
 
   @@index([status])
   @@index([quarterId])
   @@index([userId])
+  @@index([collectedById])
   @@index([wing, flatNo])
   @@index([createdAt])
 }

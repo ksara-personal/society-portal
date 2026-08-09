@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { getPayments, createPayment, updatePayment, deletePayment, generateBulkPayments } from "@/actions/payments";
 import { getActiveQuarters } from "@/actions/quarters";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ export default function PaymentsPage() {
   const [selectedWing, setSelectedWing] = useState("");
   const [selectedFlats, setSelectedFlats] = useState<string[]>([]);
   const [selectedQuarterId, setSelectedQuarterId] = useState("");
+  const { data: session } = useSession();
 
   useEffect(() => { loadQuarters(); }, []);
   useEffect(() => { load(); }, [page, filters]);
@@ -222,6 +224,10 @@ export default function PaymentsPage() {
                     <div><Label>Transaction ID</Label><Input name="transactionId" defaultValue={editing?.transactionId} /></div>
                   </>
                 )}
+                <div>
+                  <Label>Collected By</Label>
+                  <Input value={session?.user?.name ?? (editing?.collectedBy?.name ?? "")} readOnly />
+                </div>
                 <div><Label>Notes</Label><Input name="notes" defaultValue={editing?.notes} /></div>
                 <Button type="submit" className="w-full">{editing ? "Update" : "Create"}</Button>
               </form>
@@ -264,6 +270,7 @@ export default function PaymentsPage() {
             <TableHead>Amount</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Paid On</TableHead>
+            <TableHead>Collected By</TableHead>
             <TableHead className="w-[120px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -284,6 +291,7 @@ export default function PaymentsPage() {
                 </span>
               </TableCell>
               <TableCell>{p.paidAt ? new Date(p.paidAt).toLocaleDateString() : "-"}</TableCell>
+              <TableCell>{p.collectedBy?.name ?? "-"}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
                   <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>

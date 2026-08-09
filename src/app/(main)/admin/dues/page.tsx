@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { getCurrentQuarterDues, markPaymentPaid, createDuePayment } from "@/actions/payments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ export default function DuesPage() {
   const [markingId, setMarkingId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedDue, setSelectedDue] = useState<any>(null);
+  const { data: session } = useSession();
 
   useEffect(() => {
     load();
@@ -238,6 +240,50 @@ export default function DuesPage() {
                           Mark Paid
                         </Button>
                       </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Mark Payment as Paid</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={(e) => handleMarkPaid(e, due.payment.id)} className="space-y-4">
+                          <div>
+                            <Label>Flat</Label>
+                            <p className="text-sm font-medium">{due.flat.wing}-{due.flat.flatNo}</p>
+                          </div>
+                          <div>
+                            <Label>Amount</Label>
+                            <p className="text-sm font-medium">₹{Number(due.payment.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</p>
+                          </div>
+                          <div>
+                            <Label>Paid Date</Label>
+                            <Input name="paidAt" type="date" defaultValue={new Date().toISOString().split("T")[0]} required />
+                          </div>
+                          <div>
+                            <Label>Payment Method</Label>
+                            <Select name="paymentMethod" defaultValue="Cash">
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Cash">Cash</SelectItem>
+                                <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                                <SelectItem value="UPI">UPI</SelectItem>
+                                <SelectItem value="Cheque">Cheque</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label>Collected By</Label>
+                            <Input value={session?.user?.name ?? ""} readOnly />
+                          </div>
+                          <div>
+                            <Label>Transaction ID (optional)</Label>
+                            <Input name="transactionId" placeholder="e.g. UPI123456" />
+                          </div>
+                          <div>
+                            <Label>Notes (optional)</Label>
+                            <Input name="notes" placeholder="Any notes..." />
+                          </div>
+                          <Button type="submit" className="w-full">Confirm Payment</Button>
+                        </form>
+                      </DialogContent>
                     </Dialog>
                   ) : (
                     <Dialog open={createOpen && selectedDue?.flat.wing === due.flat.wing && selectedDue?.flat.flatNo === due.flat.flatNo} onOpenChange={(open) => {
@@ -249,6 +295,50 @@ export default function DuesPage() {
                           Bill & Pay
                         </Button>
                       </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Create & Mark Payment</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={(e) => handleMarkPaid(e, null)} className="space-y-4">
+                          <div>
+                            <Label>Flat</Label>
+                            <p className="text-sm font-medium">{due.flat.wing}-{due.flat.flatNo}</p>
+                          </div>
+                          <div>
+                            <Label>Amount (₹)</Label>
+                            <Input name="amount" type="number" step="0.01" defaultValue={data.quarter.defaultAmount ? String(data.quarter.defaultAmount) : ""} placeholder="Uses quarter default if left blank" />
+                          </div>
+                          <div>
+                            <Label>Paid Date</Label>
+                            <Input name="paidAt" type="date" defaultValue={new Date().toISOString().split("T")[0]} required />
+                          </div>
+                          <div>
+                            <Label>Payment Method</Label>
+                            <Select name="paymentMethod" defaultValue="Cash">
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Cash">Cash</SelectItem>
+                                <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                                <SelectItem value="UPI">UPI</SelectItem>
+                                <SelectItem value="Cheque">Cheque</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label>Collected By</Label>
+                            <Input value={session?.user?.name ?? ""} readOnly />
+                          </div>
+                          <div>
+                            <Label>Transaction ID (optional)</Label>
+                            <Input name="transactionId" placeholder="e.g. UPI123456" />
+                          </div>
+                          <div>
+                            <Label>Notes (optional)</Label>
+                            <Input name="notes" placeholder="Any notes..." />
+                          </div>
+                          <Button type="submit" className="w-full">Create & Confirm Payment</Button>
+                        </form>
+                      </DialogContent>
                     </Dialog>
                   )}
                 </div>
