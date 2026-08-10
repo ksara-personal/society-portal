@@ -442,7 +442,7 @@ export async function markPaymentPaid(id: string, formData: FormData): Promise<A
     },
   });
 
-  revalidatePath("/admin/dues");
+  revalidatePath("/admin/dues-tracker");
   return { success: true };
 }
 
@@ -483,7 +483,7 @@ export async function createDuePayment(formData: FormData): Promise<ActionResult
     data: { collectedById: (await getCurrentUser())?.id ?? null },
   });
 
-  revalidatePath("/admin/dues");
+  revalidatePath("/admin/dues-tracker");
   return { success: true };
 }
 

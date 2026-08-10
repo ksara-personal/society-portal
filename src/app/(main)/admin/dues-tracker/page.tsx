@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { getQuarters } from "@/actions/quarters";
-import { getDuesTrackerData } from "@/actions/payments";
+import { getDuesTrackerData, getCurrentQuarterDues } from "@/actions/payments";
 import { cn } from "@/lib/utils";
 
 interface PageProps {
@@ -23,6 +23,11 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
   const year = yearParam ? Number(yearParam) : years[0] ?? new Date().getFullYear();
 
   const { quarters, rows } = await getDuesTrackerData(year);
+
+  // Also fetch current quarter summary for KPI cards (may return error if no active quarter)
+  const currentDuesRes = await getCurrentQuarterDues();
+  const currentSummary = "error" in currentDuesRes ? null : currentDuesRes.summary;
+  const currentQuarter = "error" in currentDuesRes ? null : currentDuesRes.quarter;
 
   const quarterTotals = quarters.map((quarter) =>
     rows.reduce(
@@ -55,9 +60,34 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
             Apply
           </button>
         </form>
-      </div>
+        </div>
 
-      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+        {currentSummary && (
+          <div className="grid gap-4 md:grid-cols-4">
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <p className="text-sm font-medium text-muted-foreground">Collection Rate ({currentQuarter?.name})</p>
+              <p className="mt-2 text-3xl font-semibold">{currentSummary.collectionRate}%</p>
+              <p className="text-xs text-muted-foreground mt-1">{currentSummary.paidCount} of {currentSummary.totalFlats} paid</p>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <p className="text-sm font-medium text-muted-foreground">Unpaid Flats</p>
+              <p className="mt-2 text-3xl font-semibold text-destructive">{currentSummary.unpaidCount}</p>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <p className="text-sm font-medium text-muted-foreground">Paid Flats</p>
+              <p className="mt-2 text-3xl font-semibold text-emerald-700">{currentSummary.paidCount}</p>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <p className="text-sm font-medium text-muted-foreground">Total Outstanding</p>
+              <p className="mt-2 text-3xl font-semibold">₹{currentSummary.totalDueAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</p>
+            </div>
+          </div>
+        )}
+
+        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
         <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
           <thead className="bg-gray-50 text-gray-700">
             <tr>
@@ -119,6 +149,7 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
           )}
         </table>
       </div>
+      
 
       <p className="text-xs text-muted-foreground flex items-center gap-2">
         <span className="inline-block h-3 w-3 rounded-sm bg-red-50 border border-red-200" />
