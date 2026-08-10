@@ -552,3 +552,90 @@ export async function getQuarterlyBalances(year?: number) {
 
   return results;
 }
+
+function normalizeFlatNo(flatNo?: string | null) {
+  const raw = String(flatNo ?? "").trim();
+  return /^\d+$/.test(raw) ? raw.padStart(3, "0") : raw;
+}
+
+export async function getDuesTrackerData(year?: number) {
+  await requireAdmin();
+
+  const quarters = await prisma.paymentQuarter.findMany({
+    where: typeof year === "number" ? { year } : {},
+    orderBy: [{ order: "asc" }],
+  });
+
+  if (quarters.length === 0) return { quarters: [] as typeof quarters, rows: [] as never[] };
+
+  const quarterIds = quarters.map((q) => q.id);
+
+  const residents = await prisma.user.findMany({
+    where: { role: "RESIDENT", approvalStatus: "APPROVED", isActive: true },
+    select: { name: true, wing: true, flatNo: true },
+    orderBy: [{ wing: "asc" }, { flatNo: "asc" }, { name: "asc" }],
+  });
+
+  const ownersByFlat = new Map<string, string[]>();
+  for (const resident of residents) {
+    const key = `${resident.wing}-${normalizeFlatNo(resident.flatNo)}`;
+    const existing = ownersByFlat.get(key) ?? [];
+    existing.push(resident.name);
+    ownersByFlat.set(key, existing);
+  }
+
+  // Configured wing/flat ranges form the baseline row set; any flat with a payment record is included too.
+  const flatKeys = new Set(
+    getFlatPairs().map((flat) => `${flat.wing}-${normalizeFlatNo(flat.flatNo)}`)
+  );
+
+  const payments = await prisma.payment.findMany({
+    where: { quarterId: { in: quarterIds }, status: "PAID" },
+    select: { quarterId: true, wing: true, flatNo: true, amount: true },
+  });
+
+  const paidByFlatAndQuarter = new Map<string, number>();
+  for (const payment of payments) {
+    const flatKey = `${payment.wing}-${normalizeFlatNo(payment.flatNo)}`;
+    flatKeys.add(flatKey);
+    const key = `${flatKey}::${payment.quarterId}`;
+    paidByFlatAndQuarter.set(key, (paidByFlatAndQuarter.get(key) ?? 0) + Number(payment.amount));
+  }
+
+  const flats = Array.from(flatKeys)
+    .map((key) => {
+      const [wing, flatNo] = key.split("-", 2);
+      return { wing, flatNo };
+    })
+    .sort((a, b) => {
+      const wingCompare = a.wing.localeCompare(b.wing);
+      if (wingCompare !== 0) return wingCompare;
+      return (parseInt(a.flatNo, 10) || 0) - (parseInt(b.flatNo, 10) || 0);
+    });
+
+  const rows = flats.map((flat) => {
+    const flatKey = `${flat.wing}-${flat.flatNo}`;
+    const owners = ownersByFlat.get(flatKey) ?? [];
+
+    const quarterAmounts = quarters.map((quarter) => {
+      const paid = paidByFlatAndQuarter.get(`${flatKey}::${quarter.id}`) ?? 0;
+      const target = Number(quarter.defaultAmount ?? 0);
+      return {
+        quarterId: quarter.id,
+        paid,
+        target,
+        isShort: paid < target,
+      };
+    });
+
+    return {
+      wing: flat.wing,
+      flatNo: flat.flatNo,
+      ownerName: owners.join(", ") || "Unregistered",
+      quarterAmounts,
+      total: quarterAmounts.reduce((sum, qa) => sum + qa.paid, 0),
+    };
+  });
+
+  return { quarters, rows };
+}

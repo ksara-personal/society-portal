@@ -20,7 +20,8 @@ import {
   FolderOpen,
   IndianRupee,
   CalendarRange,
-  AlertTriangle
+  AlertTriangle,
+  ListChecks
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -78,6 +79,7 @@ const adminFinanceItems: NavItem[] = [
   { label: "Collection Summary", href: "/admin/finance-summary", icon: IndianRupee },
   { label: "Quarterly Balances", href: "/admin/quarterly-balances", icon: BarChart2 },
   { label: "Dues", href: "/admin/dues", icon: AlertTriangle },
+  { label: "Dues Tracker", href: "/admin/dues-tracker", icon: ListChecks },
 ];
 
 function renderSidebarLink(item: NavItem, isActive: boolean) {
