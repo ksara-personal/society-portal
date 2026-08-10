@@ -75,11 +75,11 @@ const adminMasterDataItems: NavItem[] = [
 
 const adminFinanceItems: NavItem[] = [
   { label: "Payments", href: "/admin/payments", icon: IndianRupee },
-  { label: "Expense Items", href: "/admin/expense-items", icon: IndianRupee },
+  { label: "Expenses", href: "/admin/expense-items", icon: IndianRupee },
   { label: "Collection Summary", href: "/admin/finance-summary", icon: IndianRupee },
   { label: "Quarterly Balances", href: "/admin/quarterly-balances", icon: BarChart2 },
-  { label: "Dues", href: "/admin/dues", icon: AlertTriangle },
-  { label: "Dues Tracker", href: "/admin/dues-tracker", icon: ListChecks },
+  { label: "Current Quarter Dues", href: "/admin/dues", icon: AlertTriangle },
+  { label: "Dues Tracker By Villas", href: "/admin/dues-tracker", icon: ListChecks },
 ];
 
 function renderSidebarLink(item: NavItem, isActive: boolean) {
