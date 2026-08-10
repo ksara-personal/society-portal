@@ -41,15 +41,13 @@ export default async function FinanceSummaryPage({ searchParams }: FinanceSummar
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Finance Summary</h1>
+          <h1 className="text-2xl font-bold">Collection Summary</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Review collection and expense activity by each user who has recorded payments or expenses, regardless of current role.
           </p>
         </div>
 
         <form method="get" className="grid gap-3 sm:grid-cols-[220px_minmax(220px,1fr)_auto]">
-          <label className="block text-sm font-medium text-gray-700">
-            Quarter
             <select
               name="quarterId"
               defaultValue={quarterId ?? ""}
@@ -62,17 +60,13 @@ export default async function FinanceSummaryPage({ searchParams }: FinanceSummar
                 </option>
               ))}
             </select>
-          </label>
 
-          <label className="block text-sm font-medium text-gray-700">
-            Collector name or email
             <input
               name="search"
               defaultValue={searchText}
-              placeholder="Search user"
+              placeholder="Search user or email"
               className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
-          </label>
 
           <button
             type="submit"

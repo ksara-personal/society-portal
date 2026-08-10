@@ -82,8 +82,9 @@ export async function getExpenseTypes() {
   return prisma.expenseType.findMany({ orderBy: { name: "asc" } });
 }
 
-export async function getExpenseItems() {
+export async function getExpenseItems(filters?: { quarterId?: string }) {
   return prisma.expenseItem.findMany({
+    where: filters?.quarterId ? { quarterId: filters.quarterId } : undefined,
     orderBy: { date: "desc" },
     include: {
       createdBy: { select: { id: true, name: true, email: true } },
