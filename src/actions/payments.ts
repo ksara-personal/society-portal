@@ -225,12 +225,9 @@ export async function getCurrentQuarterDues(filters?: {
     return { error: "No active quarter is configured for the current date range." };
   }
 
-  // Get all approved residents for display details.
+  // Get all users for display details (include admins and other roles)
   const allResidents = await prisma.user.findMany({
     where: {
-      role: "RESIDENT",
-      approvalStatus: "APPROVED",
-      isActive: true,
       ...(filters?.wing ? { wing: filters.wing } : {}),
     },
     select: { id: true, name: true, email: true, phone: true, wing: true, flatNo: true },
@@ -249,6 +246,11 @@ export async function getCurrentQuarterDues(filters?: {
     existing.push(resident);
     residentMap.set(key, existing);
   }
+
+  // If some flats don't have residents in the map (e.g. user not APPROVED/isActive),
+  // try a secondary lookup without approval/isActive filters so we can still show names.
+  // Build list of flat keys that are missing residents.
+  const missingKeys: string[] = [];
 
   // Get existing payments for this quarter
   const existingPayments = await prisma.payment.findMany({
@@ -290,6 +292,34 @@ export async function getCurrentQuarterDues(filters?: {
   }
 
   // Build dues list: flats without a PAID payment for current quarter
+  // compute missingKeys before building dues
+  for (const flat of uniqueFlats) {
+    const key = `${flat.wing}-${flat.flatNo}`;
+    if (!residentMap.has(key)) missingKeys.push(key);
+  }
+
+  if (missingKeys.length > 0) {
+    // Fetch any users that match the missing wing/flatNo pairs regardless of approval/isActive
+    const orConditions = missingKeys.map((k) => {
+      const [wing, flatNo] = k.split("-", 2);
+      return { wing, flatNo } as any;
+    });
+    try {
+      const extraResidents = await prisma.user.findMany({
+        where: { OR: orConditions },
+        select: { id: true, name: true, email: true, phone: true, wing: true, flatNo: true },
+      });
+      for (const resident of extraResidents) {
+        const key = `${resident.wing}-${normalizeFlatNo(resident.flatNo)}`;
+        const existing = residentMap.get(key) ?? [];
+        existing.push(resident);
+        residentMap.set(key, existing);
+      }
+    } catch (err) {
+      // ignore lookup errors and continue with whatever we have
+    }
+  }
+
   const dues = uniqueFlats
     .map((flat) => {
       const key = `${flat.wing}-${flat.flatNo}`;
@@ -571,7 +601,7 @@ export async function getDuesTrackerData(year?: number) {
   const quarterIds = quarters.map((q) => q.id);
 
   const residents = await prisma.user.findMany({
-    where: { role: "RESIDENT", approvalStatus: "APPROVED", isActive: true },
+    where: { },
     select: { name: true, wing: true, flatNo: true },
     orderBy: [{ wing: "asc" }, { flatNo: "asc" }, { name: "asc" }],
   });
