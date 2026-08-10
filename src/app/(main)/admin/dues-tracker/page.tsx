@@ -36,6 +36,11 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
     )
   );
   const grandTotal = rows.reduce((sum, row) => sum + row.total, 0);
+  const rowsWithDues = rows.map((row) => ({
+    ...row,
+    totalDue: row.quarterAmounts.reduce((sum, qa) => sum + Math.max(qa.target - qa.paid, 0), 0),
+  }));
+  const grandTotalDue = rowsWithDues.reduce((sum, row) => sum + row.totalDue, 0);
 
   return (
     <div className="space-y-6">
@@ -102,18 +107,19 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
                   </div>
                 </th>
               ))}
-              <th className="px-4 py-3 font-medium text-right">Total</th>
+              <th className="px-4 py-3 font-medium text-right">Total Paid</th>
+              <th className="px-4 py-3 font-medium text-right">Total Dues</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {rows.length === 0 ? (
+            {rowsWithDues.length === 0 ? (
               <tr>
-                <td colSpan={quarters.length + 4} className="px-4 py-8 text-center text-sm text-gray-500">
+                <td colSpan={quarters.length + 5} className="px-4 py-8 text-center text-sm text-gray-500">
                   No flats or quarters found for the selected year.
                 </td>
               </tr>
             ) : (
-              rows.map((row) => (
+              rowsWithDues.map((row) => (
                 <tr key={`${row.wing}-${row.flatNo}`}>
                   <td className="px-4 py-4 font-medium text-gray-900">{row.wing}</td>
                   <td className="px-4 py-4">{row.flatNo}</td>
@@ -130,11 +136,14 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
                     </td>
                   ))}
                   <td className="px-4 py-4 text-right font-semibold">{formatCurrency(row.total)}</td>
+                  <td className={cn("px-4 py-4 text-right font-semibold", row.totalDue > 0 && "text-destructive")}>
+                    {formatCurrency(row.totalDue)}
+                  </td>
                 </tr>
               ))
             )}
           </tbody>
-          {rows.length > 0 && (
+          {rowsWithDues.length > 0 && (
             <tfoot className="bg-gray-50">
               <tr>
                 <td className="px-4 py-3 font-medium" colSpan={3}>Total</td>
@@ -144,6 +153,7 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
                   </td>
                 ))}
                 <td className="px-4 py-3 text-right font-semibold">{formatCurrency(grandTotal)}</td>
+                <td className="px-4 py-3 text-right font-semibold">{formatCurrency(grandTotalDue)}</td>
               </tr>
             </tfoot>
           )}
