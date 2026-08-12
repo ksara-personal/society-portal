@@ -546,8 +546,28 @@ export async function getQuarterlyBalances(year?: number) {
 
   // For opening balance we compute cumulative sums from all quarters that end before this quarter's start
   const results: Array<any> = [];
+  const today = new Date();
 
   for (const q of quarters) {
+    // quarters that haven't started yet carry no activity - keep them at zero so totals aren't inflated
+    // by repeating the last known closing balance across every future row
+    if (q.startDate > today) {
+      results.push({
+        quarterId: q.id,
+        name: q.name,
+        startDate: q.startDate,
+        endDate: q.endDate,
+        opening: 0,
+        maintenance: 0,
+        builderFunds: 0,
+        otherIncome: 0,
+        totalExpenses: 0,
+        netMovement: 0,
+        closing: 0,
+      });
+      continue;
+    }
+
     // find previous quarters
     const prevQuarters = await prisma.paymentQuarter.findMany({ where: { endDate: { lt: q.startDate } }, select: { id: true } });
     const prevIds = prevQuarters.map((p) => p.id);
