@@ -22,7 +22,8 @@ import {
   FolderOpen,
   IndianRupee,
   CalendarRange,
-  ListChecks
+  ListChecks,
+  ScrollText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -38,6 +39,7 @@ interface MobileNavProps {
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
 
 const navItems: NavItem[] = [
+  { href: "/meetings", label: "Meetings", icon: ScrollText },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/issues", label: "All Issues", icon: ClipboardList },
   { href: "/issues/new", label: "Report Issue", icon: PlusCircle },
@@ -117,7 +119,7 @@ export function MobileNav({ userRole, userName }: MobileNavProps) {
         <SheetContent side="left" className="w-72 p-0 flex flex-col">
           <SheetHeader className="p-4 border-b shrink-0">
             <SheetTitle asChild>
-              <Link href="/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2">
+              <Link href="/meetings" onClick={() => setOpen(false)} className="flex items-center gap-2">
                 {BRANDING.logoPath ? (
                   <Image
                     src={BRANDING.logoPath}

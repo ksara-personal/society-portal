@@ -184,9 +184,18 @@ export const flatRangeSchema = z.object({
   path: ["flatEnd"],
 });
 
+export const meetingSchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters").max(200),
+  content: z.string().min(1, "Content is required").max(20000),
+  meetingDate: z.string().min(1, "Meeting date and time is required"),
+  status: z.enum(["DRAFT", "PUBLISHED"]).default("DRAFT"),
+});
+
 export type QuarterFormValues = z.infer<typeof quarterSchema>;
 export type PaymentFormValues = z.infer<typeof paymentSchema>;
 export type ContactFormValues = z.infer<typeof contactSchema>;
 export type ContactCategoryFormValues = z.infer<typeof contactCategorySchema>;
 export type FlatFormValues = z.infer<typeof flatSchema>;
+export type MeetingFormValues = z.infer<typeof meetingSchema>;
+
 

@@ -21,7 +21,8 @@ import {
   IndianRupee,
   CalendarRange,
   AlertTriangle,
-  ListChecks
+  ListChecks,
+  ScrollText
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ type NavItem = {
 
 function buildNavItems(): NavItem[] {
   return [
+    { href: "/meetings", label: "Meetings", icon: ScrollText },
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/issues", label: "All Issues", icon: ClipboardList },
     { href: "/issues/new", label: "Report Issue", icon: PlusCircle },
@@ -110,7 +112,7 @@ export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
     <aside className="flex flex-col h-full w-64 border-r bg-white">
       {/* Logo */}
       <div className="p-4 border-b">
-        <Link href="/dashboard" className="flex items-center gap-3">
+        <Link href="/meetings" className="flex items-center gap-3">
           {BRANDING.logoPath ? (
             <Image
               src={BRANDING.logoPath}
