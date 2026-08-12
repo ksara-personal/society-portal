@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { getPayments, createPayment, updatePayment, deletePayment, generateBulkPayments } from "@/actions/payments";
+import { getPayments, createPayment, updatePayment, deletePayment, generateBulkPayments, getAdmins } from "@/actions/payments";
 import { getActiveQuarters, getCurrentQuarter } from "@/actions/quarters";
 import { getPaymentTypes } from "@/actions/expense-master";
 import { Button } from "@/components/ui/button";
@@ -41,13 +41,14 @@ export default function PaymentsPage() {
   const [selectedFlats, setSelectedFlats] = useState<string[]>([]);
   const [selectedQuarterId, setSelectedQuarterId] = useState("");
   const [paymentTypes, setPaymentTypes] = useState<any[]>([]);
+  const [admins, setAdmins] = useState<any[]>([]);
   const [formWing, setFormWing] = useState("");
   const [formFlatNo, setFormFlatNo] = useState("");
   const { data: session } = useSession();
   const wings = useWings();
   const formFlats = useFlatsForWing(formWing);
 
-  useEffect(() => { loadQuarters(); loadPaymentTypes(); }, []);
+  useEffect(() => { loadQuarters(); loadPaymentTypes(); loadAdmins(); }, []);
   useEffect(() => { load(); }, [page, filters]);
 
   async function loadQuarters() {
@@ -65,6 +66,11 @@ export default function PaymentsPage() {
   async function loadPaymentTypes() {
     const data = await getPaymentTypes();
     setPaymentTypes(data);
+  }
+
+  async function loadAdmins() {
+    const data = await getAdmins();
+    setAdmins(data);
   }
 
   async function load() {
@@ -262,7 +268,12 @@ export default function PaymentsPage() {
                 )}
                 <div>
                   <Label>Collected By</Label>
-                  <Input value={session?.user?.name ?? (editing?.collectedBy?.name ?? "")} readOnly />
+                  <Select name="collectedById" defaultValue={editing?.collectedById ?? session?.user?.id}>
+                    <SelectTrigger><SelectValue placeholder="Select admin" /></SelectTrigger>
+                    <SelectContent>
+                      {admins.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div><Label>Notes</Label><Input name="notes" defaultValue={editing?.notes} /></div>
                 <Button type="submit" className="w-full">{editing ? "Update" : "Create"}</Button>

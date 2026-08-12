@@ -46,6 +46,15 @@ export async function getPayments(filters?: {
   return { items, total, pages: Math.ceil(total / limit) };
 }
 
+export async function getAdmins() {
+  await requireAdmin();
+  return prisma.user.findMany({
+    where: { role: "ADMIN", isActive: true },
+    select: { id: true, name: true, email: true },
+    orderBy: { name: "asc" },
+  });
+}
+
 export async function getMyPayments() {
   const user = await getCurrentUser();
   if (!user) throw new Error("Unauthorized");
@@ -96,7 +105,7 @@ export async function createPayment(formData: FormData): Promise<ActionResult> {
       ...parsed.data,
       userId: resident?.id ?? null,
       paidAt: parsed.data.paidAt ? new Date(parsed.data.paidAt) : null,
-      collectedById: admin?.id ?? null,
+      collectedById: parsed.data.collectedById || admin?.id || null,
     },
   });
 
@@ -116,6 +125,7 @@ export async function updatePayment(id: string, formData: FormData): Promise<Act
     paymentMethod: formData.get("paymentMethod") || undefined,
     transactionId: formData.get("transactionId") || undefined,
     notes: formData.get("notes") || undefined,
+    collectedById: formData.get("collectedById") || undefined,
   });
 
   if (!parsed.success) return { error: parsed.error.errors[0].message };
@@ -127,7 +137,9 @@ export async function updatePayment(id: string, formData: FormData): Promise<Act
     paidAt: parsed.data.paidAt ? new Date(parsed.data.paidAt) : null,
   };
 
-  if (parsed.data.status === "PAID") {
+  if (parsed.data.collectedById) {
+    updateData.collectedById = parsed.data.collectedById;
+  } else if (parsed.data.status === "PAID") {
     updateData.collectedById = admin?.id ?? null;
   }
 

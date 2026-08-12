@@ -54,7 +54,7 @@ export default function LoginPage() {
       }
       setLoading(false);
     } else {
-      router.push("/meetings");
+      router.push("/dashboard");
       router.refresh();
     }
   }

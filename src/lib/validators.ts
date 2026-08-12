@@ -159,6 +159,7 @@ export const paymentSchema = z.object({
   paymentMethod: z.string().max(50).optional().or(z.literal("")),
   transactionId: z.string().max(100).optional().or(z.literal("")),
   notes: z.string().max(500).optional().or(z.literal("")),
+  collectedById: z.string().optional().or(z.literal("")),
 });
 
 export const bulkPaymentSchema = z.object({

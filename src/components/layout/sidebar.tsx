@@ -43,8 +43,8 @@ type NavItem = {
 
 function buildNavItems(): NavItem[] {
   return [
-    { href: "/meetings", label: "Meetings", icon: ScrollText },
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/meetings", label: "Meetings", icon: ScrollText },
     { href: "/issues", label: "All Issues", icon: ClipboardList },
     { href: "/issues/new", label: "Report Issue", icon: PlusCircle },
     { href: "/villa-issues", label: myUnitIssuesLabel(), icon: Home },
@@ -112,7 +112,7 @@ export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
     <aside className="flex flex-col h-full w-64 border-r bg-white">
       {/* Logo */}
       <div className="p-4 border-b">
-        <Link href="/meetings" className="flex items-center gap-3">
+        <Link href="/dashboard" className="flex items-center gap-3">
           {BRANDING.logoPath ? (
             <Image
               src={BRANDING.logoPath}

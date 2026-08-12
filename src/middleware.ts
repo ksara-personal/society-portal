@@ -10,15 +10,15 @@ export default auth((req) => {
   const publicRoutes = ["/login", "/register"];
   if (publicRoutes.includes(pathname)) {
     if (isLoggedIn) {
-      return NextResponse.redirect(new URL("/meetings", req.url));
+      return NextResponse.redirect(new URL("/dashboard", req.url));
     }
     return NextResponse.next();
   }
 
-  // Root redirect — Meeting Minutes is the landing page for all logged-in users
+  // Root redirect — Dashboard is the landing page for all logged-in users
   if (pathname === "/") {
     return NextResponse.redirect(
-      new URL(isLoggedIn ? "/meetings" : "/login", req.url)
+      new URL(isLoggedIn ? "/dashboard" : "/login", req.url)
     );
   }
 
