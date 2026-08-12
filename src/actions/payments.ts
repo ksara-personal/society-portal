@@ -89,6 +89,7 @@ export async function createPayment(formData: FormData): Promise<ActionResult> {
     paymentMethod: formData.get("paymentMethod") || undefined,
     transactionId: formData.get("transactionId") || undefined,
     notes: formData.get("notes") || undefined,
+    collectedById: formData.get("collectedById") || undefined,
   });
 
   if (!parsed.success) return { error: parsed.error.errors[0].message };

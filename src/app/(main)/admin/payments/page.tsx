@@ -214,7 +214,7 @@ export default function PaymentsPage() {
                 </div>
                 <div>
                   <Label>Payment Type</Label>
-                  <Select name="paymentTypeId" defaultValue={editing?.paymentTypeId}>
+                  <Select name="paymentTypeId" defaultValue={editing?.paymentTypeId ?? paymentTypes.find((t) => t.name === "Maintenance")?.id}>
                     <SelectTrigger><SelectValue placeholder="Select payment type" /></SelectTrigger>
                     <SelectContent>
                       {paymentTypes.map((type) => (
@@ -249,7 +249,7 @@ export default function PaymentsPage() {
                 </div>
                 <div>
                   <Label>Status</Label>
-                  <Select name="status" defaultValue={editing?.status ?? "PENDING"}>
+                  <Select name="status" defaultValue={editing?.status ?? "PAID"}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="PENDING">Pending</SelectItem>
