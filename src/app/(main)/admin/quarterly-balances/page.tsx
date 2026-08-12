@@ -1,7 +1,8 @@
+import { Fragment } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { getQuarters } from "@/actions/quarters";
-import { getQuarterlyBalances } from "@/actions/payments";
+import { getQuarterlyBalances, getQuarterlyPersonBalances } from "@/actions/payments";
 
 interface PageProps {
   searchParams: Promise<{ year?: string | string[] }>;
@@ -18,6 +19,7 @@ export default async function QuarterlyBalancesPage({ searchParams }: PageProps)
   const year = yearParam ? Number(yearParam) : years[0] ?? new Date().getFullYear();
 
   const balances = await getQuarterlyBalances(year);
+  const personBalances = await getQuarterlyPersonBalances(year);
 
   const totalOpening = balances.reduce((s, b) => s + b.opening, 0);
   const totalMaintenance = balances.reduce((s, b) => s + b.maintenance, 0);
@@ -94,6 +96,55 @@ export default async function QuarterlyBalancesPage({ searchParams }: PageProps)
               <td className="px-4 py-3">₹{totalClosing.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
             </tr>
           </tfoot>
+        </table>
+      </div>
+
+      <div>
+        <h2 className="text-xl font-bold">Person-wise Collections &amp; Expenses</h2>
+        <p className="text-sm text-muted-foreground mt-1">Money collected and spent by each person, per quarter, for {year}.</p>
+      </div>
+
+      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+        <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
+          <thead className="bg-gray-50 text-gray-700">
+            <tr>
+              <th rowSpan={2} className="px-4 py-3 font-medium align-bottom">Person</th>
+              {personBalances.quarters.map((q) => (
+                <th key={q.id} colSpan={2} className="px-4 py-2 font-medium text-center border-l border-gray-200">{q.name}</th>
+              ))}
+              <th rowSpan={2} className="px-4 py-3 font-medium align-bottom border-l border-gray-200">Balance</th>
+            </tr>
+            <tr>
+              {personBalances.quarters.map((q) => (
+                <Fragment key={q.id}>
+                  <th className="px-4 py-2 font-medium border-l border-gray-200">Collected</th>
+                  <th className="px-4 py-2 font-medium">Spent</th>
+                </Fragment>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 bg-white">
+            {personBalances.rows.length === 0 ? (
+              <tr>
+                <td colSpan={personBalances.quarters.length * 2 + 2} className="px-4 py-8 text-center text-sm text-gray-500">No collections or expenses recorded for selected year.</td>
+              </tr>
+            ) : (
+              personBalances.rows.map((row) => (
+                <tr key={row.userId}>
+                  <td className="px-4 py-4 font-medium text-gray-900">{row.user.name}</td>
+                  {row.perQuarter.map((pq) => (
+                    <Fragment key={pq.quarterId}>
+                      <td className="px-4 py-4 border-l border-gray-200">₹{pq.collected.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                      <td className="px-4 py-4">₹{pq.spent.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                    </Fragment>
+                  ))}
+                  <td className={`px-4 py-4 font-semibold border-l border-gray-200 ${row.balance < 0 ? "text-destructive" : "text-emerald-700"}`}>
+                    ₹{row.balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
         </table>
       </div>
     </div>

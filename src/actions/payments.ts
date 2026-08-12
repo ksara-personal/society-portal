@@ -583,6 +583,85 @@ export async function getQuarterlyBalances(year?: number) {
   return results;
 }
 
+export async function getQuarterlyPersonBalances(year?: number) {
+  await requireAdmin();
+
+  const quarters = await prisma.paymentQuarter.findMany({
+    where: typeof year === "number" ? { year } : {},
+    orderBy: [{ year: "asc" }, { order: "asc" }],
+  });
+
+  if (quarters.length === 0) return { quarters: [], rows: [] };
+
+  const quarterIds = quarters.map((q) => q.id);
+
+  const paymentsByQuarterAndCollector = await prisma.payment.groupBy({
+    by: ["quarterId", "collectedById"],
+    where: { quarterId: { in: quarterIds }, status: "PAID", collectedById: { not: null } },
+    _sum: { amount: true },
+  });
+
+  const expensesByQuarterAndCreator = await prisma.expenseItem.groupBy({
+    by: ["quarterId", "createdById"],
+    where: { quarterId: { in: quarterIds } },
+    _sum: { amount: true },
+  });
+
+  const userIds = new Set<string>();
+  paymentsByQuarterAndCollector.forEach((entry) => {
+    if (entry.collectedById) userIds.add(entry.collectedById);
+  });
+  expensesByQuarterAndCreator.forEach((entry) => userIds.add(entry.createdById));
+
+  const users = userIds.size > 0
+    ? await prisma.user.findMany({
+        where: { id: { in: Array.from(userIds) } },
+        select: { id: true, name: true, email: true },
+      })
+    : [];
+  const userMap = new Map(users.map((user) => [user.id, user]));
+
+  const collectedMap = new Map<string, number>();
+  for (const entry of paymentsByQuarterAndCollector) {
+    if (!entry.collectedById) continue;
+    collectedMap.set(`${entry.quarterId}::${entry.collectedById}`, Number(entry._sum.amount ?? 0));
+  }
+
+  const spentMap = new Map<string, number>();
+  for (const entry of expensesByQuarterAndCreator) {
+    spentMap.set(`${entry.quarterId}::${entry.createdById}`, Number(entry._sum.amount ?? 0));
+  }
+
+  const rows = Array.from(userIds)
+    .map((userId) => {
+      const user = userMap.get(userId) ?? { id: userId, name: "Unknown", email: "" };
+      let totalCollected = 0;
+      let totalSpent = 0;
+      const perQuarter = quarters.map((q) => {
+        const collected = collectedMap.get(`${q.id}::${userId}`) ?? 0;
+        const spent = spentMap.get(`${q.id}::${userId}`) ?? 0;
+        totalCollected += collected;
+        totalSpent += spent;
+        return { quarterId: q.id, collected, spent };
+      });
+
+      return {
+        userId,
+        user,
+        perQuarter,
+        totalCollected,
+        totalSpent,
+        balance: totalCollected - totalSpent,
+      };
+    })
+    .sort((left, right) => (left.user.name ?? "").localeCompare(right.user.name ?? ""));
+
+  return {
+    quarters: quarters.map((q) => ({ id: q.id, name: q.name })),
+    rows,
+  };
+}
+
 function normalizeFlatNo(flatNo?: string | null) {
   const raw = String(flatNo ?? "").trim();
   return /^\d+$/.test(raw) ? raw.padStart(3, "0") : raw;
