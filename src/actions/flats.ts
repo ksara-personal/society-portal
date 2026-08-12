@@ -63,7 +63,7 @@ export async function createFlat(formData: FormData): Promise<ActionResult> {
   const parsed = flatSchema.safeParse({
     wing: formData.get("wing"),
     flatNo: formData.get("flatNo"),
-    eligibleForMaintenance: formData.get("eligibleForMaintenance") ?? "true",
+    eligibleForMaintenance: formData.get("eligibleForMaintenance"),
   });
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
@@ -84,7 +84,7 @@ export async function updateFlat(id: string, formData: FormData): Promise<Action
   const parsed = flatSchema.safeParse({
     wing: formData.get("wing"),
     flatNo: formData.get("flatNo"),
-    eligibleForMaintenance: formData.get("eligibleForMaintenance") ?? "false",
+    eligibleForMaintenance: formData.get("eligibleForMaintenance"),
   });
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
@@ -114,7 +114,7 @@ export async function createFlatRange(formData: FormData): Promise<ActionResult>
     wing: formData.get("wing"),
     flatStart: formData.get("flatStart"),
     flatEnd: formData.get("flatEnd"),
-    eligibleForMaintenance: formData.get("eligibleForMaintenance") ?? "true",
+    eligibleForMaintenance: formData.get("eligibleForMaintenance"),
   });
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 

@@ -51,7 +51,6 @@ export default function FlatsPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
-    form.set("eligibleForMaintenance", form.get("eligibleForMaintenance") ? "true" : "false");
     const res = editing
       ? await updateFlat(editing.id, form)
       : await createFlat(form);
@@ -69,7 +68,6 @@ export default function FlatsPage() {
   async function handleRangeSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
-    form.set("eligibleForMaintenance", form.get("eligibleForMaintenance") ? "true" : "false");
     const res = await createFlatRange(form);
 
     if ("error" in res) {
