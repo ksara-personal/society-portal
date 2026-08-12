@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MediaUpload, type UploadedFile } from "@/components/issues/media-upload";
 import { createVillaIssue } from "@/actions/villa-issues";
 import { useToast } from "@/components/ui/use-toast";
-import { WINGS, getFlatsForWing } from "@/lib/utils";
+import { useWings, useFlatsForWing } from "@/hooks/use-wings";
 import { ArrowLeft, Home } from "lucide-react";
 import { BRANDING, myUnitIssuesLabel } from "@/config/branding";
 
@@ -38,6 +38,8 @@ export default function NewVillaIssuePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [wing, setWing] = useState<string>("");
   const [flatNo, setFlatNo] = useState<string>("");
+  const wings = useWings();
+  const flats = useFlatsForWing(wing);
 
   // Fetch categories once on mount
   useEffect(() => {
@@ -176,7 +178,7 @@ export default function NewVillaIssuePage() {
                     <SelectValue placeholder="Select wing" />
                   </SelectTrigger>
                   <SelectContent>
-                    {WINGS.map((w) => (
+                    {wings.map((w) => (
                       <SelectItem key={w} value={w}>
                         Wing {w}
                       </SelectItem>
@@ -192,7 +194,7 @@ export default function NewVillaIssuePage() {
                     <SelectValue placeholder={wing ? "Select flat" : "Select wing first"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {getFlatsForWing(wing).map((f) => (
+                    {flats.map((f) => (
                       <SelectItem key={f} value={f}>
                         {f}
                       </SelectItem>

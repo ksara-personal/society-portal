@@ -71,6 +71,7 @@ const adminMasterDataItems: NavItem[] = [
   { href: "/admin/payment-types", label: "Payment Types", icon: IndianRupee },
   { href: "/admin/contacts/categories", label: "Service Contact Categories", icon: BookUser },
   { label: "Quarters", href: "/admin/quarters", icon: CalendarRange },
+  { label: "Flats / Villas", href: "/admin/flats", icon: Building2 },
 ];
 
 const adminFinanceItems: NavItem[] = [

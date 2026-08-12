@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { getResidents } from "@/actions/users";
-import { BUILDING_CONFIG } from "@/config/building";
+import { useWings } from "@/hooks/use-wings";
 import { Phone, Mail, UserCheck, UserX, Search, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -67,11 +67,10 @@ function ResidentCard({ resident }: { resident: Resident }) {
   );
 }
 
-const configuredWings = BUILDING_CONFIG.wings.map((w) => w.name);
-
 export default function ResidentsPage() {
   const [residents, setResidents] = useState<Resident[]>([]);
   const [loading, setLoading] = useState(true);
+  const configuredWings = useWings();
 
   const [wingFilter, setWingFilter] = useState("all");
   const [flatFilter, setFlatFilter] = useState("");

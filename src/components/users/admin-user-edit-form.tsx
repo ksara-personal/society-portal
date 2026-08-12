@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { updateUser } from "@/actions/users";
-import { WINGS, getFlatsForWing } from "@/lib/utils";
+import { useWings, useFlatsForWing } from "@/hooks/use-wings";
 
 export type AdminUserEditData = {
   id: string;
@@ -35,6 +35,8 @@ export default function AdminUserEditForm({ user }: AdminUserEditFormProps) {
   const [flatNo, setFlatNo] = useState(user.flatNo ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const wings = useWings();
+  const flats = useFlatsForWing(wing);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -91,7 +93,7 @@ export default function AdminUserEditForm({ user }: AdminUserEditFormProps) {
               <SelectValue placeholder="Select wing" />
             </SelectTrigger>
             <SelectContent>
-              {WINGS.map((w) => (
+              {wings.map((w) => (
                 <SelectItem key={w} value={w}>
                   Wing {w}
                 </SelectItem>
@@ -107,7 +109,7 @@ export default function AdminUserEditForm({ user }: AdminUserEditFormProps) {
               <SelectValue placeholder={wing ? "Select flat" : "Select wing first"} />
             </SelectTrigger>
             <SelectContent>
-              {getFlatsForWing(wing).map((n) => (
+              {flats.map((n) => (
                 <SelectItem key={n} value={n}>
                   {n}
                 </SelectItem>

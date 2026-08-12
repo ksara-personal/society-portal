@@ -17,7 +17,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { updateIssue } from "@/actions/issues";
 import { useToast } from "@/components/ui/use-toast";
-import { WINGS } from "@/lib/utils";
+import { useWings } from "@/hooks/use-wings";
 import { ArrowLeft } from "lucide-react";
 
 export default function EditIssuePage() {
@@ -28,6 +28,7 @@ export default function EditIssuePage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const wings = useWings();
 
   useEffect(() => {
     Promise.all([
@@ -134,7 +135,7 @@ export default function EditIssuePage() {
                     <SelectValue placeholder="Select wing" />
                   </SelectTrigger>
                   <SelectContent>
-                    {WINGS.map((w) => (
+                    {wings.map((w) => (
                       <SelectItem key={w} value={w}>
                         Wing {w}
                       </SelectItem>

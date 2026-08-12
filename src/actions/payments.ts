@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin, getCurrentUser } from "@/lib/session";
 import { paymentSchema, bulkPaymentSchema } from "@/lib/validators";
 import { summarizeFlatPayment } from "@/lib/payment-summary";
-import { getFlatPairs } from "@/lib/utils";
+import { getFlatPairs } from "@/actions/flats";
 
 type ActionResult = { success: boolean; count?: number } | { error: string };
 
@@ -262,7 +262,7 @@ export async function getCurrentQuarterDues(filters?: {
   });
 
   // Use configured wing/flat ranges as the baseline for dues, then include any existing payment records.
-  const configuredFlats = getFlatPairs(filters?.wing).map((flat) => ({
+  const configuredFlats = (await getFlatPairs(filters?.wing, { eligibleOnly: true })).map((flat) => ({
     ...flat,
     flatNo: normalizeFlatNo(flat.flatNo),
   }));
@@ -695,7 +695,7 @@ export async function getDuesTrackerData(year?: number) {
 
   // Configured wing/flat ranges form the baseline row set; any flat with a payment record is included too.
   const flatKeys = new Set(
-    getFlatPairs().map((flat) => `${flat.wing}-${normalizeFlatNo(flat.flatNo)}`)
+    (await getFlatPairs(undefined, { eligibleOnly: true })).map((flat) => `${flat.wing}-${normalizeFlatNo(flat.flatNo)}`)
   );
 
   const payments = await prisma.payment.findMany({

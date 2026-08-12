@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MediaUpload, type UploadedFile } from "@/components/issues/media-upload";
 import { createIssue } from "@/actions/issues";
 import { useToast } from "@/components/ui/use-toast";
-import { WINGS } from "@/lib/utils";
+import { useWings } from "@/hooks/use-wings";
 import { useEffect } from "react";
 
 interface Category {
@@ -33,6 +33,7 @@ export default function NewIssuePage() {
   const [attachments, setAttachments] = useState<UploadedFile[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [wing, setWing] = useState<string>("");
+  const wings = useWings();
 
   useEffect(() => {
     fetch("/api/categories")
@@ -139,7 +140,7 @@ export default function NewIssuePage() {
                     <SelectValue placeholder="Select wing" />
                   </SelectTrigger>
                   <SelectContent>
-                    {WINGS.map((w) => (
+                    {wings.map((w) => (
                       <SelectItem key={w} value={w}>
                         Wing {w}
                       </SelectItem>
