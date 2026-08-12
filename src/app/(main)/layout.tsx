@@ -5,6 +5,9 @@ import { Header } from "@/components/layout/header";
 import { BRANDING, myUnitIssuesLabel, unitDashboardLabel, allUnitIssuesLabel, membersLabel } from "@/config/branding";
 
 function getTitle(pathname: string): string {
+  if (pathname === "/meetings/new") return "Add Meeting Minutes";
+  if (pathname.match(/\/meetings\/[^/]+\/edit/)) return "Edit Meeting Minutes";
+  if (pathname === "/meetings") return "Meeting Minutes";
   if (pathname === "/dashboard") return "Dashboard";
   if (pathname === "/issues/new") return "Report New Issue";
   if (pathname.match(/\/issues\/[^/]+\/edit/)) return "Edit Issue";
