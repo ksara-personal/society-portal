@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { getQuarters } from "@/actions/quarters";
 import { getDuesTrackerData, getCurrentQuarterDues } from "@/actions/payments";
+import { getFlatEligibilityCounts } from "@/actions/flats";
 import { cn } from "@/lib/utils";
 
 interface PageProps {
@@ -28,6 +29,7 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
   const currentDuesRes = await getCurrentQuarterDues();
   const currentSummary = "error" in currentDuesRes ? null : currentDuesRes.summary;
   const currentQuarter = "error" in currentDuesRes ? null : currentDuesRes.quarter;
+  const eligibility = await getFlatEligibilityCounts();
 
   const quarterTotals = quarters.map((quarter) =>
     rows.reduce(
@@ -65,6 +67,12 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
             Apply
           </button>
         </form>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm max-w-xs">
+          <p className="text-sm font-medium text-muted-foreground">Villas Eligible for Maintenance</p>
+          <p className="mt-2 text-3xl font-semibold text-emerald-700">{eligibility.eligible}</p>
+          <p className="text-xs text-muted-foreground mt-1">of {eligibility.total} total villas</p>
         </div>
 
         {currentSummary && (

@@ -41,8 +41,11 @@ export default function PaymentsPage() {
   const [selectedFlats, setSelectedFlats] = useState<string[]>([]);
   const [selectedQuarterId, setSelectedQuarterId] = useState("");
   const [paymentTypes, setPaymentTypes] = useState<any[]>([]);
+  const [formWing, setFormWing] = useState("");
+  const [formFlatNo, setFormFlatNo] = useState("");
   const { data: session } = useSession();
   const wings = useWings();
+  const formFlats = useFlatsForWing(formWing);
 
   useEffect(() => { loadQuarters(); loadPaymentTypes(); }, []);
   useEffect(() => { load(); }, [page, filters]);
@@ -73,6 +76,8 @@ export default function PaymentsPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
+    form.set("wing", formWing);
+    form.set("flatNo", formFlatNo);
     const res = editing
       ? await updatePayment(editing.id, form)
       : await createPayment(form);
@@ -187,7 +192,7 @@ export default function PaymentsPage() {
 
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => setEditing(null)}><Plus className="mr-2 h-4 w-4" />Add Payment</Button>
+              <Button onClick={() => { setEditing(null); setFormWing(""); setFormFlatNo(""); }}><Plus className="mr-2 h-4 w-4" />Add Payment</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>{editing ? "Edit Payment" : "New Payment"}</DialogTitle></DialogHeader>
@@ -214,12 +219,17 @@ export default function PaymentsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div><Label>Wing</Label>
-                    <Select name="wing" defaultValue={editing?.wing ?? ""}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select value={formWing} onValueChange={(v) => { setFormWing(v); setFormFlatNo(""); }}>
+                      <SelectTrigger><SelectValue placeholder="Select wing" /></SelectTrigger>
                       <SelectContent>{wings.map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                  <div><Label>Flat No</Label><Input name="flatNo" defaultValue={editing?.flatNo} required /></div>
+                  <div><Label>Flat No</Label>
+                    <Select value={formFlatNo} onValueChange={setFormFlatNo} disabled={!formWing}>
+                      <SelectTrigger><SelectValue placeholder={formWing ? "Select flat" : "Select wing first"} /></SelectTrigger>
+                      <SelectContent>{formFlats.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div>
                   <Label>Amount (₹)</Label>
@@ -321,7 +331,7 @@ export default function PaymentsPage() {
               <TableCell>{p.collectedBy?.name ?? "-"}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setFormWing(p.wing ?? ""); setFormFlatNo(p.flatNo ?? ""); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
               </TableCell>

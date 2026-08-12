@@ -17,6 +17,15 @@ export async function getFlats() {
   });
 }
 
+/** Counts of flats/villas by maintenance eligibility. */
+export async function getFlatEligibilityCounts() {
+  const [total, eligible] = await Promise.all([
+    prisma.flat.count(),
+    prisma.flat.count({ where: { eligibleForMaintenance: true } }),
+  ]);
+  return { total, eligible, notEligible: total - eligible };
+}
+
 /** Distinct wing names present in the Flat master, sorted alphabetically. */
 export async function getWings(): Promise<string[]> {
   const flats = await prisma.flat.findMany({
