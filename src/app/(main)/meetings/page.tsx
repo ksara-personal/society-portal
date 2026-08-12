@@ -22,8 +22,7 @@ export default async function MeetingsPage({ searchParams }: PageProps) {
   const year = yearParam ? Number(yearParam) : (years.includes(currentYear) ? currentYear : years[0] ?? currentYear);
   const yearOptions = years.includes(currentYear) ? years : [currentYear, ...years];
 
-  const [latest, meetings] = await Promise.all([
-    getLatestMeeting(),
+  const [meetings] = await Promise.all([
     getMeetings({ year }),
   ]);
 
@@ -43,13 +42,6 @@ export default async function MeetingsPage({ searchParams }: PageProps) {
           </Button>
         )}
       </div>
-
-      {latest && (
-        <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Latest</p>
-          <MeetingCard meeting={latest} isAdmin={isAdmin} defaultOpen highlightLabel="Latest" />
-        </div>
-      )}
 
       <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
         <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">All minutes</p>
@@ -72,8 +64,8 @@ export default async function MeetingsPage({ searchParams }: PageProps) {
         </div>
       ) : (
         <div className="space-y-3">
-          {meetings.map((m: MeetingWithCreator) => (
-            <MeetingCard key={m.id} meeting={m} isAdmin={isAdmin} />
+          {meetings.map((m: MeetingWithCreator, index:Number) => (
+            <MeetingCard key={m.id} meeting={m} isAdmin={isAdmin} defaultOpen={index == 0} />
           ))}
         </div>
       )}
