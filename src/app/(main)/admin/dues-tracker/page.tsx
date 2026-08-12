@@ -69,36 +69,38 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
         </form>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm max-w-xs">
-          <p className="text-sm font-medium text-muted-foreground">Villas Eligible for Maintenance</p>
-          <p className="mt-2 text-3xl font-semibold text-emerald-700">{eligibility.eligible}</p>
-          <p className="text-xs text-muted-foreground mt-1">of {eligibility.total} total villas</p>
-        </div>
-
-        {currentSummary && (
-          <div className="grid gap-4 md:grid-cols-4">
-            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-              <p className="text-sm font-medium text-muted-foreground">Collection Rate ({currentQuarter?.name})</p>
-              <p className="mt-2 text-3xl font-semibold">{currentSummary.collectionRate}%</p>
-              <p className="text-xs text-muted-foreground mt-1">{currentSummary.paidCount} of {currentSummary.totalFlats} paid</p>
-            </div>
-
-            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-              <p className="text-sm font-medium text-muted-foreground">Unpaid Flats</p>
-              <p className="mt-2 text-3xl font-semibold text-destructive">{currentSummary.unpaidCount}</p>
-            </div>
-
-            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-              <p className="text-sm font-medium text-muted-foreground">Paid Flats</p>
-              <p className="mt-2 text-3xl font-semibold text-emerald-700">{currentSummary.paidCount}</p>
-            </div>
-
-            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-              <p className="text-sm font-medium text-muted-foreground">Total Outstanding</p>
-              <p className="mt-2 text-3xl font-semibold">₹{currentSummary.totalDueAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</p>
-            </div>
+        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
+          <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+            <p className="text-xs font-medium text-muted-foreground">Villas Eligible for Maintenance</p>
+            <p className="mt-1 text-xl font-semibold text-emerald-700">{eligibility.eligible}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">of {eligibility.total} total villas</p>
           </div>
-        )}
+
+          {currentSummary && (
+            <>
+              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+                <p className="text-xs font-medium text-muted-foreground">Collection Rate ({currentQuarter?.name})</p>
+                <p className="mt-1 text-xl font-semibold">{currentSummary.collectionRate}%</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{currentSummary.paidCount} of {currentSummary.totalFlats} paid</p>
+              </div>
+
+              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+                <p className="text-xs font-medium text-muted-foreground">Unpaid Flats</p>
+                <p className="mt-1 text-xl font-semibold text-destructive">{currentSummary.unpaidCount}</p>
+              </div>
+
+              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+                <p className="text-xs font-medium text-muted-foreground">Paid Flats</p>
+                <p className="mt-1 text-xl font-semibold text-emerald-700">{currentSummary.paidCount}</p>
+              </div>
+
+              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+                <p className="text-xs font-medium text-muted-foreground">Total Outstanding</p>
+                <p className="mt-1 text-xl font-semibold">₹{currentSummary.totalDueAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</p>
+              </div>
+            </>
+          )}
+        </div>
 
         <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
         <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
