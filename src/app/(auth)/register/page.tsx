@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Building2, CheckCircle2, Clock } from "lucide-react";
 import { registerUser } from "@/actions/auth";
-import { WINGS, getFlatsForWing } from "@/lib/utils";
+import { useWings, useFlatsForWing } from "@/hooks/use-wings";
 import { BRANDING } from "@/config/branding";
 
 export default function RegisterPage() {
@@ -30,6 +30,8 @@ export default function RegisterPage() {
   const [registered, setRegistered] = useState(false);
   const [wing, setWing] = useState("");
   const [flatNo, setFlatNo] = useState("");
+  const wings = useWings();
+  const flats = useFlatsForWing(wing);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -146,7 +148,7 @@ export default function RegisterPage() {
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
-                  {WINGS.map((w) => (
+                  {wings.map((w) => (
                     <SelectItem key={w} value={w}>
                       Wing {w}
                     </SelectItem>
@@ -161,7 +163,7 @@ export default function RegisterPage() {
                   <SelectValue placeholder={wing ? "Select" : "Select wing first"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {getFlatsForWing(wing).map((n) => (
+                  {flats.map((n) => (
                     <SelectItem key={n} value={n}>
                       {n}
                     </SelectItem>

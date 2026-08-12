@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
-import { WINGS } from "@/lib/utils";
+import { useWings } from "@/hooks/use-wings";
 
 interface Category {
   id: string;
@@ -27,6 +27,7 @@ export function IssueFilters({ categories }: IssueFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const wings = useWings();
 
   const createQueryString = useCallback(
     (updates: Record<string, string | null>) => {
@@ -118,7 +119,7 @@ export function IssueFilters({ categories }: IssueFiltersProps) {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Wings</SelectItem>
-          {WINGS.map((wing) => (
+          {wings.map((wing) => (
             <SelectItem key={wing} value={wing}>
               Wing {wing}
             </SelectItem>

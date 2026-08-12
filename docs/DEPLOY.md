@@ -134,10 +134,9 @@ The app will run comfortably free for **years** at typical housing society usage
 ## Customisation
 
 - **App name/branding**: Edit `src/app/layout.tsx` title and `src/components/layout/sidebar.tsx`
-- **Add wings**: Update `WINGS` constant in `src/lib/utils.ts`
+- **Add/edit wings and flats**: Use the Admin → Flats/Villas page (backed by the `Flat` table)
 - **Add categories**: Use the Admin → Categories page
 - **Primary color**: Update `--primary` in `src/app/globals.css`
-- **Add more flat numbers**: Update `FLAT_NUMBERS` in `src/lib/utils.ts`
 
 ---
 

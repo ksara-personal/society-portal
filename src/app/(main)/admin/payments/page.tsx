@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/components/ui/use-toast";
 import { Plus, Pencil, Trash2, Download } from "lucide-react";
-import { WINGS, getFlatsForWing } from "@/lib/utils";
+import { useWings, useFlatsForWing } from "@/hooks/use-wings";
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<any[]>([]);
@@ -42,6 +42,7 @@ export default function PaymentsPage() {
   const [selectedQuarterId, setSelectedQuarterId] = useState("");
   const [paymentTypes, setPaymentTypes] = useState<any[]>([]);
   const { data: session } = useSession();
+  const wings = useWings();
 
   useEffect(() => { loadQuarters(); loadPaymentTypes(); }, []);
   useEffect(() => { load(); }, [page, filters]);
@@ -112,7 +113,7 @@ export default function PaymentsPage() {
     load();
   }
 
-  const flats = selectedWing ? getFlatsForWing(selectedWing) : [];
+  const flats = useFlatsForWing(selectedWing);
 
   return (
     <div className="space-y-6">
@@ -150,7 +151,7 @@ export default function PaymentsPage() {
                   <Select onValueChange={v => { setSelectedWing(v); setSelectedFlats([]); }}>
                     <SelectTrigger><SelectValue placeholder="All wings or select one" /></SelectTrigger>
                     <SelectContent>
-                      {WINGS.map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}
+                      {wings.map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -215,7 +216,7 @@ export default function PaymentsPage() {
                   <div><Label>Wing</Label>
                     <Select name="wing" defaultValue={editing?.wing ?? ""}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{WINGS.map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}</SelectContent>
+                      <SelectContent>{wings.map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div><Label>Flat No</Label><Input name="flatNo" defaultValue={editing?.flatNo} required /></div>
@@ -268,7 +269,7 @@ export default function PaymentsPage() {
         </Select>
         <Select onValueChange={v => setFilters(p => ({ ...p, wing: v }))}>
           <SelectTrigger className="w-[120px]"><SelectValue placeholder="All wings" /></SelectTrigger>
-          <SelectContent>{WINGS.map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}</SelectContent>
+        <SelectContent>{wings.map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}</SelectContent>
         </Select>
         <Input placeholder="Flat No" className="w-[120px]" onChange={e => setFilters(p => ({ ...p, flatNo: e.target.value }))} />
         <Select onValueChange={v => setFilters(p => ({ ...p, status: v }))}>

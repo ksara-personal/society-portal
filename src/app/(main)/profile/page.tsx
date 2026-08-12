@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { getProfile, updateProfile, changePassword } from "@/actions/profile";
-import { WINGS, getFlatsForWing } from "@/lib/utils";
+import { useWings, useFlatsForWing } from "@/hooks/use-wings";
 import {
   User,
   Shield,
@@ -50,6 +50,8 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [wing, setWing] = useState("");
   const [flatNo, setFlatNo] = useState("");
+  const wings = useWings();
+  const flats = useFlatsForWing(wing);
   const [profileLoading, setProfileLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [profileError, setProfileError] = useState("");
@@ -237,7 +239,7 @@ export default function ProfilePage() {
                     <SelectValue placeholder="Select wing" />
                   </SelectTrigger>
                   <SelectContent>
-                    {WINGS.map((w) => (
+                    {wings.map((w) => (
                       <SelectItem key={w} value={w}>Wing {w}</SelectItem>
                     ))}
                   </SelectContent>
@@ -250,7 +252,7 @@ export default function ProfilePage() {
                     <SelectValue placeholder={wing ? "Select flat" : "Select wing first"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {getFlatsForWing(wing).map((n) => (
+                    {flats.map((n) => (
                       <SelectItem key={n} value={n}>{n}</SelectItem>
                     ))}
                   </SelectContent>

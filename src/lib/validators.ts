@@ -168,7 +168,25 @@ export const bulkPaymentSchema = z.object({
   flatNos: z.array(z.string()).min(1, "Select at least one flat"),
 });
 
+export const flatSchema = z.object({
+  wing: z.string().min(1, "Wing is required").max(20),
+  flatNo: z.string().min(1, "Flat/villa no. is required").max(20),
+  eligibleForMaintenance: z.coerce.boolean().default(true),
+});
+
+export const flatRangeSchema = z.object({
+  wing: z.string().min(1, "Wing is required").max(20),
+  flatStart: z.coerce.number().int().min(1),
+  flatEnd: z.coerce.number().int().min(1),
+  eligibleForMaintenance: z.coerce.boolean().default(true),
+}).refine((data) => data.flatEnd >= data.flatStart, {
+  message: "End number must be greater than or equal to start number",
+  path: ["flatEnd"],
+});
+
 export type QuarterFormValues = z.infer<typeof quarterSchema>;
 export type PaymentFormValues = z.infer<typeof paymentSchema>;
 export type ContactFormValues = z.infer<typeof contactSchema>;
 export type ContactCategoryFormValues = z.infer<typeof contactCategorySchema>;
+export type FlatFormValues = z.infer<typeof flatSchema>;
+

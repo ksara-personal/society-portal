@@ -191,6 +191,29 @@ async function main() {
     });
   }
   console.log(`✅ ${quarters.length} payment quarters seeded`);
+
+  // Seed the Flat master with the default wing/flat ranges (Wings A-E)
+  const defaultWings = [
+    { name: "A", flatStart: 1, flatEnd: 9 },
+    { name: "B", flatStart: 10, flatEnd: 19 },
+    { name: "C", flatStart: 20, flatEnd: 33 },
+    { name: "D", flatStart: 34, flatEnd: 49 },
+    { name: "E", flatStart: 50, flatEnd: 57 },
+  ];
+
+  let flatCount = 0;
+  for (const wing of defaultWings) {
+    for (let n = wing.flatStart; n <= wing.flatEnd; n++) {
+      const flatNo = String(n).padStart(3, "0");
+      await prisma.flat.upsert({
+        where: { wing_flatNo: { wing: wing.name, flatNo } },
+        update: {},
+        create: { wing: wing.name, flatNo, eligibleForMaintenance: true },
+      });
+      flatCount++;
+    }
+  }
+  console.log(`✅ ${flatCount} flats/villas seeded`);
 }
 
 main()

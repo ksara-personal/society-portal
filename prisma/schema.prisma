@@ -226,6 +226,19 @@ model PaymentQuarter {
   @@index([order])
 }
 
+model Flat {
+  id                     String   @id @default(cuid())
+  wing                   String
+  flatNo                 String
+  eligibleForMaintenance Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@unique([wing, flatNo])
+  @@index([wing])
+  @@index([eligibleForMaintenance])
+}
+
 model Payment {
   id            String         @id @default(cuid())
   amount        Decimal        @db.Decimal(10, 2)

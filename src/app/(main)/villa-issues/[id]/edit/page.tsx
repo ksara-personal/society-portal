@@ -17,7 +17,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { updateVillaIssue } from "@/actions/villa-issues";
 import { useToast } from "@/components/ui/use-toast";
-import { WINGS, getFlatsForWing } from "@/lib/utils";
+import { useWings, useFlatsForWing } from "@/hooks/use-wings";
 import { ArrowLeft } from "lucide-react";
 import { BRANDING } from "@/config/branding";
 
@@ -31,6 +31,8 @@ export default function EditVillaIssuePage() {
   const [saving, setSaving] = useState(false);
   const [wing, setWing] = useState("");
   const [flatNo, setFlatNo] = useState("");
+  const wings = useWings();
+  const flats = useFlatsForWing(wing);
 
   useEffect(() => {
     Promise.all([
@@ -145,7 +147,7 @@ export default function EditVillaIssuePage() {
                     <SelectValue placeholder="Select wing" />
                   </SelectTrigger>
                   <SelectContent>
-                    {WINGS.map((w) => (
+                    {wings.map((w) => (
                       <SelectItem key={w} value={w}>
                         Wing {w}
                       </SelectItem>
@@ -161,7 +163,7 @@ export default function EditVillaIssuePage() {
                     <SelectValue placeholder={wing ? "Select flat" : "Select wing first"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {getFlatsForWing(wing).map((f) => (
+                    {flats.map((f) => (
                       <SelectItem key={f} value={f}>
                         {f}
                       </SelectItem>

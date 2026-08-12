@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { WINGS, getFlatsForWing } from "@/lib/utils";
+import { useWings, useFlatsForWing } from "@/hooks/use-wings";
 import { SlidersHorizontal, X } from "lucide-react";
 
 export function AllVillaFilter() {
@@ -20,6 +20,8 @@ export function AllVillaFilter() {
 
   const [wing, setWing] = useState(searchParams.get("wing") ?? "");
   const [flatNo, setFlatNo] = useState(searchParams.get("flatNo") ?? "");
+  const wings = useWings();
+  const flats = useFlatsForWing(wing);
 
   function apply() {
     const params = new URLSearchParams();
@@ -51,7 +53,7 @@ export function AllVillaFilter() {
             <SelectValue placeholder="All wings" />
           </SelectTrigger>
           <SelectContent>
-            {WINGS.map((w) => (
+            {wings.map((w) => (
               <SelectItem key={w} value={w}>
                 Wing {w}
               </SelectItem>
@@ -66,7 +68,7 @@ export function AllVillaFilter() {
             <SelectValue placeholder="All flats" />
           </SelectTrigger>
           <SelectContent>
-            {getFlatsForWing(wing).map((f) => (
+            {flats.map((f) => (
               <SelectItem key={f} value={f}>
                 Flat {f}
               </SelectItem>
