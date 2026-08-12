@@ -318,14 +318,12 @@ export default function PaymentsPage() {
             <TableHead>Status</TableHead>
             <TableHead>Paid On</TableHead>
             <TableHead>Collected By</TableHead>
-            <TableHead className="w-[120px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {payments.map((p) => (
             <TableRow key={p.id}>
               <TableCell>{p.quarter.name}</TableCell>
-              <TableCell>{p.paymentType?.name ?? "—"}</TableCell>
               <TableCell>{p.wing}-{p.flatNo}</TableCell>
               <TableCell>₹{Number(p.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</TableCell>
               <TableCell>
@@ -338,7 +336,7 @@ export default function PaymentsPage() {
                   {p.status}
                 </span>
               </TableCell>
-              <TableCell>{p.paidAt ? new Date(p.paidAt).toLocaleDateString() : "-"}</TableCell>
+              <TableCell>{p.paymentType?.name ?? "—"}</TableCell>
               <TableCell>{p.collectedBy?.name ?? "-"}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
