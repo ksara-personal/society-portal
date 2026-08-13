@@ -213,9 +213,22 @@ export async function importExpenseItems(
     }
 
     const paidByName = (row["Paid By"] ?? "").trim().toLowerCase();
-    const paidBy = users.find(
+    let paidBy = users.find(
       (u) => u.name.trim().toLowerCase() === paidByName || u.email.toLowerCase() === paidByName
     );
+    if (!paidBy && paidByName) {
+      // fall back to a partial (substring) match on name when no exact match exists
+      const partialMatches = users.filter((u) => u.name.trim().toLowerCase().includes(paidByName));
+      if (partialMatches.length === 1) paidBy = partialMatches[0];
+      else if (partialMatches.length > 1) {
+        results.push({
+          row: rowNum,
+          success: false,
+          error: `"${row["Paid By"]}" matches multiple users (${partialMatches.map((u) => u.name).join(", ")}) - use a more specific name`,
+        });
+        continue;
+      }
+    }
     if (!paidBy) {
       results.push({ row: rowNum, success: false, error: `User "${row["Paid By"]}" not found` });
       continue;
