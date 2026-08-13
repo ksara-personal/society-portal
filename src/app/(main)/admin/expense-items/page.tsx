@@ -6,5 +6,5 @@ export default async function ExpenseItemsPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== "ADMIN") redirect("/dashboard");
 
-  return <ExpenseItemsAdminClient />;
+  return <ExpenseItemsAdminClient currentUserId={user.id} />;
 }

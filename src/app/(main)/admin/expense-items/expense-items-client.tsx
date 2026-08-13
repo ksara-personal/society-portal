@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,24 +8,38 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/components/ui/use-toast";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Upload } from "lucide-react";
 import {
   createExpenseItem,
   deleteExpenseItem,
   getExpenseCategories,
   getExpenseItems,
   getExpenseTypes,
+  importExpenseItems,
+  type ExpenseImportRow,
+  type ExpenseImportRowResult,
 } from "@/actions/expense-master";
 import { getActiveQuarters } from "@/actions/quarters";
+import { getAdmins } from "@/actions/payments";
+import { parseCsv } from "@/lib/utils";
 
-export default function ExpenseItemsAdminClient() {
+interface ExpenseItemsAdminClientProps {
+  currentUserId: string;
+}
+
+export default function ExpenseItemsAdminClient({ currentUserId }: ExpenseItemsAdminClientProps) {
   const [items, setItems] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [types, setTypes] = useState<any[]>([]);
   const [quarters, setQuarters] = useState<any[]>([]);
+  const [admins, setAdmins] = useState<any[]>([]);
   const [selectedQuarterId, setSelectedQuarterId] = useState<string>("ALL");
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResults, setImportResults] = useState<ExpenseImportRowResult[] | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadStatic();
@@ -38,27 +52,31 @@ export default function ExpenseItemsAdminClient() {
   }, [selectedQuarterId]);
 
   async function load() {
-    const [itemsRes, categoriesRes, typesRes, quartersRes] = await Promise.all([
+    const [itemsRes, categoriesRes, typesRes, quartersRes, adminsRes] = await Promise.all([
       getExpenseItems(),
       getExpenseCategories(),
       getExpenseTypes(),
       getActiveQuarters(),
+      getAdmins(),
     ]);
     setItems(itemsRes);
     setCategories(categoriesRes);
     setTypes(typesRes);
     setQuarters(quartersRes);
+    setAdmins(adminsRes);
   }
 
   async function loadStatic() {
-    const [categoriesRes, typesRes, quartersRes] = await Promise.all([
+    const [categoriesRes, typesRes, quartersRes, adminsRes] = await Promise.all([
       getExpenseCategories(),
       getExpenseTypes(),
       getActiveQuarters(),
+      getAdmins(),
     ]);
     setCategories(categoriesRes);
     setTypes(typesRes);
     setQuarters(quartersRes);
+    setAdmins(adminsRes);
   }
 
   async function loadItems() {
@@ -93,6 +111,40 @@ export default function ExpenseItemsAdminClient() {
     }
   }
 
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    setImportResults(null);
+    try {
+      const text = await file.text();
+      const rows = parseCsv(text) as unknown as ExpenseImportRow[];
+      if (rows.length === 0) {
+        toast({ title: "Error", description: "No rows found in CSV", variant: "destructive" });
+        return;
+      }
+
+      const result = await importExpenseItems(rows);
+      if ("error" in result) {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
+      } else {
+        setImportResults(result.results);
+        const successCount = result.results.filter((r) => r.success).length;
+        const failCount = result.results.length - successCount;
+        toast({
+          title: "Import complete",
+          description: `${successCount} imported, ${failCount} failed`,
+          variant: failCount > 0 ? "destructive" : undefined,
+        });
+        await load();
+      }
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between gap-4">
@@ -115,6 +167,68 @@ export default function ExpenseItemsAdminClient() {
               </SelectContent>
             </Select>
           </div>
+
+          <Dialog
+            open={importOpen}
+            onOpenChange={(v) => {
+              setImportOpen(v);
+              if (!v) setImportResults(null);
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button variant="outline" onClick={() => setImportOpen(true)}>
+                <Upload className="mr-2 h-4 w-4" />
+                Import CSV
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Import Expenses from CSV</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <p className="text-sm text-gray-500">
+                  CSV must have the columns: <code className="text-xs">Date, Quarter, Category, Description, Amount (₹), Paid By, Expense Type</code>.
+                  Date must be in <code className="text-xs">yyyy-MM-dd</code> format. Quarter, Category, Expense Type and Paid By must match existing
+                  names/emails exactly.
+                </p>
+
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  disabled={importing}
+                  onChange={handleImportFile}
+                />
+
+                {importing && <p className="text-sm text-gray-500">Importing…</p>}
+
+                {importResults && (
+                  <div className="max-h-64 overflow-y-auto rounded border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-16">Row</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {importResults.map((r) => (
+                          <TableRow key={r.row}>
+                            <TableCell>{r.row}</TableCell>
+                            <TableCell className={r.success ? "text-green-600" : "text-red-600"}>
+                              {r.success ? "Imported" : r.error}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -184,9 +298,25 @@ export default function ExpenseItemsAdminClient() {
                   <Input id="description" name="description" />
                 </div>
 
-                <div>
-                  <Label htmlFor="amount">Amount</Label>
-                  <Input id="amount" name="amount" type="number" step="0.01" min="0.01" required />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="amount">Amount</Label>
+                    <Input id="amount" name="amount" type="number" step="0.01" min="0.01" required />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="createdById">Paid by</Label>
+                    <Select name="createdById" defaultValue={currentUserId} required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select admin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {admins.map((admin) => (
+                          <SelectItem key={admin.id} value={admin.id}>{admin.name ?? admin.email}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <Button type="submit" className="w-full" disabled={saving}>

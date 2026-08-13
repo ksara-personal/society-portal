@@ -61,6 +61,7 @@ export const expenseItemSchema = z.object({
   expenseTypeId: z.string().min(1, "Expense type is required"),
   description: z.string().max(500).optional(),
   amount: z.coerce.number().positive("Amount must be greater than 0"),
+  createdById: z.string().optional(),
 });
 
 export const registerSchema = z.object({

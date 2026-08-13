@@ -105,16 +105,28 @@ export async function createExpenseItem(formData: FormData): Promise<ActionResul
     expenseTypeId: formData.get("expenseTypeId"),
     description: formData.get("description"),
     amount: formData.get("amount"),
+    createdById: formData.get("createdById") || undefined,
   });
 
   if (!parsed.success) return { error: parsed.error.errors[0].message };
+
+  // "Paid by" must be an active admin - falls back to the current admin if none was picked
+  let createdById = admin.id;
+  if (parsed.data.createdById && parsed.data.createdById !== admin.id) {
+    const paidBy = await prisma.user.findFirst({
+      where: { id: parsed.data.createdById, role: "ADMIN", isActive: true },
+      select: { id: true },
+    });
+    if (!paidBy) return { error: "Invalid 'Paid by' user" };
+    createdById = paidBy.id;
+  }
 
   await prisma.expenseItem.create({
     data: {
       date: new Date(parsed.data.date),
       description: parsed.data.description ?? "",
       amount: parsed.data.amount,
-      createdById: admin.id,
+      createdById,
       quarterId: parsed.data.quarterId,
       expenseCategoryId: parsed.data.expenseCategoryId,
       expenseTypeId: parsed.data.expenseTypeId,
@@ -130,6 +142,125 @@ export async function deleteExpenseItem(id: string): Promise<ActionResult> {
   await prisma.expenseItem.delete({ where: { id } });
   revalidatePath("/admin/expense-items");
   return { success: true };
+}
+
+export interface ExpenseImportRow {
+  Date: string;
+  Quarter: string;
+  Category: string;
+  Description?: string;
+  "Amount (₹)": string;
+  "Paid By": string;
+  "Expense Type": string;
+}
+
+export interface ExpenseImportRowResult {
+  row: number;
+  success: boolean;
+  error?: string;
+}
+
+export async function importExpenseItems(
+  rows: ExpenseImportRow[]
+): Promise<{ results: ExpenseImportRowResult[] } | { error: string }> {
+  await requireAdmin();
+
+  if (!Array.isArray(rows) || rows.length === 0) return { error: "No rows to import" };
+
+  const [quarters, categories, types, users] = await Promise.all([
+    prisma.paymentQuarter.findMany(),
+    prisma.expenseCategory.findMany(),
+    prisma.expenseType.findMany(),
+    prisma.user.findMany({ where: { isActive: true } }),
+  ]);
+
+  const byName = <T extends { name: string }>(list: T[], name: string) =>
+    list.find((item) => item.name.trim().toLowerCase() === name.trim().toLowerCase());
+
+  const results: ExpenseImportRowResult[] = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowNum = i + 2; // account for the header row
+
+    const dateStr = (row.Date ?? "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      results.push({ row: rowNum, success: false, error: `Invalid date "${dateStr}" (expected yyyy-MM-dd)` });
+      continue;
+    }
+    const date = new Date(`${dateStr}T00:00:00.000Z`);
+    if (Number.isNaN(date.getTime())) {
+      results.push({ row: rowNum, success: false, error: `Invalid date "${dateStr}"` });
+      continue;
+    }
+
+    const quarter = byName(quarters, row.Quarter ?? "");
+    if (!quarter) {
+      results.push({ row: rowNum, success: false, error: `Quarter "${row.Quarter}" not found` });
+      continue;
+    }
+
+    const category = byName(categories, row.Category ?? "");
+    if (!category) {
+      results.push({ row: rowNum, success: false, error: `Expense category "${row.Category}" not found` });
+      continue;
+    }
+
+    const expenseType = byName(types, row["Expense Type"] ?? "");
+    if (!expenseType) {
+      results.push({ row: rowNum, success: false, error: `Expense type "${row["Expense Type"]}" not found` });
+      continue;
+    }
+
+    const paidByName = (row["Paid By"] ?? "").trim().toLowerCase();
+    let paidBy = users.find(
+      (u) => u.name.trim().toLowerCase() === paidByName || u.email.toLowerCase() === paidByName
+    );
+    if (!paidBy && paidByName) {
+      // fall back to a partial (substring) match on name when no exact match exists
+      const partialMatches = users.filter((u) => u.name.trim().toLowerCase().includes(paidByName));
+      if (partialMatches.length === 1) paidBy = partialMatches[0];
+      else if (partialMatches.length > 1) {
+        results.push({
+          row: rowNum,
+          success: false,
+          error: `"${row["Paid By"]}" matches multiple users (${partialMatches.map((u) => u.name).join(", ")}) - use a more specific name`,
+        });
+        continue;
+      }
+    }
+    if (!paidBy) {
+      results.push({ row: rowNum, success: false, error: `User "${row["Paid By"]}" not found` });
+      continue;
+    }
+
+    const amountRaw = (row["Amount (₹)"] ?? "").replace(/[₹,\s]/g, "");
+    const amount = Number(amountRaw);
+    if (!amountRaw || Number.isNaN(amount) || amount <= 0) {
+      results.push({ row: rowNum, success: false, error: `Invalid amount "${row["Amount (₹)"]}"` });
+      continue;
+    }
+
+    try {
+      await prisma.expenseItem.create({
+        data: {
+          date,
+          description: (row.Description ?? "").trim(),
+          amount,
+          createdById: paidBy.id,
+          quarterId: quarter.id,
+          expenseCategoryId: category.id,
+          expenseTypeId: expenseType.id,
+        },
+      });
+      results.push({ row: rowNum, success: true });
+    } catch {
+      results.push({ row: rowNum, success: false, error: "Failed to create expense item" });
+    }
+  }
+
+  revalidatePath("/admin/expense-items");
+  return { results };
 }
 
 export async function createExpenseType(formData: FormData): Promise<ActionResult> {
