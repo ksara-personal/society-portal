@@ -23,14 +23,20 @@ export default async function QuarterlyBalancesPage({ searchParams }: PageProps)
 
   // Opening/closing balances are cumulative running totals, not per-quarter
   // amounts, so the year total must use the first quarter's opening and the
-  // last quarter's closing rather than summing every row.
+  // closing of the latest started quarter rather than summing every row.
+  // Quarters that haven't started yet are zeroed out (see getQuarterlyBalances)
+  // and can still follow the current quarter in the list, so they must be skipped.
+  const today = new Date();
+  const startedBalances = balances.filter((b) => new Date(b.startDate) <= today);
+  const lastStartedBalance = startedBalances[startedBalances.length - 1];
+
   const totalOpening = balances[0]?.opening ?? 0;
   const totalMaintenance = balances.reduce((s, b) => s + b.maintenance, 0);
   const totalBuilder = balances.reduce((s, b) => s + b.builderFunds, 0);
   const totalOther = balances.reduce((s, b) => s + b.otherIncome, 0);
   const totalExpenses = balances.reduce((s, b) => s + b.totalExpenses, 0);
   const totalNet = balances.reduce((s, b) => s + b.netMovement, 0);
-  const totalClosing = balances[balances.length - 1]?.closing ?? 0;
+  const totalClosing = lastStartedBalance?.closing ?? 0;
 
   return (
     <div className="space-y-6">
