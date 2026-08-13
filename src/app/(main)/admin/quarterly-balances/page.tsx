@@ -21,13 +21,16 @@ export default async function QuarterlyBalancesPage({ searchParams }: PageProps)
   const balances = await getQuarterlyBalances(year);
   const personBalances = await getQuarterlyPersonBalances(year);
 
-  const totalOpening = balances.reduce((s, b) => s + b.opening, 0);
+  // Opening/closing balances are cumulative running totals, not per-quarter
+  // amounts, so the year total must use the first quarter's opening and the
+  // last quarter's closing rather than summing every row.
+  const totalOpening = balances[0]?.opening ?? 0;
   const totalMaintenance = balances.reduce((s, b) => s + b.maintenance, 0);
   const totalBuilder = balances.reduce((s, b) => s + b.builderFunds, 0);
   const totalOther = balances.reduce((s, b) => s + b.otherIncome, 0);
   const totalExpenses = balances.reduce((s, b) => s + b.totalExpenses, 0);
   const totalNet = balances.reduce((s, b) => s + b.netMovement, 0);
-  const totalClosing = balances.reduce((s, b) => s + b.closing, 0);
+  const totalClosing = balances[balances.length - 1]?.closing ?? 0;
 
   return (
     <div className="space-y-6">
