@@ -150,7 +150,7 @@ export default function ExpenseItemsAdminClient({ currentUserId }: ExpenseItemsA
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">All Expenses</h1>
-          <p className="text-sm text-gray-500">Manage administrative expense entry records.</p>
+          <p className="text-sm text-gray-500">Manage administrative expense entry records.   <b>Total :{items.reduce((sum, qa) => sum + Number(qa.amount), 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</b></p>
         </div>
 
         <div className="flex items-center gap-3">

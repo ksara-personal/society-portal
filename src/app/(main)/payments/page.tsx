@@ -18,7 +18,7 @@ export default async function MyPaymentsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">My Quarterly Payments</h1>
+      <h1 className="text-2xl font-bold">My Payments</h1>
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
