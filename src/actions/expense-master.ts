@@ -105,16 +105,28 @@ export async function createExpenseItem(formData: FormData): Promise<ActionResul
     expenseTypeId: formData.get("expenseTypeId"),
     description: formData.get("description"),
     amount: formData.get("amount"),
+    createdById: formData.get("createdById") || undefined,
   });
 
   if (!parsed.success) return { error: parsed.error.errors[0].message };
+
+  // "Paid by" must be an active admin - falls back to the current admin if none was picked
+  let createdById = admin.id;
+  if (parsed.data.createdById && parsed.data.createdById !== admin.id) {
+    const paidBy = await prisma.user.findFirst({
+      where: { id: parsed.data.createdById, role: "ADMIN", isActive: true },
+      select: { id: true },
+    });
+    if (!paidBy) return { error: "Invalid 'Paid by' user" };
+    createdById = paidBy.id;
+  }
 
   await prisma.expenseItem.create({
     data: {
       date: new Date(parsed.data.date),
       description: parsed.data.description ?? "",
       amount: parsed.data.amount,
-      createdById: admin.id,
+      createdById,
       quarterId: parsed.data.quarterId,
       expenseCategoryId: parsed.data.expenseCategoryId,
       expenseTypeId: parsed.data.expenseTypeId,

@@ -17,12 +17,18 @@ import {
   getExpenseTypes,
 } from "@/actions/expense-master";
 import { getActiveQuarters } from "@/actions/quarters";
+import { getAdmins } from "@/actions/payments";
 
-export default function ExpenseItemsAdminClient() {
+interface ExpenseItemsAdminClientProps {
+  currentUserId: string;
+}
+
+export default function ExpenseItemsAdminClient({ currentUserId }: ExpenseItemsAdminClientProps) {
   const [items, setItems] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [types, setTypes] = useState<any[]>([]);
   const [quarters, setQuarters] = useState<any[]>([]);
+  const [admins, setAdmins] = useState<any[]>([]);
   const [selectedQuarterId, setSelectedQuarterId] = useState<string>("ALL");
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -38,27 +44,31 @@ export default function ExpenseItemsAdminClient() {
   }, [selectedQuarterId]);
 
   async function load() {
-    const [itemsRes, categoriesRes, typesRes, quartersRes] = await Promise.all([
+    const [itemsRes, categoriesRes, typesRes, quartersRes, adminsRes] = await Promise.all([
       getExpenseItems(),
       getExpenseCategories(),
       getExpenseTypes(),
       getActiveQuarters(),
+      getAdmins(),
     ]);
     setItems(itemsRes);
     setCategories(categoriesRes);
     setTypes(typesRes);
     setQuarters(quartersRes);
+    setAdmins(adminsRes);
   }
 
   async function loadStatic() {
-    const [categoriesRes, typesRes, quartersRes] = await Promise.all([
+    const [categoriesRes, typesRes, quartersRes, adminsRes] = await Promise.all([
       getExpenseCategories(),
       getExpenseTypes(),
       getActiveQuarters(),
+      getAdmins(),
     ]);
     setCategories(categoriesRes);
     setTypes(typesRes);
     setQuarters(quartersRes);
+    setAdmins(adminsRes);
   }
 
   async function loadItems() {
@@ -184,9 +194,25 @@ export default function ExpenseItemsAdminClient() {
                   <Input id="description" name="description" />
                 </div>
 
-                <div>
-                  <Label htmlFor="amount">Amount</Label>
-                  <Input id="amount" name="amount" type="number" step="0.01" min="0.01" required />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="amount">Amount</Label>
+                    <Input id="amount" name="amount" type="number" step="0.01" min="0.01" required />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="createdById">Paid by</Label>
+                    <Select name="createdById" defaultValue={currentUserId} required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select admin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {admins.map((admin) => (
+                          <SelectItem key={admin.id} value={admin.id}>{admin.name ?? admin.email}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <Button type="submit" className="w-full" disabled={saving}>
