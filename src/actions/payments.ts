@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin, getCurrentUser } from "@/lib/session";
+import { requireAdmin, requireAuth, getCurrentUser } from "@/lib/session";
 import { paymentSchema, bulkPaymentSchema } from "@/lib/validators";
 import { summarizeFlatPayment } from "@/lib/payment-summary";
 import { getFlatPairs } from "@/actions/flats";
@@ -220,7 +220,8 @@ export async function generateBulkPayments(formData: FormData): Promise<ActionRe
 export async function getCurrentQuarterDues(filters?: {
   wing?: string;
 }) {
-  await requireAdmin();
+  // Shared with residents via the Dues Tracker page
+  await requireAuth();
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -265,11 +266,13 @@ export async function getCurrentQuarterDues(filters?: {
   // Build list of flat keys that are missing residents.
   const missingKeys: string[] = [];
 
-  // Get existing payments for this quarter
+  // Get existing payments for this quarter (Dues Tracker only tracks the Maintenance payment type;
+  // untyped/legacy records are treated as Maintenance too, only explicit other types are excluded)
   const existingPayments = await prisma.payment.findMany({
     where: {
       quarterId: currentQuarter.id,
       ...(filters?.wing ? { wing: filters.wing } : {}),
+      OR: [{ paymentTypeId: null }, { paymentType: { slug: "maintenance" } }],
     },
     select: { wing: true, flatNo: true, status: true, amount: true, userId: true, id: true },
   });
@@ -353,8 +356,14 @@ export async function getCurrentQuarterDues(filters?: {
   const totalFlats = uniqueFlats.length;
   const paidCount = uniqueFlats.length - dues.length;
   const unpaidCount = dues.length;
+  const quarterTarget = Number(currentQuarter.defaultAmount ?? 0);
   const totalDueAmount = dues.reduce((sum, due) => {
-    const paymentAmount = Number(due.payment?.amount ?? currentQuarter.defaultAmount ?? 0);
+    // A PARTIAL payment's amount is what has already been paid, so the outstanding due is the remainder, not the full recorded amount
+    if (due.payment?.status === "PARTIAL") {
+      const paidAmount = Number(due.payment.amount ?? 0);
+      return sum + Math.max(quarterTarget - paidAmount, 0);
+    }
+    const paymentAmount = Number(due.payment?.amount ?? quarterTarget);
     return sum + paymentAmount;
   }, 0);
 
@@ -375,7 +384,7 @@ export async function getFinanceUserSummary(filters?: { quarterId?: string; user
   await requireAdmin();
 
   const paymentWhere: any = {
-    status: "PAID",
+    status: { in: ["PAID", "PARTIAL"] },
     collectedById: { not: null },
   };
   if (filters?.quarterId) paymentWhere.quarterId = filters.quarterId;
@@ -516,16 +525,16 @@ export async function getQuarterlyBalances(year?: number) {
   const paymentTypes = await prisma.paymentType.findMany({ select: { id: true, slug: true } });
   const slugToId = new Map(paymentTypes.map((pt) => [pt.slug, pt.id]));
 
-  // group payments per quarter and paymentType
+  // group payments per quarter and paymentType (PARTIAL amounts are real cash already collected)
   const paymentsByQuarterAndType = await prisma.payment.groupBy({
     by: ["quarterId", "paymentTypeId"],
-    where: { quarterId: { in: quarterIds }, status: "PAID" },
+    where: { quarterId: { in: quarterIds }, status: { in: ["PAID", "PARTIAL"] } },
     _sum: { amount: true },
   });
 
   const paymentsTotalByQuarter = await prisma.payment.groupBy({
     by: ["quarterId"],
-    where: { quarterId: { in: quarterIds }, status: "PAID" },
+    where: { quarterId: { in: quarterIds }, status: { in: ["PAID", "PARTIAL"] } },
     _sum: { amount: true },
   });
 
@@ -576,7 +585,7 @@ export async function getQuarterlyBalances(year?: number) {
     let prevPaymentsSum = 0;
     let prevExpensesSum = 0;
     if (prevIds.length > 0) {
-      const prevPay = await prisma.payment.aggregate({ where: { quarterId: { in: prevIds }, status: "PAID" }, _sum: { amount: true } });
+      const prevPay = await prisma.payment.aggregate({ where: { quarterId: { in: prevIds }, status: { in: ["PAID", "PARTIAL"] } }, _sum: { amount: true } });
       const prevExp = await prisma.expenseItem.aggregate({ where: { quarterId: { in: prevIds } }, _sum: { amount: true } });
       prevPaymentsSum = Number(prevPay._sum.amount ?? 0);
       prevExpensesSum = Number(prevExp._sum.amount ?? 0);
@@ -630,7 +639,7 @@ export async function getQuarterlyPersonBalances(year?: number) {
 
   const paymentsByQuarterAndCollector = await prisma.payment.groupBy({
     by: ["quarterId", "collectedById"],
-    where: { quarterId: { in: quarterIds }, status: "PAID", collectedById: { not: null } },
+    where: { quarterId: { in: quarterIds }, status: { in: ["PAID", "PARTIAL"] }, collectedById: { not: null } },
     _sum: { amount: true },
   });
 
@@ -701,7 +710,8 @@ function normalizeFlatNo(flatNo?: string | null) {
 }
 
 export async function getDuesTrackerData(year?: number) {
-  await requireAdmin();
+  // Shared with residents via the Dues Tracker page
+  await requireAuth();
 
   const quarters = await prisma.paymentQuarter.findMany({
     where: typeof year === "number" ? { year } : {},
@@ -727,21 +737,39 @@ export async function getDuesTrackerData(year?: number) {
   }
 
   // Configured wing/flat ranges form the baseline row set; any flat with a payment record is included too.
+  const allFlatPairs = await getFlatPairs();
+  const eligibilityByFlat = new Map<string, boolean>();
+  for (const flat of allFlatPairs) {
+    eligibilityByFlat.set(`${flat.wing}-${normalizeFlatNo(flat.flatNo)}`, flat.eligibleForMaintenance);
+  }
+
   const flatKeys = new Set(
-    (await getFlatPairs(undefined, { eligibleOnly: true })).map((flat) => `${flat.wing}-${normalizeFlatNo(flat.flatNo)}`)
+    allFlatPairs
+      .filter((flat) => flat.eligibleForMaintenance)
+      .map((flat) => `${flat.wing}-${normalizeFlatNo(flat.flatNo)}`)
   );
 
   const payments = await prisma.payment.findMany({
-    where: { quarterId: { in: quarterIds }, status: "PAID" },
-    select: { quarterId: true, wing: true, flatNo: true, amount: true },
+    where: {
+      quarterId: { in: quarterIds },
+      status: { in: ["PAID", "PARTIAL", "WAIVED"] },
+      OR: [{ paymentTypeId: null }, { paymentType: { slug: "maintenance" } }],
+    },
+    select: { quarterId: true, wing: true, flatNo: true, amount: true, status: true },
   });
 
   const paidByFlatAndQuarter = new Map<string, number>();
+  // PAID/WAIVED fully resolve a quarter regardless of the recorded amount (e.g. a
+  // reduced amount approved for residents who don't use all facilities)
+  const resolvedFlatQuarters = new Set<string>();
   for (const payment of payments) {
     const flatKey = `${payment.wing}-${normalizeFlatNo(payment.flatNo)}`;
     flatKeys.add(flatKey);
     const key = `${flatKey}::${payment.quarterId}`;
     paidByFlatAndQuarter.set(key, (paidByFlatAndQuarter.get(key) ?? 0) + Number(payment.amount));
+    if (payment.status === "PAID" || payment.status === "WAIVED") {
+      resolvedFlatQuarters.add(key);
+    }
   }
 
   const flats = Array.from(flatKeys)
@@ -760,13 +788,17 @@ export async function getDuesTrackerData(year?: number) {
     const owners = ownersByFlat.get(flatKey) ?? [];
 
     const quarterAmounts = quarters.map((quarter) => {
-      const paid = paidByFlatAndQuarter.get(`${flatKey}::${quarter.id}`) ?? 0;
-      const target = Number(quarter.defaultAmount ?? 0);
+      const key = `${flatKey}::${quarter.id}`;
+      const paid = paidByFlatAndQuarter.get(key) ?? 0;
+      // Flats not eligible for maintenance owe nothing, regardless of the quarter's default amount
+      const isEligible = eligibilityByFlat.get(flatKey) ?? true;
+      const target = isEligible ? Number(quarter.defaultAmount ?? 0) : 0;
+      const resolved = resolvedFlatQuarters.has(key);
       return {
         quarterId: quarter.id,
         paid,
         target,
-        isShort: paid < target,
+        isShort: !resolved && paid < target,
       };
     });
 

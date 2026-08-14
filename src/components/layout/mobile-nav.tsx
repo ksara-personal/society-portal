@@ -66,6 +66,7 @@ const adminMasterDataItems: NavItem[] = [
   { href: "/admin/payment-types", label: "Payment Types", icon: IndianRupee },
   { href: "/admin/contacts/categories", label: "Service Contact Categories", icon: BookUser },
   { label: "Quarters", href: "/admin/quarters", icon: CalendarRange },
+  { label: "Villas", href: "/admin/flats", icon: Building2 },
 ];
 
 const adminFinanceItems: NavItem[] = [
@@ -166,6 +167,28 @@ export function MobileNav({ userRole, userName }: MobileNavProps) {
               Service Directory
             </p>
             {serviceDirectoryItems.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                    isActive ? "bg-primary/10 text-primary" : "text-gray-600 hover:bg-gray-100"
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+
+            {/* Non-admin finance report links */}
+            {!isAdmin && [
+              //{ href: "/admin/quarterly-balances", label: "Quarterly Balances", icon: BarChart2 },
+              { href: "/admin/dues-tracker", label: "Dues Tracker", icon: ListChecks },
+            ].map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
               return (
                 <Link

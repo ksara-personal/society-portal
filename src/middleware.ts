@@ -27,8 +27,14 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
+  // Dues Tracker is shared with residents; other /admin/* routes stay admin-only
+  const sharedAdminRoutes = ["/admin/dues-tracker"];
+  const isSharedAdminRoute = sharedAdminRoutes.some(
+    (route) => pathname === route || pathname.startsWith(route + "/")
+  );
+
   // Admin-only routes
-  if (pathname.startsWith("/admin") && !isAdmin) {
+  if (pathname.startsWith("/admin") && !isAdmin && !isSharedAdminRoute) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 

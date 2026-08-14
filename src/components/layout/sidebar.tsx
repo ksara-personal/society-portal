@@ -73,7 +73,7 @@ const adminMasterDataItems: NavItem[] = [
   { href: "/admin/payment-types", label: "Payment Types", icon: IndianRupee },
   { href: "/admin/contacts/categories", label: "Service Contact Categories", icon: BookUser },
   { label: "Quarters", href: "/admin/quarters", icon: CalendarRange },
-  { label: "Flats / Villas", href: "/admin/flats", icon: Building2 },
+  { label: "Villas", href: "/admin/flats", icon: Building2 },
 ];
 
 const adminFinanceItems: NavItem[] = [
@@ -81,7 +81,7 @@ const adminFinanceItems: NavItem[] = [
   { label: "Expenses", href: "/admin/expense-items", icon: IndianRupee },
   { label: "Collection Summary", href: "/admin/finance-summary", icon: IndianRupee },
   { label: "Quarterly Balances", href: "/admin/quarterly-balances", icon: BarChart2 },
-  { label: "Dues Tracker By Villas", href: "/admin/dues-tracker", icon: ListChecks },
+  { label: "Dues Tracker", href: "/admin/dues-tracker", icon: ListChecks },
 ];
 
 function renderSidebarLink(item: NavItem, isActive: boolean) {
@@ -146,12 +146,14 @@ export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
           return renderSidebarLink(item, isActive);
         })}
 
-        {/* Non-admin Quarterly Balances link */}
-        {!isAdmin && (() => {
-          const item: NavItem = { href: "/admin/quarterly-balances", label: "Quarterly Balances", icon: BarChart2 };
+        {/* Non-admin finance report links */}
+        {!isAdmin && [
+          //{ href: "/admin/quarterly-balances", label: "Quarterly Balances", icon: BarChart2 },
+          { href: "/admin/dues-tracker", label: "Dues Tracker", icon: ListChecks },
+        ].map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
           return renderSidebarLink(item, isActive);
-        })()}
+        })}
 
         {/* Service Directory group */}
         <Separator className="my-2" />

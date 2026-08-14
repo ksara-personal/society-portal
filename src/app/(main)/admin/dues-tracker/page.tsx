@@ -40,7 +40,8 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
   const grandTotal = rows.reduce((sum, row) => sum + row.total, 0);
   const rowsWithDues = rows.map((row) => ({
     ...row,
-    totalDue: row.quarterAmounts.reduce((sum, qa) => sum + Math.max(qa.target - qa.paid, 0), 0),
+    // Only count quarters still flagged short (not resolved by a Paid/Waived status) as outstanding
+    totalDue: row.quarterAmounts.reduce((sum, qa) => sum + (qa.isShort ? qa.target - qa.paid : 0), 0),
   }));
   const grandTotalDue = rowsWithDues.reduce((sum, row) => sum + row.totalDue, 0);
 
@@ -173,7 +174,8 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
 
       <p className="text-xs text-muted-foreground flex items-center gap-2">
         <span className="inline-block h-3 w-3 rounded-sm bg-red-50 border border-red-200" />
-        Highlighted cells indicate the amount paid is less than the quarterly target.
+        Highlighted cells indicate the amount paid is less than the quarterly target and is still pending
+        (payments marked Paid or Waived are treated as fully settled regardless of amount).
       </p>
     </div>
   );

@@ -39,6 +39,7 @@ export const PAYMENT_STATUS_LABELS: Record<string, string> = {
   PAID: "Paid",
   OVERDUE: "Overdue",
   WAIVED: "Waived",
+  PARTIAL: "Partial",
 };
 
 // Parses CSV text (double-quote aware) into an array of header -> value records.
