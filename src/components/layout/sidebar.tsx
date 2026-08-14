@@ -148,7 +148,7 @@ export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
 
         {/* Non-admin finance report links */}
         {!isAdmin && [
-          { href: "/admin/quarterly-balances", label: "Quarterly Balances", icon: BarChart2 },
+          //{ href: "/admin/quarterly-balances", label: "Quarterly Balances", icon: BarChart2 },
           { href: "/admin/dues-tracker", label: "Dues Tracker", icon: ListChecks },
         ].map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
