@@ -266,11 +266,13 @@ export async function getCurrentQuarterDues(filters?: {
   // Build list of flat keys that are missing residents.
   const missingKeys: string[] = [];
 
-  // Get existing payments for this quarter
+  // Get existing payments for this quarter (Dues Tracker only tracks the Maintenance payment type;
+  // untyped/legacy records are treated as Maintenance too, only explicit other types are excluded)
   const existingPayments = await prisma.payment.findMany({
     where: {
       quarterId: currentQuarter.id,
       ...(filters?.wing ? { wing: filters.wing } : {}),
+      OR: [{ paymentTypeId: null }, { paymentType: { slug: "maintenance" } }],
     },
     select: { wing: true, flatNo: true, status: true, amount: true, userId: true, id: true },
   });
@@ -735,12 +737,24 @@ export async function getDuesTrackerData(year?: number) {
   }
 
   // Configured wing/flat ranges form the baseline row set; any flat with a payment record is included too.
+  const allFlatPairs = await getFlatPairs();
+  const eligibilityByFlat = new Map<string, boolean>();
+  for (const flat of allFlatPairs) {
+    eligibilityByFlat.set(`${flat.wing}-${normalizeFlatNo(flat.flatNo)}`, flat.eligibleForMaintenance);
+  }
+
   const flatKeys = new Set(
-    (await getFlatPairs(undefined, { eligibleOnly: true })).map((flat) => `${flat.wing}-${normalizeFlatNo(flat.flatNo)}`)
+    allFlatPairs
+      .filter((flat) => flat.eligibleForMaintenance)
+      .map((flat) => `${flat.wing}-${normalizeFlatNo(flat.flatNo)}`)
   );
 
   const payments = await prisma.payment.findMany({
-    where: { quarterId: { in: quarterIds }, status: { in: ["PAID", "PARTIAL", "WAIVED"] } },
+    where: {
+      quarterId: { in: quarterIds },
+      status: { in: ["PAID", "PARTIAL", "WAIVED"] },
+      OR: [{ paymentTypeId: null }, { paymentType: { slug: "maintenance" } }],
+    },
     select: { quarterId: true, wing: true, flatNo: true, amount: true, status: true },
   });
 
@@ -776,7 +790,9 @@ export async function getDuesTrackerData(year?: number) {
     const quarterAmounts = quarters.map((quarter) => {
       const key = `${flatKey}::${quarter.id}`;
       const paid = paidByFlatAndQuarter.get(key) ?? 0;
-      const target = Number(quarter.defaultAmount ?? 0);
+      // Flats not eligible for maintenance owe nothing, regardless of the quarter's default amount
+      const isEligible = eligibilityByFlat.get(flatKey) ?? true;
+      const target = isEligible ? Number(quarter.defaultAmount ?? 0) : 0;
       const resolved = resolvedFlatQuarters.has(key);
       return {
         quarterId: quarter.id,

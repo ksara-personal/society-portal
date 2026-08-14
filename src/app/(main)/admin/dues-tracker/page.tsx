@@ -40,7 +40,8 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
   const grandTotal = rows.reduce((sum, row) => sum + row.total, 0);
   const rowsWithDues = rows.map((row) => ({
     ...row,
-    totalDue: row.quarterAmounts.reduce((sum, qa) => sum + Math.max(qa.target - qa.paid, 0), 0),
+    // Only count quarters still flagged short (not resolved by a Paid/Waived status) as outstanding
+    totalDue: row.quarterAmounts.reduce((sum, qa) => sum + (qa.isShort ? qa.target - qa.paid : 0), 0),
   }));
   const grandTotalDue = rowsWithDues.reduce((sum, row) => sum + row.totalDue, 0);
 
