@@ -7,7 +7,7 @@ export default auth((req) => {
   const isAdmin = req.auth?.user?.role === "ADMIN";
 
   // Public routes
-  const publicRoutes = ["/login", "/register"];
+  const publicRoutes = ["/login", "/register", "/forgot-password"];
   if (publicRoutes.includes(pathname)) {
     if (isLoggedIn) {
       return NextResponse.redirect(new URL("/dashboard", req.url));
