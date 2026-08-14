@@ -94,6 +94,38 @@ export const changePasswordSchema = z
     path: ["confirmPassword"],
   });
 
+// Password reset flow
+
+export const strongPasswordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .max(72, "Password must be at most 72 characters")
+  .regex(/[a-z]/, "Password must include a lowercase letter")
+  .regex(/[A-Z]/, "Password must include an uppercase letter")
+  .regex(/[0-9]/, "Password must include a number")
+  .regex(/[^A-Za-z0-9]/, "Password must include a special character");
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Enter a valid email address"),
+});
+
+export const verifyResetCodeSchema = z.object({
+  email: z.string().email("Enter a valid email address"),
+  code: z.string().regex(/^\d{6}$/, "Enter the 6-digit code"),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    email: z.string().email("Enter a valid email address"),
+    code: z.string().regex(/^\d{6}$/, "Enter the 6-digit code"),
+    newPassword: strongPasswordSchema,
+    confirmPassword: z.string().min(1, "Please confirm your new password"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
 // Contacts feature
 
 const indianMobileRegex = /^[6-9]\d{9}$/;

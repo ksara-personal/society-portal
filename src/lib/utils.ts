@@ -5,6 +5,26 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Masks an email for display, e.g. "ravi.kumar@example.com" -> "r*******r@e*****e.com"
+export function maskEmail(email: string): string {
+  const atIndex = email.lastIndexOf("@");
+  if (atIndex <= 0) return email;
+
+  const local = email.slice(0, atIndex);
+  const domain = email.slice(atIndex + 1);
+
+  const maskPart = (part: string) => {
+    if (part.length <= 2) return part[0] + "*".repeat(part.length - 1);
+    return part[0] + "*".repeat(part.length - 2) + part[part.length - 1];
+  };
+
+  const dotIndex = domain.lastIndexOf(".");
+  const domainName = dotIndex > 0 ? domain.slice(0, dotIndex) : domain;
+  const tld = dotIndex > 0 ? domain.slice(dotIndex) : "";
+
+  return `${maskPart(local)}@${maskPart(domainName)}${tld}`;
+}
+
 export function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
   const k = 1024;

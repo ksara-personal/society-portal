@@ -31,10 +31,27 @@ model User {
   expenseItems    ExpenseItem[]   @relation("ExpenseItemsCreated")
   statusChanges   StatusHistory[]
   meetingsCreated Meeting[]       @relation("MeetingsCreated")
+  passwordResetTokens PasswordResetToken[]
 
   @@index([email])
   @@index([role])
   @@index([approvalStatus])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  email     String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([email])
+  @@index([expiresAt])
 }
 
 model Category {
