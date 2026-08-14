@@ -333,6 +333,7 @@ enum PaymentStatus {
   PAID
   OVERDUE
   WAIVED
+  PARTIAL
 }
 
 enum MeetingStatus {

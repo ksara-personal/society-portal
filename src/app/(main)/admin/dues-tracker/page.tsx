@@ -173,7 +173,8 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
 
       <p className="text-xs text-muted-foreground flex items-center gap-2">
         <span className="inline-block h-3 w-3 rounded-sm bg-red-50 border border-red-200" />
-        Highlighted cells indicate the amount paid is less than the quarterly target.
+        Highlighted cells indicate the amount paid is less than the quarterly target and is still pending
+        (payments marked Paid or Waived are treated as fully settled regardless of amount).
       </p>
     </div>
   );

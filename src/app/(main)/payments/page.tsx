@@ -13,8 +13,16 @@ import { Badge } from "@/components/ui/badge";
 export default async function MyPaymentsPage() {
   const payments = await getMyPayments();
 
-  const totalPending = payments.filter(p => p.status === "PENDING" || p.status === "OVERDUE").reduce((sum, p) => sum + Number(p.amount), 0);
-  const totalPaid = payments.filter(p => p.status === "PAID").reduce((sum, p) => sum + Number(p.amount), 0);
+  // A PARTIAL payment's amount is what's already been paid, so only the remainder is still outstanding
+  const totalPending = payments
+    .filter(p => p.status === "PENDING" || p.status === "OVERDUE")
+    .reduce((sum, p) => sum + Number(p.amount), 0)
+    + payments
+      .filter(p => p.status === "PARTIAL")
+      .reduce((sum, p) => sum + Math.max(Number(p.quarter.defaultAmount) - Number(p.amount), 0), 0);
+  const totalPaid = payments
+    .filter(p => p.status === "PAID" || p.status === "WAIVED" || p.status === "PARTIAL")
+    .reduce((sum, p) => sum + Number(p.amount), 0);
 
   return (
     <div className="space-y-6">
@@ -63,7 +71,7 @@ export default async function MyPaymentsPage() {
                   p.status === "PAID" ? "default" :
                   p.status === "OVERDUE" ? "destructive" :
                   p.status === "WAIVED" ? "secondary" : "outline"
-                }>
+                } className={p.status === "PARTIAL" ? "border-amber-300 bg-amber-50 text-amber-800" : undefined}>
                   {p.status}
                 </Badge>
               </TableCell>

@@ -254,6 +254,7 @@ export default function PaymentsPage() {
                     <SelectContent>
                       <SelectItem value="PENDING">Pending</SelectItem>
                       <SelectItem value="PAID">Paid</SelectItem>
+                      <SelectItem value="PARTIAL">Partial</SelectItem>
                       <SelectItem value="OVERDUE">Overdue</SelectItem>
                       <SelectItem value="WAIVED">Waived</SelectItem>
                     </SelectContent>
@@ -298,6 +299,7 @@ export default function PaymentsPage() {
           <SelectContent>
             <SelectItem value="PENDING">Pending</SelectItem>
             <SelectItem value="PAID">Paid</SelectItem>
+            <SelectItem value="PARTIAL">Partial</SelectItem>
             <SelectItem value="OVERDUE">Overdue</SelectItem>
             <SelectItem value="WAIVED">Waived</SelectItem>
           </SelectContent>
@@ -329,6 +331,7 @@ export default function PaymentsPage() {
               <TableCell>
                 <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                   p.status === "PAID" ? "bg-green-100 text-green-800" :
+                  p.status === "PARTIAL" ? "bg-amber-100 text-amber-800" :
                   p.status === "OVERDUE" ? "bg-red-100 text-red-800" :
                   p.status === "WAIVED" ? "bg-gray-100 text-gray-800" :
                   "bg-yellow-100 text-yellow-800"

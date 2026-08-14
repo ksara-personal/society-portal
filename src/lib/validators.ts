@@ -155,7 +155,7 @@ export const paymentSchema = z.object({
   paymentTypeId: z.string().min(1, "Payment type is required"),
   wing: z.string().min(1, "Wing is required"),
   flatNo: z.string().min(1, "Flat number is required"),
-  status: z.enum(["PENDING", "PAID", "OVERDUE", "WAIVED"]).default("PENDING"),
+  status: z.enum(["PENDING", "PAID", "OVERDUE", "WAIVED", "PARTIAL"]).default("PENDING"),
   paidAt: z.string().optional().or(z.literal("")),
   paymentMethod: z.string().max(50).optional().or(z.literal("")),
   transactionId: z.string().max(100).optional().or(z.literal("")),
