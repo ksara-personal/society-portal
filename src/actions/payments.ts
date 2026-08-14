@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin, getCurrentUser } from "@/lib/session";
+import { requireAdmin, requireAuth, getCurrentUser } from "@/lib/session";
 import { paymentSchema, bulkPaymentSchema } from "@/lib/validators";
 import { summarizeFlatPayment } from "@/lib/payment-summary";
 import { getFlatPairs } from "@/actions/flats";
@@ -220,7 +220,8 @@ export async function generateBulkPayments(formData: FormData): Promise<ActionRe
 export async function getCurrentQuarterDues(filters?: {
   wing?: string;
 }) {
-  await requireAdmin();
+  // Shared with residents via the Dues Tracker page
+  await requireAuth();
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -701,7 +702,8 @@ function normalizeFlatNo(flatNo?: string | null) {
 }
 
 export async function getDuesTrackerData(year?: number) {
-  await requireAdmin();
+  // Shared with residents via the Dues Tracker page
+  await requireAuth();
 
   const quarters = await prisma.paymentQuarter.findMany({
     where: typeof year === "number" ? { year } : {},

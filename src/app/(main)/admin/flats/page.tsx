@@ -59,7 +59,7 @@ export default function FlatsPage() {
       toast({ title: "Error", description: res.error, variant: "destructive" });
       return;
     }
-    toast({ title: editing ? "Flat/villa updated" : "Flat/villa created" });
+    toast({ title: editing ? "Villa updated" : "Villa created" });
     setOpen(false);
     setEditing(null);
     load();
@@ -97,9 +97,9 @@ export default function FlatsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Flats / Villas</h1>
+          <h1 className="text-2xl font-bold">Villas</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage the wings and flat/villa numbers used across the app, and mark which are eligible for maintenance dues.
+            Manage the wings and villa numbers used across the app, and mark which are eligible for maintenance dues.
           </p>
         </div>
         <div className="flex gap-2">
@@ -107,12 +107,12 @@ export default function FlatsPage() {
             <DialogTrigger asChild>
               <Button variant="outline">
                 <LayoutGrid className="mr-2 h-4 w-4" />
-                Bulk Add Range
+                Bulk Add Villas
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Bulk Add Flats/Villas</DialogTitle>
+                <DialogTitle>Bulk Add Villas</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleRangeSubmit} className="space-y-4">
                 <div>
@@ -148,12 +148,12 @@ export default function FlatsPage() {
             <DialogTrigger asChild>
               <Button onClick={() => setEditing(null)}>
                 <Plus className="mr-2 h-4 w-4" />
-                Add Flat/Villa
+                Add Villa
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{editing ? "Edit Flat/Villa" : "New Flat/Villa"}</DialogTitle>
+                <DialogTitle>{editing ? "Edit Villa" : "New Villa"}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -161,7 +161,7 @@ export default function FlatsPage() {
                   <Input id="wing" name="wing" defaultValue={editing?.wing} placeholder="e.g. A" required />
                 </div>
                 <div>
-                  <Label htmlFor="flatNo">Flat/Villa No.</Label>
+                  <Label htmlFor="flatNo">Villa No.</Label>
                   <Input id="flatNo" name="flatNo" defaultValue={editing?.flatNo} placeholder="e.g. 001" required />
                 </div>
                 <div className="flex items-center space-x-2">
@@ -202,7 +202,7 @@ export default function FlatsPage() {
         <TableHeader>
           <TableRow>
             <TableHead>Wing</TableHead>
-            <TableHead>Flat/Villa No.</TableHead>
+            <TableHead>Villa No.</TableHead>
             <TableHead>Eligible for Maintenance</TableHead>
             <TableHead className="w-[120px]">Actions</TableHead>
           </TableRow>
@@ -211,7 +211,7 @@ export default function FlatsPage() {
           {visibleFlats.length === 0 ? (
             <TableRow>
               <TableCell colSpan={4} className="text-center text-sm text-gray-500 py-8">
-                No flats/villas found.
+                No villas found.
               </TableCell>
             </TableRow>
           ) : (

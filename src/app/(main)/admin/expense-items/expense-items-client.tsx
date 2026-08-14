@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -84,6 +84,15 @@ export default function ExpenseItemsAdminClient({ currentUserId }: ExpenseItemsA
     const itemsRes = await getExpenseItems(filter);
     setItems(itemsRes);
   }
+
+  const categoryTotals = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const item of items) {
+      const name = item.expenseCategory?.name ?? "Uncategorized";
+      totals.set(name, (totals.get(name) ?? 0) + Number(item.amount));
+    }
+    return Array.from(totals.entries()).sort((a, b) => b[1] - a[1]);
+  }, [items]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -327,6 +336,17 @@ export default function ExpenseItemsAdminClient({ currentUserId }: ExpenseItemsA
           </Dialog>
         </div>
       </div>
+
+      {categoryTotals.length > 0 && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600">
+          {categoryTotals.map(([name, total]) => (
+            <span key={name} className="whitespace-nowrap">
+              <span className="font-medium text-gray-800">{name}:</span>{" "}
+              ₹{total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="rounded-lg border bg-white overflow-hidden">
         <Table>
