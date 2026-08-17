@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { BRANDING } from "@/config/branding";
+import { renderEmailTemplate, escapeHtml } from "@/lib/email-template-renderer";
 
 let transporter: nodemailer.Transporter | null = null;
 
@@ -46,20 +47,118 @@ export async function sendMail(options: {
   });
 }
 
-export async function sendPasswordResetEmail(to: string, name: string, code: string) {
+// Best-effort send for non-critical notifications — logs failures instead of throwing
+// so registration/approval workflows never break because of an email/SMTP issue.
+async function sendMailSafe(options: {
+  to: string | string[];
+  subject: string;
+  html: string;
+  text?: string;
+}) {
+  const to = Array.isArray(options.to) ? options.to.filter(Boolean).join(",") : options.to;
+  if (!to) return;
+
+  try {
+    await sendMail({ ...options, to });
+  } catch (err) {
+    console.error(`[mailer] Failed to send "${options.subject}" to ${to}:`, err);
+  }
+}
+
+function getAppUrl(path: string): string | null {
+  const base = process.env.NEXTAUTH_URL;
+  if (!base) return null;
+  return `${base.replace(/\/$/, "")}${path}`;
+}
+
+export async function sendPasswordResetEmail(
+  to: string,
+  name: string,
+  code: string,
+  expiryMinutes: number
+) {
   const subject = `${BRANDING.communityName} — Password Reset Code`;
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #1f2937;">
-      <h2 style="color: #111827;">Password Reset Request</h2>
-      <p>Hi ${name},</p>
-      <p>Use the code below to reset your ${BRANDING.communityName} account password. This code expires in 15 minutes.</p>
-      <div style="font-size: 32px; font-weight: bold; letter-spacing: 8px; text-align: center; background: #f3f4f6; border-radius: 8px; padding: 16px 0; margin: 24px 0;">
-        ${code}
-      </div>
-      <p>If you did not request a password reset, you can safely ignore this email.</p>
-    </div>
-  `;
-  const text = `Your ${BRANDING.communityName} password reset code is ${code}. It expires in 15 minutes. If you did not request this, ignore this email.`;
+  const html = renderEmailTemplate("password-reset", {
+    name: escapeHtml(name),
+    communityName: BRANDING.communityName,
+    expiryMinutes: String(expiryMinutes),
+    code,
+  });
+  const text = `Your ${BRANDING.communityName} password reset code is ${code}. It expires in ${expiryMinutes} minutes. If you did not request this, ignore this email.`;
 
   await sendMail({ to, subject, html, text });
+}
+
+// Notifies all active admins that a new registration needs their review.
+export async function sendAdminNewRegistrationEmail(
+  adminEmails: string[],
+  registrant: {
+    name: string;
+    email: string;
+    phone?: string | null;
+    wing?: string | null;
+    flatNo?: string | null;
+  }
+) {
+  const subject = `${BRANDING.communityName} — New Registration Pending Approval`;
+  const details = [
+    `<strong>Name:</strong> ${escapeHtml(registrant.name)}`,
+    `<strong>Email:</strong> ${escapeHtml(registrant.email)}`,
+    registrant.phone ? `<strong>Phone:</strong> ${escapeHtml(registrant.phone)}` : null,
+    registrant.wing ? `<strong>Wing:</strong> ${escapeHtml(registrant.wing)}` : null,
+    registrant.flatNo
+      ? `<strong>${escapeHtml(BRANDING.unitLabel)}:</strong> ${escapeHtml(registrant.flatNo)}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join("<br/>");
+  const reviewUrl = getAppUrl("/admin/users");
+
+  const html = renderEmailTemplate("admin-new-registration", {
+    memberLabel: BRANDING.memberLabel.toLowerCase(),
+    communityName: BRANDING.communityName,
+    details,
+    reviewLink: reviewUrl
+      ? `<p><a href="${reviewUrl}" style="color: #2563eb;">Review pending registrations</a></p>`
+      : "",
+  });
+
+  await sendMailSafe({ to: adminEmails, subject, html });
+}
+
+// Confirms to the registrant that their sign-up was received and is pending approval.
+export async function sendRegistrationReceivedEmail(to: string, name: string) {
+  const subject = `${BRANDING.communityName} — Registration Received`;
+  const html = renderEmailTemplate("registration-received", {
+    name: escapeHtml(name),
+    communityName: BRANDING.communityName,
+  });
+
+  await sendMailSafe({ to, subject, html });
+}
+
+// Lets the user know their account was approved and they can now sign in.
+export async function sendAccountApprovedEmail(to: string, name: string) {
+  const subject = `${BRANDING.communityName} — Account Approved`;
+  const loginUrl = getAppUrl("/login");
+  const html = renderEmailTemplate("account-approved", {
+    name: escapeHtml(name),
+    communityName: BRANDING.communityName,
+    loginLink: loginUrl
+      ? `<p><a href="${loginUrl}" style="color: #2563eb;">Sign in to your account</a></p>`
+      : "",
+  });
+
+  await sendMailSafe({ to, subject, html });
+}
+
+// Lets the user know their registration was not approved.
+export async function sendAccountRejectedEmail(to: string, name: string) {
+  const subject = `${BRANDING.communityName} — Registration Update`;
+  const html = renderEmailTemplate("account-rejected", {
+    name: escapeHtml(name),
+    communityName: BRANDING.communityName,
+  });
+
+  await sendMailSafe({ to, subject, html });
 }

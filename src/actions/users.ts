@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireAuth } from "@/lib/session";
 import { updateProfileSchema } from "@/lib/validators";
+import { sendAccountApprovedEmail, sendAccountRejectedEmail } from "@/lib/mailer";
 
 export async function getUsers() {
   await requireAdmin();
@@ -101,7 +102,7 @@ export async function getPendingUsersCount() {
 
 export async function approveUser(userId: string) {
   await requireAdmin();
-  await prisma.user.update({
+  const user = await prisma.user.update({
     where: { id: userId },
     data: {
       approvalStatus: "APPROVED",
@@ -109,19 +110,21 @@ export async function approveUser(userId: string) {
       isActive: true,
     },
   });
+  await sendAccountApprovedEmail(user.email, user.name);
   revalidatePath("/admin/users");
   return { success: true };
 }
 
 export async function rejectUser(userId: string) {
   await requireAdmin();
-  await prisma.user.update({
+  const user = await prisma.user.update({
     where: { id: userId },
     data: {
       approvalStatus: "REJECTED",
       isActive: false,
     },
   });
+  await sendAccountRejectedEmail(user.email, user.name);
   revalidatePath("/admin/users");
   return { success: true };
 }

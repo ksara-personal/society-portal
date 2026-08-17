@@ -9,7 +9,11 @@ import {
   resetPasswordSchema,
 } from "@/lib/validators";
 import { maskEmail } from "@/lib/utils";
-import { sendPasswordResetEmail } from "@/lib/mailer";
+import {
+  sendPasswordResetEmail,
+  sendAdminNewRegistrationEmail,
+  sendRegistrationReceivedEmail,
+} from "@/lib/mailer";
 
 const RESET_CODE_EXPIRY_MINUTES = 15;
 const MAX_RESET_ATTEMPTS = 5;
@@ -38,7 +42,7 @@ export async function registerUser(formData: FormData) {
 
   const hashedPassword = await bcrypt.hash(parsed.data.password, 12);
 
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       name: parsed.data.name,
       email: parsed.data.email,
@@ -49,6 +53,19 @@ export async function registerUser(formData: FormData) {
       approvalStatus: "PENDING",
     },
   });
+
+  const admins = await prisma.user.findMany({
+    where: { role: "ADMIN", isActive: true },
+    select: { email: true },
+  });
+
+  await Promise.all([
+    sendAdminNewRegistrationEmail(
+      admins.map((a) => a.email),
+      user
+    ),
+    sendRegistrationReceivedEmail(user.email, user.name),
+  ]);
 
   return { success: true };
 }
@@ -105,7 +122,7 @@ export async function requestPasswordReset(email: string) {
   ]);
 
   try {
-    await sendPasswordResetEmail(user.email, user.name, code);
+    await sendPasswordResetEmail(user.email, user.name, code, RESET_CODE_EXPIRY_MINUTES);
   } catch {
     return {
       error: "Failed to send the reset email. Please try again later or contact the admin.",

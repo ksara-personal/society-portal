@@ -86,12 +86,12 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
               </div>
 
               <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-                <p className="text-xs font-medium text-muted-foreground">Unpaid Flats</p>
+                <p className="text-xs font-medium text-muted-foreground">Unpaid Villas</p>
                 <p className="mt-1 text-xl font-semibold text-destructive">{currentSummary.unpaidCount}</p>
               </div>
 
               <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-                <p className="text-xs font-medium text-muted-foreground">Paid Flats</p>
+                <p className="text-xs font-medium text-muted-foreground">Paid Villas</p>
                 <p className="mt-1 text-xl font-semibold text-emerald-700">{currentSummary.paidCount}</p>
               </div>
 
