@@ -202,7 +202,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState<FullUser[]>([]);
   const [dailyLoginUsers, setDailyLoginUsers] = useState<DailyLoginUser[]>([]);
   const [resetTarget, setResetTarget] = useState<{ id: string; name: string } | null>(null);
-  const [activeTab, setActiveTab] = useState<"pending" | "all" | "deactivated" | "daily-logins">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "all" | "admins" | "deactivated" | "daily-logins">("pending");
 
   async function load() {
     const [pending, all, daily] = await Promise.all([
@@ -256,6 +256,7 @@ export default function UsersPage() {
 
   const deactivatedUsers = users.filter((u) => !u.isActive && u.approvalStatus === "APPROVED");
   const approvedUsers = users.filter((u) => u.approvalStatus !== "PENDING");
+  const adminUsers = users.filter((u) => u.role === "ADMIN");
 
   const wingGroups = Object.entries(
     approvedUsers.reduce<Record<string, FullUser[]>>((groups, user) => {
@@ -325,6 +326,22 @@ export default function UsersPage() {
         >
           <Users className="h-4 w-4" />
           All Users
+        </button>
+        <button
+          onClick={() => setActiveTab("admins")}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "admins"
+              ? "border-primary text-primary"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <Shield className="h-4 w-4" />
+          Admins
+          {adminUsers.length > 0 && (
+            <span className="inline-flex items-center justify-center rounded-full bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-0.5 min-w-[20px]">
+              {adminUsers.length}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveTab("deactivated")}
@@ -514,6 +531,94 @@ export default function UsersPage() {
               onResetPassword={(userId) => setResetTarget({ id: userId, name: users.find((u) => u.id === userId)?.name ?? "" })}
             />
           </div>
+        </div>
+      )}
+
+      {/* Admins tab */}
+      {activeTab === "admins" && (
+        <div>
+          {adminUsers.length === 0 ? (
+            <div className="rounded-lg border bg-white p-12 text-center text-gray-400">
+              <Shield className="h-10 w-10 mx-auto mb-3 text-gray-300" />
+              <p className="font-medium text-gray-500">No admin users</p>
+              <p className="text-sm mt-1">Promote a resident to Admin from the All Users tab.</p>
+            </div>
+          ) : (
+            <div className="rounded-lg border bg-white overflow-hidden">
+              <div className="px-4 py-3 bg-purple-50 border-b border-purple-100 flex items-center gap-2">
+                <Shield className="h-4 w-4 text-purple-600" />
+                <span className="text-sm font-medium text-purple-800">
+                  {adminUsers.length} admin{adminUsers.length > 1 ? "s" : ""}
+                </span>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Flat</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Last Login</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {adminUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">
+                        {user.name}
+                        {user.id === session?.user?.id && (
+                          <span className="ml-2 text-xs text-gray-400">(you)</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600">{user.email}</TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {user.wing && user.flatNo ? `${user.wing}-${user.flatNo}` : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {user.isActive ? (
+                          <Badge variant="outline" className="border-green-300 text-green-700 bg-green-50 text-xs">
+                            Active
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="border-gray-300 text-gray-500 bg-gray-50 text-xs">
+                            Deactivated
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {user.lastLoginAt ? format(new Date(user.lastLoginAt), "dd MMM yy, h:mm a") : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs"
+                            onClick={() => setResetTarget({ id: user.id, name: user.name })}
+                          >
+                            <KeyRound className="h-3.5 w-3.5 mr-1" />
+                            Reset Password
+                          </Button>
+                          {user.id !== session?.user?.id && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs text-amber-700 hover:bg-amber-50 border-amber-200"
+                              onClick={() => handleDemote(user.id)}
+                            >
+                              <User className="h-3.5 w-3.5 mr-1" />
+                              Demote to Resident
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </div>
       )}
 

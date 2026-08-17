@@ -7,6 +7,7 @@ import { ChevronDown, Pencil, Trash2, Eye, EyeOff, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { HtmlContent } from "./html-content";
+import { ShareMeetingButton } from "./share-meeting-button";
 import { useToast } from "@/components/ui/use-toast";
 import { setMeetingStatus, deleteMeeting } from "@/actions/meetings";
 import { cn } from "@/lib/utils";
@@ -98,30 +99,33 @@ export function MeetingCard({ meeting, isAdmin, defaultOpen = false, highlightLa
         <div className="space-y-4 border-t px-4 py-4">
           <HtmlContent html={meeting.content} className="space-y-2 text-sm text-gray-700" />
 
-          {isAdmin && (
-            <div className="flex flex-wrap items-center gap-2 border-t pt-3">
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/meetings/${meeting.id}/edit`}>
-                  <Pencil className="h-4 w-4" />
-                  Edit
-                </Link>
-              </Button>
-              <Button variant="outline" size="sm" disabled={isPending} onClick={handleTogglePublish}>
-                {meeting.status === "PUBLISHED" ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                {meeting.status === "PUBLISHED" ? "Unpublish" : "Publish"}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={isPending}
-                onClick={handleDelete}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete
-              </Button>
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-2 border-t pt-3">
+            <ShareMeetingButton meeting={meeting} />
+            {isAdmin && (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/meetings/${meeting.id}/edit`}>
+                    <Pencil className="h-4 w-4" />
+                    Edit
+                  </Link>
+                </Button>
+                <Button variant="outline" size="sm" disabled={isPending} onClick={handleTogglePublish}>
+                  {meeting.status === "PUBLISHED" ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {meeting.status === "PUBLISHED" ? "Unpublish" : "Publish"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isPending}
+                  onClick={handleDelete}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>
