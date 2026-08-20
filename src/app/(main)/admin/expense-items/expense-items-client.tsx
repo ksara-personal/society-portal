@@ -19,7 +19,7 @@ import {
   type ExpenseImportRow,
   type ExpenseImportRowResult,
 } from "@/actions/expense-master";
-import { getActiveQuarters } from "@/actions/quarters";
+import { getActiveQuarters, getCurrentQuarter } from "@/actions/quarters";
 import { getAdmins } from "@/actions/payments";
 import { parseCsv } from "@/lib/utils";
 
@@ -43,13 +43,25 @@ export default function ExpenseItemsAdminClient({ currentUserId }: ExpenseItemsA
 
   useEffect(() => {
     loadStatic();
-    loadItems();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const current = await getCurrentQuarter();
+      if (current) setSelectedQuarterId(current.id);
+    })();
   }, []);
 
   useEffect(() => {
     // reload items when quarter filter changes
     loadItems();
   }, [selectedQuarterId]);
+
+  const pageTitle = useMemo(() => {
+    if (selectedQuarterId === "ALL") return "All Expenses";
+    const quarter = quarters.find((q) => q.id === selectedQuarterId);
+    return quarter ? `All ${quarter.name} Expenses` : "All Expenses";
+  }, [selectedQuarterId, quarters]);
 
   async function load() {
     const [itemsRes, categoriesRes, typesRes, quartersRes, adminsRes] = await Promise.all([
@@ -158,7 +170,7 @@ export default function ExpenseItemsAdminClient({ currentUserId }: ExpenseItemsA
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">All Expenses</h1>
+          <h1 className="text-2xl font-bold">{pageTitle}</h1>
           <p className="text-sm text-gray-500">Manage administrative expense entry records.   <b>Total :{items.reduce((sum, qa) => sum + Number(qa.amount), 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</b></p>
         </div>
 
