@@ -9,6 +9,14 @@ import { getFlatPairs } from "@/actions/flats";
 
 type ActionResult = { success: boolean; count?: number } | { error: string };
 
+// Wing/flat are only mandatory for Maintenance payments (or untyped/legacy records,
+// which default to Maintenance) - other payment types (e.g. builder funds) aren't tied to a flat.
+async function requiresFlatDetails(paymentTypeId?: string | null) {
+  if (!paymentTypeId) return true;
+  const type = await prisma.paymentType.findUnique({ where: { id: paymentTypeId }, select: { slug: true } });
+  return !type || type.slug === "maintenance";
+}
+
 export async function getPayments(filters?: {
   quarterId?: string;
   wing?: string;
@@ -94,16 +102,27 @@ export async function createPayment(formData: FormData): Promise<ActionResult> {
 
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
-  const resident = await prisma.user.findFirst({
-    where: { wing: parsed.data.wing, flatNo: parsed.data.flatNo, isActive: true },
-    select: { id: true },
-  });
+  const needsFlatDetails = await requiresFlatDetails(parsed.data.paymentTypeId);
+  if (needsFlatDetails && (!parsed.data.wing || !parsed.data.flatNo)) {
+    return { error: "Wing and flat number are required for Maintenance payments" };
+  }
+  const wing = needsFlatDetails ? parsed.data.wing! : "";
+  const flatNo = needsFlatDetails ? parsed.data.flatNo! : "";
+
+  const resident = needsFlatDetails
+    ? await prisma.user.findFirst({
+        where: { wing, flatNo, isActive: true },
+        select: { id: true },
+      })
+    : null;
 
   const admin = await getCurrentUser();
 
   await prisma.payment.create({
     data: {
       ...parsed.data,
+      wing,
+      flatNo,
       userId: resident?.id ?? null,
       paidAt: parsed.data.paidAt ? new Date(parsed.data.paidAt) : null,
       collectedById: parsed.data.collectedById || admin?.id || null,
@@ -120,6 +139,8 @@ export async function updatePayment(id: string, formData: FormData): Promise<Act
   const parsed = paymentSchema.partial().safeParse({
     quarterId: formData.get("quarterId"),
     paymentTypeId: formData.get("paymentTypeId"),
+    wing: formData.get("wing") ?? undefined,
+    flatNo: formData.get("flatNo") ?? undefined,
     amount: formData.get("amount"),
     status: formData.get("status"),
     paidAt: formData.get("paidAt") || undefined,
@@ -131,10 +152,17 @@ export async function updatePayment(id: string, formData: FormData): Promise<Act
 
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
+  const needsFlatDetails = await requiresFlatDetails(parsed.data.paymentTypeId);
+  if (needsFlatDetails && (!parsed.data.wing || !parsed.data.flatNo)) {
+    return { error: "Wing and flat number are required for Maintenance payments" };
+  }
+
   const admin = await getCurrentUser();
 
   const updateData: any = {
     ...parsed.data,
+    wing: needsFlatDetails ? parsed.data.wing : "",
+    flatNo: needsFlatDetails ? parsed.data.flatNo : "",
     paidAt: parsed.data.paidAt ? new Date(parsed.data.paidAt) : null,
   };
 

@@ -44,9 +44,14 @@ export default function PaymentsPage() {
   const [admins, setAdmins] = useState<any[]>([]);
   const [formWing, setFormWing] = useState("");
   const [formFlatNo, setFormFlatNo] = useState("");
+  const [formPaymentTypeId, setFormPaymentTypeId] = useState("");
   const { data: session } = useSession();
   const wings = useWings();
   const formFlats = useFlatsForWing(formWing);
+
+  const maintenanceTypeId = paymentTypes.find((t) => t.slug === "maintenance" || t.name === "Maintenance")?.id;
+  // Untyped/legacy records and the Maintenance type itself require a wing/flat; other types don't.
+  const isMaintenancePayment = !formPaymentTypeId || formPaymentTypeId === maintenanceTypeId;
 
   useEffect(() => { loadQuarters(); loadPaymentTypes(); loadAdmins(); }, []);
   useEffect(() => { load(); }, [page, filters]);
@@ -82,8 +87,8 @@ export default function PaymentsPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
-    form.set("wing", formWing);
-    form.set("flatNo", formFlatNo);
+    form.set("wing", isMaintenancePayment ? formWing : "");
+    form.set("flatNo", isMaintenancePayment ? formFlatNo : "");
     const res = editing
       ? await updatePayment(editing.id, form)
       : await createPayment(form);
@@ -129,7 +134,7 @@ export default function PaymentsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Resident Payments</h1>
+        <h1 className="text-2xl font-bold">Payments</h1>
         <div className="flex gap-2">
           <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
             <DialogTrigger asChild>
@@ -198,7 +203,7 @@ export default function PaymentsPage() {
 
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => { setEditing(null); setFormWing(""); setFormFlatNo(""); }}><Plus className="mr-2 h-4 w-4" />Add Payment</Button>
+              <Button onClick={() => { setEditing(null); setFormWing(""); setFormFlatNo(""); setFormPaymentTypeId(maintenanceTypeId ?? ""); }}><Plus className="mr-2 h-4 w-4" />Add Payment</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>{editing ? "Edit Payment" : "New Payment"}</DialogTitle></DialogHeader>
@@ -214,7 +219,7 @@ export default function PaymentsPage() {
                 </div>
                 <div>
                   <Label>Payment Type</Label>
-                  <Select name="paymentTypeId" defaultValue={editing?.paymentTypeId ?? paymentTypes.find((t) => t.name === "Maintenance")?.id}>
+                  <Select name="paymentTypeId" value={formPaymentTypeId} onValueChange={setFormPaymentTypeId}>
                     <SelectTrigger><SelectValue placeholder="Select payment type" /></SelectTrigger>
                     <SelectContent>
                       {paymentTypes.map((type) => (
@@ -223,20 +228,22 @@ export default function PaymentsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div><Label>Wing</Label>
-                    <Select value={formWing} onValueChange={(v) => { setFormWing(v); setFormFlatNo(""); }}>
-                      <SelectTrigger><SelectValue placeholder="Select wing" /></SelectTrigger>
-                      <SelectContent>{wings.map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}</SelectContent>
-                    </Select>
+                {isMaintenancePayment && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><Label>Wing</Label>
+                      <Select value={formWing} onValueChange={(v) => { setFormWing(v); setFormFlatNo(""); }}>
+                        <SelectTrigger><SelectValue placeholder="Select wing" /></SelectTrigger>
+                        <SelectContent>{wings.map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div><Label>Flat No</Label>
+                      <Select value={formFlatNo} onValueChange={setFormFlatNo} disabled={!formWing}>
+                        <SelectTrigger><SelectValue placeholder={formWing ? "Select flat" : "Select wing first"} /></SelectTrigger>
+                        <SelectContent>{formFlats.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div><Label>Flat No</Label>
-                    <Select value={formFlatNo} onValueChange={setFormFlatNo} disabled={!formWing}>
-                      <SelectTrigger><SelectValue placeholder={formWing ? "Select flat" : "Select wing first"} /></SelectTrigger>
-                      <SelectContent>{formFlats.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                )}
                 <div>
                   <Label>Amount (₹)</Label>
                   <Input
@@ -326,7 +333,7 @@ export default function PaymentsPage() {
           {payments.map((p) => (
             <TableRow key={p.id}>
               <TableCell>{p.quarter.name}</TableCell>
-              <TableCell>{p.wing}-{p.flatNo}</TableCell>
+              <TableCell>{p.wing && p.flatNo ? `${p.wing}-${p.flatNo}` : "—"}</TableCell>
               <TableCell>₹{Number(p.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</TableCell>
               <TableCell>
                 <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -343,7 +350,7 @@ export default function PaymentsPage() {
               <TableCell>{p.collectedBy?.name ?? "-"}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setFormWing(p.wing ?? ""); setFormFlatNo(p.flatNo ?? ""); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setFormWing(p.wing ?? ""); setFormFlatNo(p.flatNo ?? ""); setFormPaymentTypeId(p.paymentTypeId ?? maintenanceTypeId ?? ""); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
               </TableCell>

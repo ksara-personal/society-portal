@@ -185,8 +185,10 @@ export const paymentSchema = z.object({
   amount: z.coerce.number().positive("Amount must be greater than 0"),
   quarterId: z.string().min(1, "Please select a quarter"),
   paymentTypeId: z.string().min(1, "Payment type is required"),
-  wing: z.string().min(1, "Wing is required"),
-  flatNo: z.string().min(1, "Flat number is required"),
+  // Wing/flat are only required for Maintenance-type payments; enforced in the action
+  // (needs a DB lookup of the payment type's slug), not here.
+  wing: z.string().optional(),
+  flatNo: z.string().optional(),
   status: z.enum(["PENDING", "PAID", "OVERDUE", "WAIVED", "PARTIAL"]).default("PENDING"),
   paidAt: z.string().optional().or(z.literal("")),
   paymentMethod: z.string().max(50).optional().or(z.literal("")),
