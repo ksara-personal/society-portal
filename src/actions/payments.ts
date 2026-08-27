@@ -514,15 +514,20 @@ export async function createDuePayment(formData: FormData): Promise<ActionResult
   });
 
   if (!parsed.success) return { error: parsed.error.errors[0].message };
+  if (!parsed.data.wing || !parsed.data.flatNo) return { error: "Wing and flat number are required" };
+  const wing = parsed.data.wing;
+  const flatNo = parsed.data.flatNo;
 
   const resident = await prisma.user.findFirst({
-    where: { wing: parsed.data.wing, flatNo: parsed.data.flatNo, isActive: true },
+    where: { wing, flatNo, isActive: true },
     select: { id: true },
   });
 
   await prisma.payment.create({
     data: {
       ...parsed.data,
+      wing,
+      flatNo,
       userId: resident?.id ?? null,
     },
   });
