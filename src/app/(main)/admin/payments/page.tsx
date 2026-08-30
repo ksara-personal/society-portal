@@ -63,6 +63,7 @@ export default function PaymentsPage() {
     const current = await getCurrentQuarter();
     if (current?.id) {
       setSelectedQuarterId(current.id);
+      setFilters(p => ({ ...p, quarterId: current.id }));
     } else if (data.length > 0 && !selectedQuarterId) {
       setSelectedQuarterId(data[0].id);
     }
@@ -292,7 +293,7 @@ export default function PaymentsPage() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Select onValueChange={v => setFilters(p => ({ ...p, quarterId: v }))}>
+        <Select value={filters.quarterId} onValueChange={v => setFilters(p => ({ ...p, quarterId: v }))}>
           <SelectTrigger className="w-[180px]"><SelectValue placeholder="All quarters" /></SelectTrigger>
           <SelectContent>{quarters.map(q => <SelectItem key={q.id} value={q.id}>{q.name}</SelectItem>)}</SelectContent>
         </Select>
