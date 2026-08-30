@@ -3,6 +3,8 @@
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import { subDays, format } from "date-fns";
+import { getMyPayments } from "@/actions/payments";
+import { getLatestMeeting } from "@/actions/meetings";
 
 export async function getDashboardStats() {
   await requireAuth();
@@ -110,5 +112,78 @@ export async function getDashboardStats() {
       date,
       count,
     })),
+  };
+}
+
+// Resident-facing "My Home" summary: dues status, open issue counts, latest meeting.
+export async function getResidentDashboardSummary() {
+  const user = await requireAuth();
+  const today = new Date();
+
+  const flatUsers =
+    user.wing && user.flatNo
+      ? await prisma.user.findMany({
+          where: { wing: user.wing, flatNo: user.flatNo },
+          select: { id: true },
+        })
+      : [{ id: user.id }];
+  const flatmateIds = flatUsers.map((u) => u.id);
+
+  const [payments, currentQuarter, societyOpenCount, villaOpenCount, recentIssues, latestMeeting] =
+    await Promise.all([
+      getMyPayments(),
+      prisma.paymentQuarter.findFirst({
+        where: { isActive: true, startDate: { lte: today }, endDate: { gte: today } },
+      }),
+      prisma.issue.count({
+        where: {
+          issueType: "SOCIETY",
+          createdById: user.id,
+          status: { in: ["PENDING", "IN_PROGRESS"] },
+        },
+      }),
+      prisma.issue.count({
+        where: {
+          issueType: "VILLA",
+          createdById: { in: flatmateIds },
+          status: { in: ["PENDING", "IN_PROGRESS"] },
+        },
+      }),
+      prisma.issue.findMany({
+        where: {
+          OR: [
+            { issueType: "SOCIETY", createdById: user.id },
+            { issueType: "VILLA", createdById: { in: flatmateIds } },
+          ],
+        },
+        include: { category: true, createdBy: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 3,
+      }),
+      getLatestMeeting(),
+    ]);
+
+  // Same outstanding-total rule as the My Payments page: PAID/WAIVED always resolved,
+  // PARTIAL only leaves the remainder (target - paid) outstanding.
+  const outstandingAmount =
+    payments
+      .filter((p) => p.status === "PENDING" || p.status === "OVERDUE")
+      .reduce((sum, p) => sum + Number(p.amount), 0) +
+    payments
+      .filter((p) => p.status === "PARTIAL")
+      .reduce((sum, p) => sum + Math.max(Number(p.quarter.defaultAmount) - Number(p.amount), 0), 0);
+
+  const currentQuarterPayment = currentQuarter
+    ? payments.find((p) => p.quarterId === currentQuarter.id) ?? null
+    : null;
+
+  return {
+    dues: {
+      outstandingAmount,
+      currentQuarterName: currentQuarter?.name ?? null,
+      currentQuarterStatus: currentQuarterPayment?.status ?? (currentQuarter ? "PENDING" : null),
+    },
+    issues: { societyOpenCount, villaOpenCount, recentIssues },
+    latestMeeting,
   };
 }
