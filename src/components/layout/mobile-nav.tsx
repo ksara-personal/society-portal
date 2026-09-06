@@ -208,14 +208,14 @@ export function MobileNav({ userRole, userName }: MobileNavProps) {
 
             {/* Admin group */}
             {isAdmin && (
+              renderSideBarItems(setOpen, pathname, "Finance Mgmt", adminFinanceItems)
+            )} 
+            {isAdmin && (
               renderSideBarItems(setOpen, pathname, "Admin", adminItems)
             )}
             {isAdmin && (
               renderSideBarItems(setOpen, pathname, "Master Data", adminMasterDataItems)
             )}
-            {isAdmin && (
-              renderSideBarItems(setOpen, pathname, "Finance Mgmt", adminFinanceItems)
-            )} 
           </nav>
 
           <div className="border-t p-3 shrink-0">

@@ -6,11 +6,12 @@ import { requireAdmin } from "@/lib/session";
 import { expenseCategorySchema, expenseItemSchema, expenseTypeSchema, paymentTypeSchema } from "@/lib/validators";
 import {
   CACHE_TAGS,
+  getCachedActiveQuarters,
   getCachedExpenseCategories,
   getCachedExpenseTypes,
   getCachedPaymentTypes,
 } from "@/lib/master-data";
-import { toPlainAmountRow } from "@/lib/decimal";
+import { toPlainAmountRow, toPlainQuarter } from "@/lib/decimal";
 
 /** Mutations call these so the cached reference reads pick up the change. */
 function invalidateExpenseCategoryCaches() {
@@ -120,6 +121,66 @@ export async function getExpenseItems(filters?: { quarterId?: string }) {
   // This feeds a Client Component, so the Decimal money columns are converted
   // before they cross the boundary.
   return items.map(toPlainAmountRow);
+}
+
+/**
+ * Everything the Expense Items admin screen needs for one render, in a single
+ * request. The page used to fetch every expense item unfiltered on mount (the
+ * quarter filter started as "ALL"), then refetch scoped to the current quarter
+ * once that resolved a moment later — a full "All Expenses" load the UI showed
+ * only to immediately throw away.
+ */
+export async function getExpenseItemsPageData(filters?: {
+  quarterId?: string;
+  /** First load has no quarter chosen yet and wants the current one, same as
+   * the Payments screen — resolving it here means the item list only ever
+   * goes out once, already scoped to it. */
+  useCurrentQuarterIfUnset?: boolean;
+}) {
+  await requireAdmin();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const { quarterId, useCurrentQuarterIfUnset } = filters ?? {};
+  const needsDefaultQuarter = !quarterId && !!useCurrentQuarterIfUnset;
+
+  const referenceData = Promise.all([
+    getCachedActiveQuarters(),
+
+    prisma.paymentQuarter.findFirst({
+      where: { isActive: true, startDate: { lte: today }, endDate: { gte: today } },
+    }),
+
+    getCachedExpenseCategories(),
+    getCachedExpenseTypes(),
+
+    prisma.user.findMany({
+      where: { role: "ADMIN", isActive: true },
+      select: { id: true, name: true, email: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
+
+  // When the quarter is already known (or the caller explicitly asked for
+  // every quarter), the item list goes out with everything else; only the
+  // first load has to wait for the current quarter to resolve.
+  const [[quarters, currentQuarter, categories, types, admins], items] = needsDefaultQuarter
+    ? await (async () => {
+        const reference = await referenceData;
+        const list = await getExpenseItems(reference[1] ? { quarterId: reference[1].id } : undefined);
+        return [reference, list] as const;
+      })()
+    : await Promise.all([referenceData, getExpenseItems(quarterId ? { quarterId } : undefined)]);
+
+  return {
+    quarters: quarters.map(toPlainQuarter),
+    categories,
+    types,
+    admins,
+    items,
+    appliedQuarterId: needsDefaultQuarter ? currentQuarter?.id ?? "ALL" : quarterId || "ALL",
+  };
 }
 
 export async function createExpenseItem(formData: FormData): Promise<ActionResult> {
