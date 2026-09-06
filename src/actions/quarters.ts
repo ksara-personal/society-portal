@@ -9,6 +9,7 @@ import {
   getCachedActiveQuarters,
   getCachedQuarters,
 } from "@/lib/master-data";
+import { toPlainQuarter } from "@/lib/decimal";
 
 type ActionResult = { success: boolean } | { error: string };
 
@@ -22,12 +23,17 @@ function toSlug(name: string, year: number) {
   return `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${year}`;
 }
 
+// Both getters feed client components directly (the quarters admin page,
+// finance summary, quarterly balances), so `defaultAmount` is converted from
+// Prisma's Decimal here rather than at each call site.
 export async function getQuarters() {
-  return getCachedQuarters();
+  const quarters = await getCachedQuarters();
+  return quarters.map(toPlainQuarter);
 }
 
 export async function getActiveQuarters() {
-  return getCachedActiveQuarters();
+  const quarters = await getCachedActiveQuarters();
+  return quarters.map(toPlainQuarter);
 }
 
 // Deliberately not cached: which quarter is "current" depends on today's date,

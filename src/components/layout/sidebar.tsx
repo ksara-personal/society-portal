@@ -167,6 +167,20 @@ export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
         })}
 
         {/* Admin group */}
+        {/* Admin Finance Mgmt group */}
+        {isAdmin && (
+          <>
+            <Separator className="my-2" />
+            <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+              <Shield className="h-3 w-3" />
+              Finance Management
+            </p>
+            {adminFinanceItems.map((item) => {
+              const isActive = pathname.startsWith(item.href);
+              return renderSidebarLink(item, isActive);
+            })}
+          </>
+        )}
         {isAdmin && (
           <>
             <Separator className="my-2" />
@@ -190,21 +204,6 @@ export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
               Master Data
             </p>
             {adminMasterDataItems.map((item) => {
-              const isActive = pathname.startsWith(item.href);
-              return renderSidebarLink(item, isActive);
-            })}
-          </>
-        )}
-
-        {/* Admin Finance Mgmt group */}
-        {isAdmin && (
-          <>
-            <Separator className="my-2" />
-            <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-              <Shield className="h-3 w-3" />
-              Finance Management
-            </p>
-            {adminFinanceItems.map((item) => {
               const isActive = pathname.startsWith(item.href);
               return renderSidebarLink(item, isActive);
             })}

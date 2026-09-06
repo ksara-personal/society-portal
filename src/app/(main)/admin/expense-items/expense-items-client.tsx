@@ -12,15 +12,12 @@ import { Plus, Trash2, Upload } from "lucide-react";
 import {
   createExpenseItem,
   deleteExpenseItem,
-  getExpenseCategories,
   getExpenseItems,
-  getExpenseTypes,
+  getExpenseItemsPageData,
   importExpenseItems,
   type ExpenseImportRow,
   type ExpenseImportRowResult,
 } from "@/actions/expense-master";
-import { getActiveQuarters, getCurrentQuarter } from "@/actions/quarters";
-import { getAdmins } from "@/actions/payments";
 import { parseCsv } from "@/lib/utils";
 
 interface ExpenseItemsAdminClientProps {
@@ -33,7 +30,10 @@ export default function ExpenseItemsAdminClient({ currentUserId }: ExpenseItemsA
   const [types, setTypes] = useState<any[]>([]);
   const [quarters, setQuarters] = useState<any[]>([]);
   const [admins, setAdmins] = useState<any[]>([]);
-  const [selectedQuarterId, setSelectedQuarterId] = useState<string>("ALL");
+  // "" means "not resolved yet" — the initial fetch below applies the current
+  // quarter once it resolves. Distinct from "ALL", which the user can still
+  // pick explicitly from the quarter select.
+  const [selectedQuarterId, setSelectedQuarterId] = useState<string>("");
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -41,59 +41,40 @@ export default function ExpenseItemsAdminClient({ currentUserId }: ExpenseItemsA
   const [importResults, setImportResults] = useState<ExpenseImportRowResult[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    loadStatic();
-  }, []);
-
+  // Single request for everything the page needs. On mount the server
+  // resolves the current quarter and returns the item list already scoped to
+  // it, instead of the page fetching every expense item first and refetching
+  // once the quarter arrives a moment later.
   useEffect(() => {
     (async () => {
-      const current = await getCurrentQuarter();
-      if (current) setSelectedQuarterId(current.id);
+      const res = await getExpenseItemsPageData({ useCurrentQuarterIfUnset: true });
+      setQuarters(res.quarters);
+      setCategories(res.categories);
+      setTypes(res.types);
+      setAdmins(res.admins);
+      setItems(res.items);
+      setSelectedQuarterId(res.appliedQuarterId);
     })();
   }, []);
 
-  useEffect(() => {
-    // reload items when quarter filter changes
-    loadItems();
-  }, [selectedQuarterId]);
-
   const pageTitle = useMemo(() => {
-    if (selectedQuarterId === "ALL") return "All Expenses";
+    if (selectedQuarterId === "ALL" || selectedQuarterId === "") return "All Expenses";
     const quarter = quarters.find((q) => q.id === selectedQuarterId);
     return quarter ? `All ${quarter.name} Expenses` : "All Expenses";
   }, [selectedQuarterId, quarters]);
 
   async function load() {
-    const [itemsRes, categoriesRes, typesRes, quartersRes, adminsRes] = await Promise.all([
-      getExpenseItems(),
-      getExpenseCategories(),
-      getExpenseTypes(),
-      getActiveQuarters(),
-      getAdmins(),
-    ]);
+    const itemsRes = await getExpenseItems(itemsFilter());
     setItems(itemsRes);
-    setCategories(categoriesRes);
-    setTypes(typesRes);
-    setQuarters(quartersRes);
-    setAdmins(adminsRes);
   }
 
-  async function loadStatic() {
-    const [categoriesRes, typesRes, quartersRes, adminsRes] = await Promise.all([
-      getExpenseCategories(),
-      getExpenseTypes(),
-      getActiveQuarters(),
-      getAdmins(),
-    ]);
-    setCategories(categoriesRes);
-    setTypes(typesRes);
-    setQuarters(quartersRes);
-    setAdmins(adminsRes);
+  function itemsFilter() {
+    return selectedQuarterId && selectedQuarterId !== "ALL" ? { quarterId: selectedQuarterId } : undefined;
   }
 
-  async function loadItems() {
-    const filter = selectedQuarterId && selectedQuarterId !== "ALL" ? { quarterId: selectedQuarterId } : undefined;
-    const itemsRes = await getExpenseItems(filter);
+  async function handleQuarterChange(id: string) {
+    setSelectedQuarterId(id);
+    const itemsRes = await getExpenseItems(id !== "ALL" ? { quarterId: id } : undefined);
     setItems(itemsRes);
   }
 
@@ -176,7 +157,7 @@ export default function ExpenseItemsAdminClient({ currentUserId }: ExpenseItemsA
 
         <div className="flex items-center gap-3">
           <div>
-            <Select onValueChange={(v) => setSelectedQuarterId(v)} value={selectedQuarterId}>
+            <Select onValueChange={handleQuarterChange} value={selectedQuarterId}>
               <SelectTrigger>
                 <SelectValue placeholder="All quarters" />
               </SelectTrigger>
