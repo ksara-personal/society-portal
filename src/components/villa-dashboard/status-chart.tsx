@@ -1,7 +1,13 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { ChartSkeleton } from "@/components/charts/chart-skeleton";
+
+const VillaStatusChartBody = dynamic(() => import("./status-chart-body"), {
+  ssr: false,
+  loading: () => <ChartSkeleton height={250} />,
+});
 
 const COLORS: Record<string, string> = {
   PENDING: "#EAB308",
@@ -26,46 +32,19 @@ export function VillaStatusChart({ data }: { data: Record<string, number> }) {
       color: COLORS[status] || "#6B7280",
     }));
 
-  if (chartData.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Status Distribution</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[250px] flex items-center justify-center text-sm text-gray-400">
-            No data yet
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">Status Distribution</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={250}>
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              innerRadius={55}
-              outerRadius={85}
-              dataKey="value"
-              paddingAngle={3}
-            >
-              {chartData.map((entry, index) => (
-                <Cell key={index} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip formatter={(value) => [`${value} issues`, ""]} />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
+        {chartData.length === 0 ? (
+          <div className="h-[250px] flex items-center justify-center text-sm text-gray-400">
+            No data yet
+          </div>
+        ) : (
+          <VillaStatusChartBody data={chartData} />
+        )}
       </CardContent>
     </Card>
   );

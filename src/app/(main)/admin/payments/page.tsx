@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { getPayments, createPayment, updatePayment, deletePayment, generateBulkPayments, getAdmins } from "@/actions/payments";
-import { getActiveQuarters, getCurrentQuarter } from "@/actions/quarters";
-import { getPaymentTypes } from "@/actions/expense-master";
+import { getPaymentsPageData, createPayment, updatePayment, deletePayment, generateBulkPayments } from "@/actions/payments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,7 +24,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/components/ui/use-toast";
 import { Plus, Pencil, Trash2, Download } from "lucide-react";
-import { useWings, useFlatsForWing } from "@/hooks/use-wings";
+import { useFlatsForWing } from "@/hooks/use-wings";
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<any[]>([]);
@@ -47,7 +45,8 @@ export default function PaymentsPage() {
   const [formPaymentTypeId, setFormPaymentTypeId] = useState("");
   const [formTransferredToId, setFormTransferredToId] = useState("");
   const { data: session } = useSession();
-  const wings = useWings();
+  // Wings arrive with the page payload rather than via their own request.
+  const [wings, setWings] = useState<string[]>([]);
   const formFlats = useFlatsForWing(formWing);
 
   const maintenanceTypeId = paymentTypes.find((t) => t.slug === "maintenance" || t.name === "Maintenance")?.id;
@@ -56,36 +55,46 @@ export default function PaymentsPage() {
   const isMaintenancePayment = !formPaymentTypeId || formPaymentTypeId === maintenanceTypeId;
   const isInternalTransfer = !!internalTransferTypeId && formPaymentTypeId === internalTransferTypeId;
 
-  useEffect(() => { loadQuarters(); loadPaymentTypes(); loadAdmins(); }, []);
-  useEffect(() => { load(); }, [page, filters]);
+  // One request covers the list plus every dropdown's options. `servedKey`
+  // holds the filter/page combination currently on screen: on first load the
+  // server resolves the current quarter and writes it into `filters`, and
+  // without this guard that state change would refetch identical data.
+  const servedKey = useRef<string | null>(null);
+  const requestKey = (p: number, f: typeof filters) => JSON.stringify({ page: p, ...f });
 
-  async function loadQuarters() {
-    const data = await getActiveQuarters();
-    setQuarters(data);
+  useEffect(() => {
+    const key = requestKey(page, filters);
+    if (servedKey.current === key) return;
+    load(key);
+  }, [page, filters]);
 
-    const current = await getCurrentQuarter();
-    if (current?.id) {
-      setSelectedQuarterId(current.id);
-      setFilters(p => ({ ...p, quarterId: current.id }));
-    } else if (data.length > 0 && !selectedQuarterId) {
-      setSelectedQuarterId(data[0].id);
+  async function load(key?: string) {
+    const firstLoad = servedKey.current === null;
+    const res = await getPaymentsPageData({
+      ...filters,
+      page,
+      limit: 20,
+      useCurrentQuarterIfUnset: firstLoad,
+    });
+
+    setQuarters(res.quarters);
+    setPaymentTypes(res.paymentTypes);
+    setAdmins(res.admins);
+    setWings(res.wings);
+    setPayments(res.payments.items);
+    setTotal(res.payments.total);
+
+    if (firstLoad && res.appliedQuarterId) {
+      const resolved = { ...filters, quarterId: res.appliedQuarterId };
+      // Record the key the resolved filters will produce before applying them,
+      // so the effect recognises this data as already served.
+      servedKey.current = requestKey(page, resolved);
+      setSelectedQuarterId(res.appliedQuarterId);
+      setFilters(resolved);
+    } else {
+      if (firstLoad && res.quarters.length > 0) setSelectedQuarterId(res.quarters[0].id);
+      servedKey.current = key ?? requestKey(page, filters);
     }
-  }
-
-  async function loadPaymentTypes() {
-    const data = await getPaymentTypes();
-    setPaymentTypes(data);
-  }
-
-  async function loadAdmins() {
-    const data = await getAdmins();
-    setAdmins(data);
-  }
-
-  async function load() {
-    const res = await getPayments({ ...filters, page, limit: 20 });
-    setPayments(res.items);
-    setTotal(res.total);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {

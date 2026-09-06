@@ -1,9 +1,32 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { expenseCategorySchema, expenseItemSchema, expenseTypeSchema, paymentTypeSchema } from "@/lib/validators";
+import {
+  CACHE_TAGS,
+  getCachedExpenseCategories,
+  getCachedExpenseTypes,
+  getCachedPaymentTypes,
+} from "@/lib/master-data";
+import { toPlainAmountRow } from "@/lib/decimal";
+
+/** Mutations call these so the cached reference reads pick up the change. */
+function invalidateExpenseCategoryCaches() {
+  updateTag(CACHE_TAGS.expenseCategories);
+  revalidatePath("/admin/expense-categories");
+}
+
+function invalidateExpenseTypeCaches() {
+  updateTag(CACHE_TAGS.expenseTypes);
+  revalidatePath("/admin/expense-types");
+}
+
+function invalidatePaymentTypeCaches() {
+  updateTag(CACHE_TAGS.paymentTypes);
+  revalidatePath("/admin/payment-types");
+}
 
 type ActionResult = { success: true } | { error: string };
 
@@ -15,7 +38,7 @@ function toSlug(name: string) {
 }
 
 export async function getExpenseCategories() {
-  return prisma.expenseCategory.findMany({ orderBy: { name: "asc" } });
+  return getCachedExpenseCategories();
 }
 
 export async function createExpenseCategory(formData: FormData): Promise<ActionResult> {
@@ -39,7 +62,7 @@ export async function createExpenseCategory(formData: FormData): Promise<ActionR
     data: { ...parsed.data, slug },
   });
 
-  revalidatePath("/admin/expense-categories");
+  invalidateExpenseCategoryCaches();
   return { success: true };
 }
 
@@ -67,23 +90,23 @@ export async function updateExpenseCategory(id: string, formData: FormData): Pro
     data: { ...parsed.data, slug },
   });
 
-  revalidatePath("/admin/expense-categories");
+  invalidateExpenseCategoryCaches();
   return { success: true };
 }
 
 export async function deleteExpenseCategory(id: string): Promise<ActionResult> {
   await requireAdmin();
   await prisma.expenseCategory.delete({ where: { id } });
-  revalidatePath("/admin/expense-categories");
+  invalidateExpenseCategoryCaches();
   return { success: true };
 }
 
 export async function getExpenseTypes() {
-  return prisma.expenseType.findMany({ orderBy: { name: "asc" } });
+  return getCachedExpenseTypes();
 }
 
 export async function getExpenseItems(filters?: { quarterId?: string }) {
-  return prisma.expenseItem.findMany({
+  const items = await prisma.expenseItem.findMany({
     where: filters?.quarterId ? { quarterId: filters.quarterId } : undefined,
     orderBy: { date: "desc" },
     include: {
@@ -93,6 +116,10 @@ export async function getExpenseItems(filters?: { quarterId?: string }) {
       expenseType: true,
     },
   });
+
+  // This feeds a Client Component, so the Decimal money columns are converted
+  // before they cross the boundary.
+  return items.map(toPlainAmountRow);
 }
 
 export async function createExpenseItem(formData: FormData): Promise<ActionResult> {
@@ -283,7 +310,7 @@ export async function createExpenseType(formData: FormData): Promise<ActionResul
     data: { ...parsed.data, slug },
   });
 
-  revalidatePath("/admin/expense-types");
+  invalidateExpenseTypeCaches();
   return { success: true };
 }
 
@@ -310,19 +337,19 @@ export async function updateExpenseType(id: string, formData: FormData): Promise
     data: { ...parsed.data, slug },
   });
 
-  revalidatePath("/admin/expense-types");
+  invalidateExpenseTypeCaches();
   return { success: true };
 }
 
 export async function deleteExpenseType(id: string): Promise<ActionResult> {
   await requireAdmin();
   await prisma.expenseType.delete({ where: { id } });
-  revalidatePath("/admin/expense-types");
+  invalidateExpenseTypeCaches();
   return { success: true };
 }
 
 export async function getPaymentTypes() {
-  return prisma.paymentType.findMany({ orderBy: { name: "asc" } });
+  return getCachedPaymentTypes();
 }
 
 export async function createPaymentType(formData: FormData): Promise<ActionResult> {
@@ -342,7 +369,7 @@ export async function createPaymentType(formData: FormData): Promise<ActionResul
   if (existing) return { error: "A payment type with this name already exists" };
 
   await prisma.paymentType.create({ data: { ...parsed.data, slug } });
-  revalidatePath("/admin/payment-types");
+  invalidatePaymentTypeCaches();
   return { success: true };
 }
 
@@ -369,13 +396,13 @@ export async function updatePaymentType(id: string, formData: FormData): Promise
     data: { ...parsed.data, slug },
   });
 
-  revalidatePath("/admin/payment-types");
+  invalidatePaymentTypeCaches();
   return { success: true };
 }
 
 export async function deletePaymentType(id: string): Promise<ActionResult> {
   await requireAdmin();
   await prisma.paymentType.delete({ where: { id } });
-  revalidatePath("/admin/payment-types");
+  invalidatePaymentTypeCaches();
   return { success: true };
 }

@@ -1,9 +1,16 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { categorySchema } from "@/lib/validators";
+import { CACHE_TAGS, getCachedAllCategories } from "@/lib/master-data";
+
+/** Called by every category mutation so the cached reference reads pick up the change. */
+function invalidateCategoryCaches() {
+  updateTag(CACHE_TAGS.categories);
+  revalidatePath("/admin/categories");
+}
 
 function toSlug(name: string) {
   return name
@@ -34,7 +41,7 @@ export async function createCategory(formData: FormData) {
     data: { ...parsed.data, slug },
   });
 
-  revalidatePath("/admin/categories");
+  invalidateCategoryCaches();
   return { success: true };
 }
 
@@ -54,7 +61,7 @@ export async function updateCategory(id: string, formData: FormData) {
     data: parsed.data,
   });
 
-  revalidatePath("/admin/categories");
+  invalidateCategoryCaches();
   return { success: true };
 }
 
@@ -69,10 +76,10 @@ export async function deleteCategory(id: string) {
   }
 
   await prisma.category.delete({ where: { id } });
-  revalidatePath("/admin/categories");
+  invalidateCategoryCaches();
   return { success: true };
 }
 
 export async function getCategories() {
-  return prisma.category.findMany({ orderBy: { name: "asc" } });
+  return getCachedAllCategories();
 }

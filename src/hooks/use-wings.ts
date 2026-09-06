@@ -26,6 +26,14 @@ export function useFlatsForWing(wing: string | undefined, options?: { eligibleOn
   const eligibleOnly = options?.eligibleOnly ?? false;
 
   useEffect(() => {
+    // With no wing chosen the action would return every flat in the community,
+    // and every caller renders this list behind a `disabled={!wing}` select —
+    // so that request was fetched on mount and then never read.
+    if (!wing) {
+      setFlats([]);
+      return;
+    }
+
     let active = true;
     getFlatsForWing(wing, { eligibleOnly }).then((data) => {
       if (active) setFlats(data);

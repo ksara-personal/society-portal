@@ -1,29 +1,37 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { quarterSchema } from "@/lib/validators";
+import {
+  CACHE_TAGS,
+  getCachedActiveQuarters,
+  getCachedQuarters,
+} from "@/lib/master-data";
 
 type ActionResult = { success: boolean } | { error: string };
+
+/** Called by every quarter mutation so the cached reference reads pick up the change. */
+function invalidateQuarterCaches() {
+  updateTag(CACHE_TAGS.quarters);
+  revalidatePath("/admin/quarters");
+}
 
 function toSlug(name: string, year: number) {
   return `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${year}`;
 }
 
 export async function getQuarters() {
-  return prisma.paymentQuarter.findMany({
-    orderBy: [{ year: "desc" }, { order: "asc" }],
-  });
+  return getCachedQuarters();
 }
 
 export async function getActiveQuarters() {
-  return prisma.paymentQuarter.findMany({
-    where: { isActive: true },
-    orderBy: [{ year: "desc" }, { order: "asc" }],
-  });
+  return getCachedActiveQuarters();
 }
 
+// Deliberately not cached: which quarter is "current" depends on today's date,
+// and it is a single indexed lookup.
 export async function getCurrentQuarter() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -71,7 +79,7 @@ export async function createQuarter(formData: FormData): Promise<ActionResult> {
     data: { ...data, slug },
   });
 
-  revalidatePath("/admin/quarters");
+  invalidateQuarterCaches();
   return { success: true };
 }
 
@@ -101,7 +109,7 @@ export async function updateQuarter(id: string, formData: FormData): Promise<Act
     data,
   });
 
-  revalidatePath("/admin/quarters");
+  invalidateQuarterCaches();
   return { success: true };
 }
 
@@ -114,6 +122,6 @@ export async function deleteQuarter(id: string): Promise<ActionResult> {
   }
 
   await prisma.paymentQuarter.delete({ where: { id } });
-  revalidatePath("/admin/quarters");
+  invalidateQuarterCaches();
   return { success: true };
 }

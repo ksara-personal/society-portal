@@ -1,14 +1,27 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { flatSchema, flatRangeSchema } from "@/lib/validators";
+import {
+  CACHE_TAGS,
+  getCachedFlatEligibilityCounts,
+  getCachedFlatPairs,
+  getCachedFlatsForWing,
+  getCachedWings,
+} from "@/lib/master-data";
 
 type ActionResult = { success: boolean; count?: number } | { error: string };
 
 function padFlatNo(n: number) {
   return String(n).padStart(3, "0");
+}
+
+/** Called by every flat mutation so the cached reference reads pick up the change. */
+function invalidateFlatCaches() {
+  updateTag(CACHE_TAGS.flats);
+  revalidatePath("/admin/flats");
 }
 
 export async function getFlats() {
@@ -19,21 +32,12 @@ export async function getFlats() {
 
 /** Counts of flats/villas by maintenance eligibility. */
 export async function getFlatEligibilityCounts() {
-  const [total, eligible] = await Promise.all([
-    prisma.flat.count(),
-    prisma.flat.count({ where: { eligibleForMaintenance: true } }),
-  ]);
-  return { total, eligible, notEligible: total - eligible };
+  return getCachedFlatEligibilityCounts();
 }
 
 /** Distinct wing names present in the Flat master, sorted alphabetically. */
 export async function getWings(): Promise<string[]> {
-  const flats = await prisma.flat.findMany({
-    select: { wing: true },
-    distinct: ["wing"],
-    orderBy: { wing: "asc" },
-  });
-  return flats.map((f) => f.wing).sort((a, b) => a.localeCompare(b));
+  return getCachedWings();
 }
 
 /**
@@ -41,29 +45,14 @@ export async function getWings(): Promise<string[]> {
  * returns all flats across every wing.
  */
 export async function getFlatsForWing(wing?: string, options?: { eligibleOnly?: boolean }): Promise<string[]> {
-  const flats = await prisma.flat.findMany({
-    where: {
-      ...(wing ? { wing } : {}),
-      ...(options?.eligibleOnly ? { eligibleForMaintenance: true } : {}),
-    },
-    orderBy: { flatNo: "asc" },
-    select: { flatNo: true },
-  });
-  return flats.map((f) => f.flatNo);
+  return getCachedFlatsForWing(wing, options?.eligibleOnly ?? false);
 }
 
 export async function getFlatPairs(
   wing?: string,
   options?: { eligibleOnly?: boolean }
 ): Promise<Array<{ wing: string; flatNo: string; eligibleForMaintenance: boolean }>> {
-  const flats = await prisma.flat.findMany({
-    where: {
-      ...(wing ? { wing } : {}),
-      ...(options?.eligibleOnly ? { eligibleForMaintenance: true } : {}),
-    },
-    orderBy: [{ wing: "asc" }, { flatNo: "asc" }],
-  });
-  return flats.map((f) => ({ wing: f.wing, flatNo: f.flatNo, eligibleForMaintenance: f.eligibleForMaintenance }));
+  return getCachedFlatPairs(wing, options?.eligibleOnly ?? false);
 }
 
 export async function createFlat(formData: FormData): Promise<ActionResult> {
@@ -83,7 +72,7 @@ export async function createFlat(formData: FormData): Promise<ActionResult> {
 
   await prisma.flat.create({ data: parsed.data });
 
-  revalidatePath("/admin/flats");
+  invalidateFlatCaches();
   return { success: true };
 }
 
@@ -104,14 +93,14 @@ export async function updateFlat(id: string, formData: FormData): Promise<Action
 
   await prisma.flat.update({ where: { id }, data: parsed.data });
 
-  revalidatePath("/admin/flats");
+  invalidateFlatCaches();
   return { success: true };
 }
 
 export async function deleteFlat(id: string): Promise<ActionResult> {
   await requireAdmin();
   await prisma.flat.delete({ where: { id } });
-  revalidatePath("/admin/flats");
+  invalidateFlatCaches();
   return { success: true };
 }
 
@@ -140,6 +129,6 @@ export async function createFlatRange(formData: FormData): Promise<ActionResult>
 
   await prisma.flat.createMany({ data: toCreate });
 
-  revalidatePath("/admin/flats");
+  invalidateFlatCaches();
   return { success: true, count: toCreate.length };
 }

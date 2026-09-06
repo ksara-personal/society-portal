@@ -10,6 +10,7 @@ import {
   issueFilterSchema,
 } from "@/lib/validators";
 import { IssueStatus } from "@prisma/client";
+import { getCachedActiveCategories } from "@/lib/master-data";
 
 export async function createIssue(formData: FormData) {
   const user = await requireAuth();
@@ -311,10 +312,7 @@ export async function getIssuesGrouped(searchParams: Record<string, string>) {
 }
 
 export async function getCategories() {
-  return prisma.category.findMany({
-    where: { isActive: true },
-    orderBy: { name: "asc" },
-  });
+  return getCachedActiveCategories();
 }
 
 export async function getAdmins() {
