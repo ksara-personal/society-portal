@@ -41,15 +41,15 @@ type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
 const navItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/meetings", label: "Meetings", icon: ScrollText },
-  { href: "/issues", label: "All Issues", icon: ClipboardList },
-  { href: "/issues/new", label: "Report Issue", icon: PlusCircle },
+  //{ href: "/issues", label: "All Issues", icon: ClipboardList },
+  //{ href: "/issues/new", label: "Report Issue", icon: PlusCircle },
   { href: "/villa-issues", label: myUnitIssuesLabel(), icon: Home },
-  { href: "/residents", label: membersLabel(), icon: Users },
   { href: "/profile", label: "My Profile", icon: UserCircle },
   { href: "/payments", label: "My Payments", icon: IndianRupee },
 ];
 
 const serviceDirectoryItems: NavItem[] = [
+  { href: "/residents", label: membersLabel(), icon: Users },
   { href: "/contacts", label: "Service Contacts", icon: BookUser },
 ];
 
@@ -160,30 +160,6 @@ export function MobileNav({ userRole, userName }: MobileNavProps) {
               );
             })}
 
-            {/* Service Directory group */}
-            <Separator className="my-2" />
-            <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-              <FolderOpen className="h-3 w-3" />
-              Service Directory
-            </p>
-            {serviceDirectoryItems.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-                    isActive ? "bg-primary/10 text-primary" : "text-gray-600 hover:bg-gray-100"
-                  )}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-
             {/* Non-admin finance report links */}
             {!isAdmin && [
               //{ href: "/admin/quarterly-balances", label: "Quarterly Balances", icon: BarChart2 },
@@ -216,6 +192,30 @@ export function MobileNav({ userRole, userName }: MobileNavProps) {
             {isAdmin && (
               renderSideBarItems(setOpen, pathname, "Master Data", adminMasterDataItems)
             )}
+
+            {/* Service Directory group */}
+            <Separator className="my-2" />
+            <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+              <FolderOpen className="h-3 w-3" />
+              Directory
+            </p>
+            {serviceDirectoryItems.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                    isActive ? "bg-primary/10 text-primary" : "text-gray-600 hover:bg-gray-100"
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
 
           <div className="border-t p-3 shrink-0">

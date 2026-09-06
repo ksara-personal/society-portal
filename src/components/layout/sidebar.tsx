@@ -45,16 +45,16 @@ function buildNavItems(): NavItem[] {
   return [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/meetings", label: "Meetings", icon: ScrollText },
-    { href: "/issues", label: "All Issues", icon: ClipboardList },
-    { href: "/issues/new", label: "Report Issue", icon: PlusCircle },
+    //{ href: "/issues", label: "All Issues", icon: ClipboardList },
+    //{ href: "/issues/new", label: "Report Issue", icon: PlusCircle },
     { href: "/villa-issues", label: myUnitIssuesLabel(), icon: Home },
-    { href: "/residents", label: membersLabel(), icon: Users },
     { href: "/profile", label: "My Profile", icon: UserCircle },
     { href: "/payments", label: "My Payments", icon: IndianRupee },
   ];
 }
 
 const serviceDirectoryItems: NavItem[] = [
+  { href: "/residents", label: membersLabel(), icon: Users },
   { href: "/contacts", label: "Service Contacts", icon: BookUser },
 ];
 
@@ -155,17 +155,6 @@ export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
           return renderSidebarLink(item, isActive);
         })}
 
-        {/* Service Directory group */}
-        <Separator className="my-2" />
-        <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-          <FolderOpen className="h-3 w-3" />
-          Service Directory
-        </p>
-        {serviceDirectoryItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-          return renderSidebarLink(item, isActive);
-        })}
-
         {/* Admin group */}
         {/* Admin Finance Mgmt group */}
         {isAdmin && (
@@ -209,6 +198,17 @@ export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
             })}
           </>
         )}
+
+        {/* Service Directory group */}
+        <Separator className="my-2" />
+        <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+          <FolderOpen className="h-3 w-3" />
+          Directory
+        </p>
+        {serviceDirectoryItems.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          return renderSidebarLink(item, isActive);
+        })}
       </nav>
 
       <div className="border-t p-3">
