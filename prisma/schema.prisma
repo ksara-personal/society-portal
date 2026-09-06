@@ -37,6 +37,9 @@ model User {
   @@index([email])
   @@index([role])
   @@index([approvalStatus])
+  // getMyPayments, the flatmate lookup in getResidentDashboardSummary and the
+  // resident lookup in createPayment all filter on wing + flatNo.
+  @@index([wing, flatNo])
 }
 
 model PasswordResetToken {
@@ -156,7 +159,12 @@ model Issue {
   @@index([createdById])
   @@index([createdAt])
   @@index([wing])
-  @@index([issueType])
+  // Practically every issue query is scoped to one issueType and then filtered
+  // or ordered by one of these. A standalone [issueType] index would be a
+  // redundant leftmost prefix of these, so it isn't kept.
+  @@index([issueType, status])
+  @@index([issueType, createdAt])
+  @@index([issueType, createdById])
 }
 
 model Attachment {
@@ -281,14 +289,19 @@ model Payment {
   paymentType   PaymentType?   @relation(fields: [paymentTypeId], references: [id])
   user          User?          @relation("PaymentResident", fields: [userId], references: [id])
 
-  @@index([status])
-  @@index([quarterId])
   @@index([paymentTypeId])
   @@index([userId])
   @@index([collectedById])
   @@index([transferredToId])
+  // getMyPayments filters on wing + flatNo with no quarter, so this stays
+  // alongside the quarter-scoped composite below.
   @@index([wing, flatNo])
   @@index([createdAt])
+  // The dues queries scope to a quarter and then a flat; the finance summary
+  // groups collected payments by collector. Standalone [quarterId] and
+  // [status] indexes would be redundant leftmost prefixes of these.
+  @@index([quarterId, wing, flatNo])
+  @@index([status, collectedById])
 }
 
 model Meeting {

@@ -1,0 +1,39 @@
+"use client";
+
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+
+export default function VillaTrendChartBody({
+  data,
+}: {
+  data: { date: string; count: number }[];
+}) {
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <LineChart data={data} margin={{ top: 4, right: 8, left: -20, bottom: 4 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+        <XAxis dataKey="date" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+        <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+        <Tooltip
+          formatter={(value) => [`${value} issues`, "Logged"]}
+          contentStyle={{ fontSize: 12 }}
+        />
+        <Line
+          type="monotone"
+          dataKey="count"
+          stroke="#f59e0b"
+          strokeWidth={2}
+          dot={{ r: 3, fill: "#f59e0b" }}
+          activeDot={{ r: 5 }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}

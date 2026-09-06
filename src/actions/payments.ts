@@ -6,6 +6,8 @@ import { requireAdmin, requireAuth, getCurrentUser } from "@/lib/session";
 import { paymentSchema, bulkPaymentSchema } from "@/lib/validators";
 import { summarizeFlatPayment } from "@/lib/payment-summary";
 import { getFlatPairs } from "@/actions/flats";
+import { getCachedWings } from "@/lib/master-data";
+import { toPlainAmountRow, toPlainQuarter } from "@/lib/decimal";
 
 type ActionResult = { success: boolean; count?: number } | { error: string };
 
@@ -70,6 +72,77 @@ export async function getAdmins() {
     select: { id: true, name: true, email: true },
     orderBy: { name: "asc" },
   });
+}
+
+/**
+ * Everything the Payments admin screen needs for one render, in a single
+ * request. The page used to make five separate server-action calls on mount —
+ * each a round trip with its own auth check — and the payment list twice over,
+ * because the quarter lookup mutated the filters the list effect depended on.
+ */
+export async function getPaymentsPageData(filters?: {
+  quarterId?: string;
+  wing?: string;
+  flatNo?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+  /**
+   * On first load the page has no quarter selected yet and wants the current
+   * one. Resolving that here avoids the client fetching the list once with no
+   * quarter and again after the quarter arrives.
+   */
+  useCurrentQuarterIfUnset?: boolean;
+}) {
+  await requireAdmin();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const { useCurrentQuarterIfUnset, ...listFilters } = filters ?? {};
+  const needsDefaultQuarter = !listFilters.quarterId && !!useCurrentQuarterIfUnset;
+
+  const referenceData = Promise.all([
+    prisma.paymentQuarter.findMany({
+      where: { isActive: true },
+      orderBy: [{ year: "desc" }, { order: "asc" }],
+    }),
+
+    prisma.paymentQuarter.findFirst({
+      where: { isActive: true, startDate: { lte: today }, endDate: { gte: today } },
+    }),
+
+    prisma.paymentType.findMany({ orderBy: { name: "asc" } }),
+
+    prisma.user.findMany({
+      where: { role: "ADMIN", isActive: true },
+      select: { id: true, name: true, email: true },
+      orderBy: { name: "asc" },
+    }),
+
+    // Included here so the page doesn't need a separate useWings() round trip.
+    getCachedWings(),
+  ]);
+
+  // When the quarter is already known the payment list goes out with everything
+  // else; only the first load has to wait for the current quarter to resolve.
+  const [[quarters, currentQuarter, paymentTypes, admins, wings], payments] = needsDefaultQuarter
+    ? await (async () => {
+        const reference = await referenceData;
+        const list = await getPayments({ ...listFilters, quarterId: reference[1]?.id });
+        return [reference, list] as const;
+      })()
+    : await Promise.all([referenceData, getPayments(listFilters)]);
+
+  return {
+    quarters: quarters.map(toPlainQuarter),
+    currentQuarter: currentQuarter ? toPlainQuarter(currentQuarter) : null,
+    paymentTypes,
+    admins,
+    wings,
+    payments: { ...payments, items: payments.items.map(toPlainAmountRow) },
+    appliedQuarterId: needsDefaultQuarter ? currentQuarter?.id ?? "" : listFilters.quarterId ?? "",
+  };
 }
 
 export async function getMyPayments() {

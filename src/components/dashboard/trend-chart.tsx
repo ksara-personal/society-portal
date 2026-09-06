@@ -1,15 +1,13 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
+import { ChartSkeleton } from "@/components/charts/chart-skeleton";
+
+const TrendChartBody = dynamic(() => import("./trend-chart-body"), {
+  ssr: false,
+  loading: () => <ChartSkeleton height={200} />,
+});
 
 export function TrendChart({
   data,
@@ -29,23 +27,7 @@ export function TrendChart({
             No data for this period
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(value) => [`${value} issues`, ""]} />
-              <Line
-                type="monotone"
-                dataKey="count"
-                stroke="#22C55E"
-                strokeWidth={2}
-                dot={{ r: 3, fill: "#22C55E" }}
-                activeDot={{ r: 5 }}
-                name="Issues"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <TrendChartBody data={data} />
         )}
       </CardContent>
     </Card>

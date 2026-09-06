@@ -1,14 +1,29 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { RichTextEditor } from "./rich-text-editor";
 import { useToast } from "@/components/ui/use-toast";
 import { createMeeting, updateMeeting } from "@/actions/meetings";
+
+// The editor pulls in the whole tiptap/ProseMirror stack, which is by far the
+// largest dependency on this route. It's browser-only anyway, so it loads as
+// its own chunk once the form is on screen rather than blocking first paint.
+const RichTextEditor = dynamic(
+  () => import("./rich-text-editor").then((m) => m.RichTextEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="mt-2 flex h-[300px] items-center justify-center rounded-md border bg-gray-50 text-sm text-gray-400">
+        Loading editor…
+      </div>
+    ),
+  }
+);
 
 interface MeetingFormProps {
   meeting?: {
