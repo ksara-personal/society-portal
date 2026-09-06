@@ -45,13 +45,16 @@ export default function PaymentsPage() {
   const [formWing, setFormWing] = useState("");
   const [formFlatNo, setFormFlatNo] = useState("");
   const [formPaymentTypeId, setFormPaymentTypeId] = useState("");
+  const [formTransferredToId, setFormTransferredToId] = useState("");
   const { data: session } = useSession();
   const wings = useWings();
   const formFlats = useFlatsForWing(formWing);
 
   const maintenanceTypeId = paymentTypes.find((t) => t.slug === "maintenance" || t.name === "Maintenance")?.id;
+  const internalTransferTypeId = paymentTypes.find((t) => t.slug === "internal-transfer")?.id;
   // Untyped/legacy records and the Maintenance type itself require a wing/flat; other types don't.
   const isMaintenancePayment = !formPaymentTypeId || formPaymentTypeId === maintenanceTypeId;
+  const isInternalTransfer = !!internalTransferTypeId && formPaymentTypeId === internalTransferTypeId;
 
   useEffect(() => { loadQuarters(); loadPaymentTypes(); loadAdmins(); }, []);
   useEffect(() => { load(); }, [page, filters]);
@@ -90,6 +93,7 @@ export default function PaymentsPage() {
     const form = new FormData(e.currentTarget);
     form.set("wing", isMaintenancePayment ? formWing : "");
     form.set("flatNo", isMaintenancePayment ? formFlatNo : "");
+    form.set("transferredToId", isInternalTransfer ? formTransferredToId : "");
     const res = editing
       ? await updatePayment(editing.id, form)
       : await createPayment(form);
@@ -204,7 +208,7 @@ export default function PaymentsPage() {
 
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => { setEditing(null); setFormWing(""); setFormFlatNo(""); setFormPaymentTypeId(maintenanceTypeId ?? ""); }}><Plus className="mr-2 h-4 w-4" />Add Payment</Button>
+              <Button onClick={() => { setEditing(null); setFormWing(""); setFormFlatNo(""); setFormPaymentTypeId(maintenanceTypeId ?? ""); setFormTransferredToId(""); }}><Plus className="mr-2 h-4 w-4" />Add Payment</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>{editing ? "Edit Payment" : "New Payment"}</DialogTitle></DialogHeader>
@@ -276,7 +280,7 @@ export default function PaymentsPage() {
                   </>
                 )}
                 <div>
-                  <Label>Collected By</Label>
+                  <Label>{isInternalTransfer ? "Paid By" : "Collected By"}</Label>
                   <Select name="collectedById" defaultValue={editing?.collectedById ?? session?.user?.id}>
                     <SelectTrigger><SelectValue placeholder="Select admin" /></SelectTrigger>
                     <SelectContent>
@@ -284,6 +288,17 @@ export default function PaymentsPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                {isInternalTransfer && (
+                  <div>
+                    <Label>Transferred To</Label>
+                    <Select value={formTransferredToId} onValueChange={setFormTransferredToId}>
+                      <SelectTrigger><SelectValue placeholder="Select admin" /></SelectTrigger>
+                      <SelectContent>
+                        {admins.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div><Label>Notes</Label><Input name="notes" defaultValue={editing?.notes} /></div>
                 <Button type="submit" className="w-full">{editing ? "Update" : "Create"}</Button>
               </form>
@@ -326,8 +341,9 @@ export default function PaymentsPage() {
             <TableHead>Flat</TableHead>
             <TableHead>Amount</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Paid On</TableHead>
+            <TableHead>Type</TableHead>
             <TableHead>Collected By</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -348,10 +364,13 @@ export default function PaymentsPage() {
                 </span>
               </TableCell>
               <TableCell>{p.paymentType?.name ?? "—"}</TableCell>
-              <TableCell>{p.collectedBy?.name ?? "-"}</TableCell>
+              <TableCell>
+                {p.collectedBy?.name ?? "—"}
+                {p.transferredTo?.name && <span className="text-muted-foreground"> → {p.transferredTo.name}</span>}
+              </TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setFormWing(p.wing ?? ""); setFormFlatNo(p.flatNo ?? ""); setFormPaymentTypeId(p.paymentTypeId ?? maintenanceTypeId ?? ""); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => { setEditing(p); setFormWing(p.wing ?? ""); setFormFlatNo(p.flatNo ?? ""); setFormPaymentTypeId(p.paymentTypeId ?? maintenanceTypeId ?? ""); setFormTransferredToId(p.transferredToId ?? ""); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
               </TableCell>

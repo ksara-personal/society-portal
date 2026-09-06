@@ -195,6 +195,8 @@ export const paymentSchema = z.object({
   transactionId: z.string().max(100).optional().or(z.literal("")),
   notes: z.string().max(500).optional().or(z.literal("")),
   collectedById: z.string().optional().or(z.literal("")),
+  // Only used (and required) for Internal Transfer payments; enforced in the action.
+  transferredToId: z.string().optional().or(z.literal("")),
 });
 
 export const bulkPaymentSchema = z.object({

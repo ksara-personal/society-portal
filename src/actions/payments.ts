@@ -17,6 +17,14 @@ async function requiresFlatDetails(paymentTypeId?: string | null) {
   return !type || type.slug === "maintenance";
 }
 
+// Internal Transfer payments move money from the recording admin to another admin,
+// so they must record the receiving admin.
+async function isInternalTransfer(paymentTypeId?: string | null) {
+  if (!paymentTypeId) return false;
+  const type = await prisma.paymentType.findUnique({ where: { id: paymentTypeId }, select: { slug: true } });
+  return type?.slug === "internal-transfer";
+}
+
 export async function getPayments(filters?: {
   quarterId?: string;
   wing?: string;
@@ -43,6 +51,7 @@ export async function getPayments(filters?: {
         paymentType: true,
         user: { select: { name: true, email: true } },
         collectedBy: { select: { id: true, name: true } },
+        transferredTo: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: "desc" },
       skip,
@@ -98,6 +107,7 @@ export async function createPayment(formData: FormData): Promise<ActionResult> {
     transactionId: formData.get("transactionId") || undefined,
     notes: formData.get("notes") || undefined,
     collectedById: formData.get("collectedById") || undefined,
+    transferredToId: formData.get("transferredToId") || undefined,
   });
 
   if (!parsed.success) return { error: parsed.error.errors[0].message };
@@ -108,6 +118,11 @@ export async function createPayment(formData: FormData): Promise<ActionResult> {
   }
   const wing = needsFlatDetails ? parsed.data.wing! : "";
   const flatNo = needsFlatDetails ? parsed.data.flatNo! : "";
+
+  const internalTransfer = await isInternalTransfer(parsed.data.paymentTypeId);
+  if (internalTransfer && !parsed.data.transferredToId) {
+    return { error: "Please select the admin the amount was transferred to" };
+  }
 
   const resident = needsFlatDetails
     ? await prisma.user.findFirst({
@@ -126,6 +141,7 @@ export async function createPayment(formData: FormData): Promise<ActionResult> {
       userId: resident?.id ?? null,
       paidAt: parsed.data.paidAt ? new Date(parsed.data.paidAt) : null,
       collectedById: parsed.data.collectedById || admin?.id || null,
+      transferredToId: internalTransfer ? parsed.data.transferredToId! : null,
     },
   });
 
@@ -148,6 +164,7 @@ export async function updatePayment(id: string, formData: FormData): Promise<Act
     transactionId: formData.get("transactionId") || undefined,
     notes: formData.get("notes") || undefined,
     collectedById: formData.get("collectedById") || undefined,
+    transferredToId: formData.get("transferredToId") || undefined,
   });
 
   if (!parsed.success) return { error: parsed.error.errors[0].message };
@@ -157,6 +174,11 @@ export async function updatePayment(id: string, formData: FormData): Promise<Act
     return { error: "Wing and flat number are required for Maintenance payments" };
   }
 
+  const internalTransfer = await isInternalTransfer(parsed.data.paymentTypeId);
+  if (internalTransfer && !parsed.data.transferredToId) {
+    return { error: "Please select the admin the amount was transferred to" };
+  }
+
   const admin = await getCurrentUser();
 
   const updateData: any = {
@@ -164,6 +186,7 @@ export async function updatePayment(id: string, formData: FormData): Promise<Act
     wing: needsFlatDetails ? parsed.data.wing : "",
     flatNo: needsFlatDetails ? parsed.data.flatNo : "",
     paidAt: parsed.data.paidAt ? new Date(parsed.data.paidAt) : null,
+    transferredToId: internalTransfer ? parsed.data.transferredToId! : null,
   };
 
   if (parsed.data.collectedById) {
