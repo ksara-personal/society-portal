@@ -1,5 +1,10 @@
-import { auth } from "@/lib/auth";
+import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
+import { authConfig } from "@/lib/auth.config";
+
+// Built from the edge-safe config only — importing `auth` from @/lib/auth would
+// pull Prisma and bcrypt into the middleware bundle, which runs on every request.
+const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
@@ -42,5 +47,9 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  // Static assets served out of /public (logos, icons, fonts) don't need an auth
+  // check, so they skip middleware entirely rather than paying for a JWT decode.
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|ico|webp|avif|woff|woff2|ttf|otf|txt|xml|webmanifest)$).*)",
+  ],
 };

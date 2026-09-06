@@ -2,15 +2,26 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
-import { subDays, format } from "date-fns";
+import { subDays } from "date-fns";
 import { getMyPayments } from "@/actions/payments";
 import { getLatestMeeting } from "@/actions/meetings";
+import { getAvgResolutionDays, getDailyIssueCounts } from "@/lib/issue-stats";
 
 export async function getDashboardStats() {
   await requireAuth();
 
-  const [total, byStatus, byCategory, byWing, recentIssues] =
-    await Promise.all([
+  // Every one of these is independent, so they all go out in a single wave
+  // rather than trailing three more round trips after the batch.
+  const [
+    total,
+    byStatus,
+    byCategory,
+    byWing,
+    recentIssues,
+    categories,
+    avgResolutionDays,
+    trendData,
+  ] = await Promise.all([
       prisma.issue.count({ where: { issueType: "SOCIETY" } }),
 
       prisma.issue.groupBy({
@@ -41,12 +52,15 @@ export async function getDashboardStats() {
         orderBy: { createdAt: "desc" },
         take: 10,
       }),
+
+      prisma.category.findMany({ select: { id: true, name: true } }),
+
+      getAvgResolutionDays("SOCIETY"),
+
+      getDailyIssueCounts("SOCIETY", subDays(new Date(), 30)),
     ]);
 
   // Resolve category names
-  const categories = await prisma.category.findMany({
-    select: { id: true, name: true },
-  });
   const categoryMap = Object.fromEntries(
     categories.map((c) => [c.id, c.name])
   );
@@ -60,37 +74,6 @@ export async function getDashboardStats() {
   };
   for (const s of byStatus) {
     statusCounts[s.status] = s._count.id;
-  }
-
-  // Avg resolution time (days)
-  let avgResolutionDays: number | null = null;
-  try {
-    const resolved = await prisma.issue.findMany({
-      where: { issueType: "SOCIETY", status: "COMPLETED", resolvedAt: { not: null } },
-      select: { createdAt: true, resolvedAt: true },
-    });
-    if (resolved.length > 0) {
-      const totalMs = resolved.reduce(
-        (acc, i) => acc + (i.resolvedAt!.getTime() - i.createdAt.getTime()),
-        0
-      );
-      avgResolutionDays = totalMs / resolved.length / (1000 * 60 * 60 * 24);
-    }
-  } catch {
-    avgResolutionDays = null;
-  }
-
-  // Trend: issues per day last 30 days
-  const trendIssues = await prisma.issue.findMany({
-    where: { issueType: "SOCIETY", createdAt: { gte: subDays(new Date(), 30) } },
-    select: { createdAt: true },
-    orderBy: { createdAt: "asc" },
-  });
-
-  const trendMap = new Map<string, number>();
-  for (const issue of trendIssues) {
-    const key = format(issue.createdAt, "MMM dd");
-    trendMap.set(key, (trendMap.get(key) || 0) + 1);
   }
 
   return {
@@ -108,10 +91,7 @@ export async function getDashboardStats() {
     })),
     recentIssues,
     avgResolutionDays,
-    trendData: Array.from(trendMap.entries()).map(([date, count]) => ({
-      date,
-      count,
-    })),
+    trendData,
   };
 }
 

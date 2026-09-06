@@ -19,17 +19,23 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
   if (!user) redirect("/dashboard");
 
   const yearParam = Array.isArray(resolved.year) ? resolved.year[0] : resolved.year;
-  const allQuarters = await getQuarters();
+
+  // The KPI-card data doesn't depend on the selected year, so it loads alongside
+  // the quarter list rather than after it.
+  // (currentDues may return an error object if no active quarter is configured)
+  const [allQuarters, currentDuesRes, eligibility] = await Promise.all([
+    getQuarters(),
+    getCurrentQuarterDues(),
+    getFlatEligibilityCounts(),
+  ]);
+
+  const currentSummary = "error" in currentDuesRes ? null : currentDuesRes.summary;
+  const currentQuarter = "error" in currentDuesRes ? null : currentDuesRes.quarter;
+
   const years = Array.from(new Set(allQuarters.map((q) => q.year))).sort((a, b) => b - a);
   const year = yearParam ? Number(yearParam) : years[0] ?? new Date().getFullYear();
 
   const { quarters, rows } = await getDuesTrackerData(year);
-
-  // Also fetch current quarter summary for KPI cards (may return error if no active quarter)
-  const currentDuesRes = await getCurrentQuarterDues();
-  const currentSummary = "error" in currentDuesRes ? null : currentDuesRes.summary;
-  const currentQuarter = "error" in currentDuesRes ? null : currentDuesRes.quarter;
-  const eligibility = await getFlatEligibilityCounts();
 
   const quarterTotals = quarters.map((quarter) =>
     rows.reduce(

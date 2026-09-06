@@ -2,12 +2,28 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
-import { subDays, format } from "date-fns";
+import { subDays } from "date-fns";
+import {
+  getAvgResolutionDays,
+  getDailyIssueCounts,
+  getDistinctIssueCreatorCount,
+} from "@/lib/issue-stats";
 
 export async function getVillaDashboardStats() {
   await requireAdmin();
 
-  const [total, byStatus, byWing, recentIssues] = await Promise.all([
+  // One wave for everything that doesn't depend on another result; only the
+  // creator-name lookup has to wait, since it needs the ids from `byFlat`.
+  const [
+    total,
+    byStatus,
+    byWing,
+    recentIssues,
+    avgResolutionDays,
+    trendData,
+    uniqueVillasCount,
+    byFlat,
+  ] = await Promise.all([
     prisma.issue.count({ where: { issueType: "VILLA" } }),
 
     prisma.issue.groupBy({
@@ -32,6 +48,21 @@ export async function getVillaDashboardStats() {
       orderBy: { createdAt: "desc" },
       take: 10,
     }),
+
+    getAvgResolutionDays("VILLA"),
+
+    getDailyIssueCounts("VILLA", subDays(new Date(), 30)),
+
+    getDistinctIssueCreatorCount("VILLA"),
+
+    // Per-flat breakdown: flat-level issue count
+    prisma.issue.groupBy({
+      by: ["createdById"],
+      where: { issueType: "VILLA" },
+      _count: { id: true },
+      orderBy: { _count: { id: "desc" } },
+      take: 20,
+    }),
   ]);
 
   // Status counts
@@ -45,66 +76,15 @@ export async function getVillaDashboardStats() {
     statusCounts[s.status] = s._count.id;
   }
 
-  // Avg resolution time (days)
-  let avgResolutionDays: number | null = null;
-  const resolved = await prisma.issue.findMany({
-    where: {
-      issueType: "VILLA",
-      status: "COMPLETED",
-      resolvedAt: { not: null },
-    },
-    select: { createdAt: true, resolvedAt: true },
-  });
-  if (resolved.length > 0) {
-    const totalMs = resolved.reduce(
-      (acc, i) => acc + (i.resolvedAt!.getTime() - i.createdAt.getTime()),
-      0
-    );
-    avgResolutionDays = totalMs / resolved.length / (1000 * 60 * 60 * 24);
-  }
-
-  // Trend: villa issues per day for last 30 days
-  const trendIssues = await prisma.issue.findMany({
-    where: {
-      issueType: "VILLA",
-      createdAt: { gte: subDays(new Date(), 30) },
-    },
-    select: { createdAt: true },
-    orderBy: { createdAt: "asc" },
-  });
-
-  const trendMap = new Map<string, number>();
-  for (const issue of trendIssues) {
-    const key = format(issue.createdAt, "MMM dd");
-    trendMap.set(key, (trendMap.get(key) || 0) + 1);
-  }
-
-  // Unique villas (residents) with at least one villa issue
-  const uniqueVillas = await prisma.issue.findMany({
-    where: { issueType: "VILLA" },
-    select: { createdById: true },
-    distinct: ["createdById"],
-  });
-
-  // Per-flat breakdown: flat-level issue count
-  const byFlat = await prisma.issue.groupBy({
-    by: ["createdById"],
-    where: { issueType: "VILLA" },
-    _count: { id: true },
-    orderBy: { _count: { id: "desc" } },
-    take: 20,
-  });
-
   // Resolve creator names for the flat breakdown
-  const creatorIds = byFlat.map((b) => b.createdById);
   const creators = await prisma.user.findMany({
-    where: { id: { in: creatorIds } },
+    where: { id: { in: byFlat.map((b) => b.createdById) } },
     select: { id: true, name: true, wing: true, flatNo: true },
   });
-  const creatorMap = Object.fromEntries(creators.map((c) => [c.id, c]));
+  const creatorMap = new Map(creators.map((c) => [c.id, c]));
 
   const flatData = byFlat.map((b) => {
-    const creator = creatorMap[b.createdById];
+    const creator = creatorMap.get(b.createdById);
     return {
       label: creator
         ? `${creator.name}${creator.wing && creator.flatNo ? ` (${creator.wing}-${creator.flatNo})` : ""}`
@@ -116,7 +96,7 @@ export async function getVillaDashboardStats() {
   return {
     total,
     statusCounts,
-    uniqueVillasCount: uniqueVillas.length,
+    uniqueVillasCount,
     wingData: byWing.map((w) => ({
       name: `Wing ${w.wing}`,
       count: w._count.id,
@@ -124,9 +104,6 @@ export async function getVillaDashboardStats() {
     flatData,
     recentIssues,
     avgResolutionDays,
-    trendData: Array.from(trendMap.entries()).map(([date, count]) => ({
-      date,
-      count,
-    })),
+    trendData,
   };
 }

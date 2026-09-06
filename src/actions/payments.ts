@@ -277,27 +277,33 @@ export async function getCurrentQuarterDues(filters?: {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Find the quarter that contains today's date
-  const currentQuarter = await prisma.paymentQuarter.findFirst({
-    where: {
-      isActive: true,
-      startDate: { lte: today },
-      endDate: { gte: today },
-    },
-  });
+  // The quarter lookup, the resident list and the configured flat ranges don't
+  // depend on each other, so they share one round trip.
+  const [currentQuarter, allResidents, configuredFlatPairs] = await Promise.all([
+    // Find the quarter that contains today's date
+    prisma.paymentQuarter.findFirst({
+      where: {
+        isActive: true,
+        startDate: { lte: today },
+        endDate: { gte: today },
+      },
+    }),
+
+    // Get all users for display details (include admins and other roles)
+    prisma.user.findMany({
+      where: {
+        ...(filters?.wing ? { wing: filters.wing } : {}),
+      },
+      select: { id: true, name: true, email: true, phone: true, wing: true, flatNo: true },
+      orderBy: [{ wing: "asc" }, { flatNo: "asc" }, { name: "asc" }],
+    }),
+
+    getFlatPairs(filters?.wing, { eligibleOnly: true }),
+  ]);
 
   if (!currentQuarter) {
     return { error: "No active quarter is configured for the current date range." };
   }
-
-  // Get all users for display details (include admins and other roles)
-  const allResidents = await prisma.user.findMany({
-    where: {
-      ...(filters?.wing ? { wing: filters.wing } : {}),
-    },
-    select: { id: true, name: true, email: true, phone: true, wing: true, flatNo: true },
-    orderBy: [{ wing: "asc" }, { flatNo: "asc" }, { name: "asc" }],
-  });
 
   function normalizeFlatNo(flatNo?: string | null) {
     const raw = String(flatNo ?? "").trim();
@@ -329,7 +335,7 @@ export async function getCurrentQuarterDues(filters?: {
   });
 
   // Use configured wing/flat ranges as the baseline for dues, then include any existing payment records.
-  const configuredFlats = (await getFlatPairs(filters?.wing, { eligibleOnly: true })).map((flat) => ({
+  const configuredFlats = configuredFlatPairs.map((flat) => ({
     ...flat,
     flatNo: normalizeFlatNo(flat.flatNo),
   }));
@@ -441,21 +447,23 @@ export async function getFinanceUserSummary(filters?: { quarterId?: string; user
   if (filters?.quarterId) paymentWhere.quarterId = filters.quarterId;
   if (filters?.userId) paymentWhere.collectedById = filters.userId;
 
-  const paymentSummaries = await prisma.payment.groupBy({
-    by: ["collectedById"],
-    where: paymentWhere,
-    _sum: { amount: true },
-  });
-
   const expenseWhere: any = {};
   if (filters?.quarterId) expenseWhere.quarterId = filters.quarterId;
   if (filters?.userId) expenseWhere.createdById = filters.userId;
 
-  const expenseSummaries = await prisma.expenseItem.groupBy({
-    by: ["createdById"],
-    where: expenseWhere,
-    _sum: { amount: true },
-  });
+  const [paymentSummaries, expenseSummaries] = await Promise.all([
+    prisma.payment.groupBy({
+      by: ["collectedById"],
+      where: paymentWhere,
+      _sum: { amount: true },
+    }),
+
+    prisma.expenseItem.groupBy({
+      by: ["createdById"],
+      where: expenseWhere,
+      _sum: { amount: true },
+    }),
+  ]);
 
   const userIds = new Set<string>();
   paymentSummaries.forEach((entry) => {
@@ -474,14 +482,22 @@ export async function getFinanceUserSummary(filters?: { quarterId?: string; user
 
   const userMap = new Map(users.map((user) => [user.id, user]));
 
-  const rows = Array.from(new Set<string>([
-    ...paymentSummaries.map((entry) => entry.collectedById).filter(Boolean) as string[],
-    ...expenseSummaries.map((entry) => entry.createdById).filter(Boolean) as string[],
-  ]))
+  // Indexed by user id so building the rows stays linear instead of scanning
+  // both summary arrays once per row.
+  const collectedMap = new Map<string, number>();
+  for (const entry of paymentSummaries) {
+    if (entry.collectedById) collectedMap.set(entry.collectedById, Number(entry._sum.amount ?? 0));
+  }
+  const expensesMap = new Map<string, number>();
+  for (const entry of expenseSummaries) {
+    if (entry.createdById) expensesMap.set(entry.createdById, Number(entry._sum.amount ?? 0));
+  }
+
+  const rows = Array.from(userIds)
     .map((userId) => {
       const user = userMap.get(userId) ?? { id: userId, name: "Unknown", email: "" };
-      const collected = Number(paymentSummaries.find((entry) => entry.collectedById === userId)?._sum.amount ?? 0);
-      const expenses = Number(expenseSummaries.find((entry) => entry.createdById === userId)?._sum.amount ?? 0);
+      const collected = collectedMap.get(userId) ?? 0;
+      const expenses = expensesMap.get(userId) ?? 0;
       return {
         userId,
         user,
@@ -568,49 +584,79 @@ export async function createDuePayment(formData: FormData): Promise<ActionResult
 export async function getQuarterlyBalances(year?: number) {
   await requireAdmin();
 
-  const quarters = await prisma.paymentQuarter.findMany({
-    where: typeof year === "number" ? { year } : {},
-    orderBy: [{ year: "asc" }, { order: "asc" }],
-  });
+  // Opening balances need every quarter that ended before the displayed ones,
+  // not just the requested year, so all four queries are unfiltered and go out
+  // together. Previously the opening balance was recomputed with three more
+  // queries per row, i.e. 3 x (number of quarters) sequential round trips.
+  const [allQuarters, paymentTypes, paymentsByQuarterAndType, expensesByQuarter] =
+    await Promise.all([
+      prisma.paymentQuarter.findMany({
+        orderBy: [{ year: "asc" }, { order: "asc" }],
+      }),
+
+      prisma.paymentType.findMany({ select: { id: true, slug: true } }),
+
+      // PARTIAL amounts are real cash already collected
+      prisma.payment.groupBy({
+        by: ["quarterId", "paymentTypeId"],
+        where: { status: { in: ["PAID", "PARTIAL"] } },
+        _sum: { amount: true },
+      }),
+
+      prisma.expenseItem.groupBy({
+        by: ["quarterId"],
+        _sum: { amount: true },
+      }),
+    ]);
+
+  const quarters =
+    typeof year === "number" ? allQuarters.filter((q) => q.year === year) : allQuarters;
 
   if (quarters.length === 0) return [];
 
-  const quarterIds = quarters.map((q) => q.id);
-
-  // load payment types map by slug
-  const paymentTypes = await prisma.paymentType.findMany({ select: { id: true, slug: true } });
   const slugToId = new Map(paymentTypes.map((pt) => [pt.slug, pt.id]));
-
-  // group payments per quarter and paymentType (PARTIAL amounts are real cash already collected)
-  const paymentsByQuarterAndType = await prisma.payment.groupBy({
-    by: ["quarterId", "paymentTypeId"],
-    where: { quarterId: { in: quarterIds }, status: { in: ["PAID", "PARTIAL"] } },
-    _sum: { amount: true },
-  });
-
-  const paymentsTotalByQuarter = await prisma.payment.groupBy({
-    by: ["quarterId"],
-    where: { quarterId: { in: quarterIds }, status: { in: ["PAID", "PARTIAL"] } },
-    _sum: { amount: true },
-  });
-
-  const expensesByQuarter = await prisma.expenseItem.groupBy({
-    by: ["quarterId"],
-    where: { quarterId: { in: quarterIds } },
-    _sum: { amount: true },
-  });
 
   // helper maps
   const paymentsTypeMap = new Map<string, number>();
+  const paymentsTotalMap = new Map<string, number>();
   for (const entry of paymentsByQuarterAndType) {
-    const key = `${entry.quarterId}::${entry.paymentTypeId ?? "-"}`;
-    paymentsTypeMap.set(key, Number(entry._sum.amount ?? 0));
+    const amount = Number(entry._sum.amount ?? 0);
+    paymentsTypeMap.set(`${entry.quarterId}::${entry.paymentTypeId ?? "-"}`, amount);
+    // The per-quarter total is just the sum across every type, so it doesn't
+    // need its own groupBy.
+    paymentsTotalMap.set(
+      entry.quarterId,
+      (paymentsTotalMap.get(entry.quarterId) ?? 0) + amount
+    );
   }
 
-  const paymentsTotalMap = new Map(paymentsTotalByQuarter.map((p) => [p.quarterId, Number(p._sum.amount ?? 0)]));
   const expensesMap = new Map(expensesByQuarter.map((e) => [e.quarterId, Number(e._sum.amount ?? 0)]));
 
-  // For opening balance we compute cumulative sums from all quarters that end before this quarter's start
+  // Opening balance = cumulative net of every quarter ending before this one
+  // starts. Walking the quarters in endDate order turns that into a prefix sum
+  // over an in-memory array instead of a query per row.
+  const netByEndDate = allQuarters
+    .map((q) => ({
+      endDate: q.endDate,
+      net: (paymentsTotalMap.get(q.id) ?? 0) - (expensesMap.get(q.id) ?? 0),
+    }))
+    .sort((a, b) => a.endDate.getTime() - b.endDate.getTime());
+
+  // prefixNet[i] = net of the first i quarters in endDate order
+  const prefixNet: number[] = [0];
+  for (const entry of netByEndDate) {
+    prefixNet.push(prefixNet[prefixNet.length - 1] + entry.net);
+  }
+
+  function openingFor(startDate: Date) {
+    // count of quarters whose endDate is strictly before startDate
+    let count = 0;
+    while (count < netByEndDate.length && netByEndDate[count].endDate < startDate) {
+      count++;
+    }
+    return prefixNet[count];
+  }
+
   const results: Array<any> = [];
   const today = new Date();
 
@@ -634,20 +680,7 @@ export async function getQuarterlyBalances(year?: number) {
       continue;
     }
 
-    // find previous quarters
-    const prevQuarters = await prisma.paymentQuarter.findMany({ where: { endDate: { lt: q.startDate } }, select: { id: true } });
-    const prevIds = prevQuarters.map((p) => p.id);
-
-    let prevPaymentsSum = 0;
-    let prevExpensesSum = 0;
-    if (prevIds.length > 0) {
-      const prevPay = await prisma.payment.aggregate({ where: { quarterId: { in: prevIds }, status: { in: ["PAID", "PARTIAL"] } }, _sum: { amount: true } });
-      const prevExp = await prisma.expenseItem.aggregate({ where: { quarterId: { in: prevIds } }, _sum: { amount: true } });
-      prevPaymentsSum = Number(prevPay._sum.amount ?? 0);
-      prevExpensesSum = Number(prevExp._sum.amount ?? 0);
-    }
-
-    const opening = prevPaymentsSum - prevExpensesSum;
+    const opening = openingFor(q.startDate);
 
     const maintenanceId = slugToId.get("maintenance") ?? null;
     const builderId = slugToId.get("builder-funds") ?? null;
@@ -769,20 +802,34 @@ export async function getDuesTrackerData(year?: number) {
   // Shared with residents via the Dues Tracker page
   await requireAuth();
 
-  const quarters = await prisma.paymentQuarter.findMany({
-    where: typeof year === "number" ? { year } : {},
-    orderBy: [{ order: "asc" }],
-  });
+  // Filtering payments through the quarter relation instead of an explicit id
+  // list means this query doesn't have to wait for the quarter list, so all
+  // four go out together.
+  const [quarters, residents, allFlatPairs, payments] = await Promise.all([
+    prisma.paymentQuarter.findMany({
+      where: typeof year === "number" ? { year } : {},
+      orderBy: [{ order: "asc" }],
+    }),
+
+    prisma.user.findMany({
+      select: { name: true, wing: true, flatNo: true },
+      orderBy: [{ wing: "asc" }, { flatNo: "asc" }, { name: "asc" }],
+    }),
+
+    // Configured wing/flat ranges form the baseline row set; any flat with a payment record is included too.
+    getFlatPairs(),
+
+    prisma.payment.findMany({
+      where: {
+        ...(typeof year === "number" ? { quarter: { year } } : {}),
+        status: { in: ["PAID", "PARTIAL", "WAIVED"] },
+        OR: [{ paymentTypeId: null }, { paymentType: { slug: "maintenance" } }],
+      },
+      select: { quarterId: true, wing: true, flatNo: true, amount: true, status: true },
+    }),
+  ]);
 
   if (quarters.length === 0) return { quarters: [] as typeof quarters, rows: [] as never[] };
-
-  const quarterIds = quarters.map((q) => q.id);
-
-  const residents = await prisma.user.findMany({
-    where: { },
-    select: { name: true, wing: true, flatNo: true },
-    orderBy: [{ wing: "asc" }, { flatNo: "asc" }, { name: "asc" }],
-  });
 
   const ownersByFlat = new Map<string, string[]>();
   for (const resident of residents) {
@@ -792,8 +839,6 @@ export async function getDuesTrackerData(year?: number) {
     ownersByFlat.set(key, existing);
   }
 
-  // Configured wing/flat ranges form the baseline row set; any flat with a payment record is included too.
-  const allFlatPairs = await getFlatPairs();
   const eligibilityByFlat = new Map<string, boolean>();
   for (const flat of allFlatPairs) {
     eligibilityByFlat.set(`${flat.wing}-${normalizeFlatNo(flat.flatNo)}`, flat.eligibleForMaintenance);
@@ -804,15 +849,6 @@ export async function getDuesTrackerData(year?: number) {
       .filter((flat) => flat.eligibleForMaintenance)
       .map((flat) => `${flat.wing}-${normalizeFlatNo(flat.flatNo)}`)
   );
-
-  const payments = await prisma.payment.findMany({
-    where: {
-      quarterId: { in: quarterIds },
-      status: { in: ["PAID", "PARTIAL", "WAIVED"] },
-      OR: [{ paymentTypeId: null }, { paymentType: { slug: "maintenance" } }],
-    },
-    select: { quarterId: true, wing: true, flatNo: true, amount: true, status: true },
-  });
 
   const paidByFlatAndQuarter = new Map<string, number>();
   // PAID/WAIVED fully resolve a quarter regardless of the recorded amount (e.g. a
