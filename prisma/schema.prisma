@@ -28,6 +28,7 @@ model User {
   createdIssues   Issue[]         @relation("CreatedBy")
   payments        Payment[]       @relation("PaymentResident")
   collectedPayments Payment[]     @relation("PaymentCollector")
+  transfersReceived Payment[]     @relation("PaymentTransferTarget")
   expenseItems    ExpenseItem[]   @relation("ExpenseItemsCreated")
   statusChanges   StatusHistory[]
   meetingsCreated Meeting[]       @relation("MeetingsCreated")
@@ -272,6 +273,8 @@ model Payment {
   notes         String?
   collectedById String?
   collectedBy   User?          @relation("PaymentCollector", fields: [collectedById], references: [id])
+  transferredToId String?
+  transferredTo User?          @relation("PaymentTransferTarget", fields: [transferredToId], references: [id])
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   quarter       PaymentQuarter @relation(fields: [quarterId], references: [id], onDelete: Cascade)
@@ -283,6 +286,7 @@ model Payment {
   @@index([paymentTypeId])
   @@index([userId])
   @@index([collectedById])
+  @@index([transferredToId])
   @@index([wing, flatNo])
   @@index([createdAt])
 }
