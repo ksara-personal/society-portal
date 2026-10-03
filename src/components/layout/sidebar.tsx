@@ -84,6 +84,12 @@ const adminFinanceItems: NavItem[] = [
   { label: "Dues Tracker", href: "/admin/dues-tracker", icon: ListChecks },
 ];
 
+const residentFinanceItems: NavItem[] = [
+  { label: "Expenses", href: "/admin/expense-items", icon: IndianRupee },
+  { label: "Collection Summary", href: "/admin/finance-summary", icon: IndianRupee },
+  { label: "Dues Tracker", href: "/admin/dues-tracker", icon: ListChecks },
+];
+
 function renderSidebarLink(item: NavItem, isActive: boolean) {
   return (
     <Link
@@ -107,6 +113,7 @@ export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
   const isAdmin = userRole === "ADMIN";
   const navItems = buildNavItems();
   const adminItems = buildAdminItems();
+  const financeItems = isAdmin ? adminFinanceItems : residentFinanceItems;
 
   return (
     <aside className="flex flex-col h-full w-64 border-r bg-white">
@@ -146,30 +153,19 @@ export function Sidebar({ userRole, userName, userEmail }: SidebarProps) {
           return renderSidebarLink(item, isActive);
         })}
 
-        {/* Non-admin finance report links */}
-        {!isAdmin && [
-          //{ href: "/admin/quarterly-balances", label: "Quarterly Balances", icon: BarChart2 },
-          { href: "/admin/dues-tracker", label: "Dues Tracker", icon: ListChecks },
-        ].map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-          return renderSidebarLink(item, isActive);
-        })}
+        <>
+          <Separator className="my-2" />
+          <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+            <Shield className="h-3 w-3" />
+            Finance Management
+          </p>
+          {financeItems.map((item) => {
+            const isActive = pathname.startsWith(item.href);
+            return renderSidebarLink(item, isActive);
+          })}
+        </>
 
         {/* Admin group */}
-        {/* Admin Finance Mgmt group */}
-        {isAdmin && (
-          <>
-            <Separator className="my-2" />
-            <p className="px-3 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-              <Shield className="h-3 w-3" />
-              Finance Management
-            </p>
-            {adminFinanceItems.map((item) => {
-              const isActive = pathname.startsWith(item.href);
-              return renderSidebarLink(item, isActive);
-            })}
-          </>
-        )}
         {isAdmin && (
           <>
             <Separator className="my-2" />

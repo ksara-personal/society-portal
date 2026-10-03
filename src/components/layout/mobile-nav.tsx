@@ -77,6 +77,12 @@ const adminFinanceItems: NavItem[] = [
   { label: "Dues Tracker", href: "/admin/dues-tracker", icon: ListChecks },
 ];
 
+const residentFinanceItems: NavItem[] = [
+  { label: "Expenses", href: "/admin/expense-items", icon: IndianRupee },
+  { label: "Collection Summary", href: "/admin/finance-summary", icon: IndianRupee },
+  { label: "Dues Tracker", href: "/admin/dues-tracker", icon: ListChecks },
+];
+
 function renderSideBarItems(setOpen: (open: boolean) => void, pathname: string, category:string, navItems: NavItem[]) {
   return(
   <>
@@ -110,6 +116,7 @@ export function MobileNav({ userRole, userName }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const isAdmin = userRole === "ADMIN";
+  const financeItems = isAdmin ? adminFinanceItems : residentFinanceItems;
 
   return (
     <>
@@ -160,32 +167,7 @@ export function MobileNav({ userRole, userName }: MobileNavProps) {
               );
             })}
 
-            {/* Non-admin finance report links */}
-            {!isAdmin && [
-              //{ href: "/admin/quarterly-balances", label: "Quarterly Balances", icon: BarChart2 },
-              { href: "/admin/dues-tracker", label: "Dues Tracker", icon: ListChecks },
-            ].map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-                    isActive ? "bg-primary/10 text-primary" : "text-gray-600 hover:bg-gray-100"
-                  )}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-
-            {/* Admin group */}
-            {isAdmin && (
-              renderSideBarItems(setOpen, pathname, "Finance Mgmt", adminFinanceItems)
-            )} 
+            {renderSideBarItems(setOpen, pathname, "Finance Management", financeItems)}
             {isAdmin && (
               renderSideBarItems(setOpen, pathname, "Admin", adminItems)
             )}

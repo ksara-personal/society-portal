@@ -13,7 +13,7 @@ interface FinanceSummaryPageProps {
 export default async function FinanceSummaryPage({ searchParams }: FinanceSummaryPageProps) {
   const resolvedSearchParams = await searchParams;
   const user = await getCurrentUser();
-  if (!user || user.role !== "ADMIN") redirect("/dashboard");
+  if (!user) redirect("/dashboard");
 
   const quarterId = Array.isArray(resolvedSearchParams.quarterId)
     ? resolvedSearchParams.quarterId[0]
