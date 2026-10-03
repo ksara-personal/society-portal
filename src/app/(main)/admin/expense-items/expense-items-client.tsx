@@ -22,9 +22,10 @@ import { parseCsv } from "@/lib/utils";
 
 interface ExpenseItemsAdminClientProps {
   currentUserId: string;
+  isAdmin: boolean;
 }
 
-export default function ExpenseItemsAdminClient({ currentUserId }: ExpenseItemsAdminClientProps) {
+export default function ExpenseItemsAdminClient({ currentUserId, isAdmin }: ExpenseItemsAdminClientProps) {
   const [items, setItems] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [types, setTypes] = useState<any[]>([]);
@@ -170,7 +171,7 @@ export default function ExpenseItemsAdminClient({ currentUserId }: ExpenseItemsA
             </Select>
           </div>
 
-          <Dialog
+          {isAdmin && <Dialog
             open={importOpen}
             onOpenChange={(v) => {
               setImportOpen(v);
@@ -230,9 +231,9 @@ export default function ExpenseItemsAdminClient({ currentUserId }: ExpenseItemsA
                 )}
               </div>
             </DialogContent>
-          </Dialog>
+          </Dialog>}
 
-          <Dialog open={open} onOpenChange={setOpen}>
+          {isAdmin && <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => setOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -326,7 +327,7 @@ export default function ExpenseItemsAdminClient({ currentUserId }: ExpenseItemsA
                 </Button>
               </form>
             </DialogContent>
-          </Dialog>
+          </Dialog>}
         </div>
       </div>
 
@@ -352,7 +353,7 @@ export default function ExpenseItemsAdminClient({ currentUserId }: ExpenseItemsA
               <TableHead>Description</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Created By</TableHead>
-              <TableHead className="w-28">Actions</TableHead>
+              {isAdmin && <TableHead className="w-28">Actions</TableHead>}
             </TableRow>
           </TableHeader>
 
@@ -366,11 +367,11 @@ export default function ExpenseItemsAdminClient({ currentUserId }: ExpenseItemsA
                 <TableCell className="max-w-xs truncate">{item.description}</TableCell>
                 <TableCell>₹{Number(item.amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</TableCell>
                 <TableCell>{item.createdBy?.name ?? item.createdBy?.email ?? "Admin"}</TableCell>
-                <TableCell>
+                {isAdmin && <TableCell>
                   <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700" onClick={() => handleDelete(item.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
-                </TableCell>
+                </TableCell>}
               </TableRow>
             ))}
           </TableBody>

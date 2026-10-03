@@ -4,7 +4,7 @@ import ExpenseItemsAdminClient from "./expense-items-client";
 
 export default async function ExpenseItemsPage() {
   const user = await getCurrentUser();
-  if (!user || user.role !== "ADMIN") redirect("/dashboard");
+  if (!user) redirect("/dashboard");
 
-  return <ExpenseItemsAdminClient currentUserId={user.id} />;
+  return <ExpenseItemsAdminClient currentUserId={user.id} isAdmin={user.role === "ADMIN"} />;
 }

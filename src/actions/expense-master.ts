@@ -2,7 +2,7 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireAdmin, requireAuth } from "@/lib/session";
 import { expenseCategorySchema, expenseItemSchema, expenseTypeSchema, paymentTypeSchema } from "@/lib/validators";
 import {
   CACHE_TAGS,
@@ -107,6 +107,8 @@ export async function getExpenseTypes() {
 }
 
 export async function getExpenseItems(filters?: { quarterId?: string }) {
+  await requireAuth();
+
   const items = await prisma.expenseItem.findMany({
     where: filters?.quarterId ? { quarterId: filters.quarterId } : undefined,
     orderBy: { date: "desc" },
@@ -137,7 +139,7 @@ export async function getExpenseItemsPageData(filters?: {
    * goes out once, already scoped to it. */
   useCurrentQuarterIfUnset?: boolean;
 }) {
-  await requireAdmin();
+  const user = await requireAuth();
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -152,14 +154,14 @@ export async function getExpenseItemsPageData(filters?: {
       where: { isActive: true, startDate: { lte: today }, endDate: { gte: today } },
     }),
 
-    getCachedExpenseCategories(),
-    getCachedExpenseTypes(),
+    user.role === "ADMIN" ? getCachedExpenseCategories() : Promise.resolve([]),
+    user.role === "ADMIN" ? getCachedExpenseTypes() : Promise.resolve([]),
 
-    prisma.user.findMany({
+    user.role === "ADMIN" ? prisma.user.findMany({
       where: { role: "ADMIN", isActive: true },
       select: { id: true, name: true, email: true },
       orderBy: { name: "asc" },
-    }),
+    }) : Promise.resolve([]),
   ]);
 
   // When the quarter is already known (or the caller explicitly asked for

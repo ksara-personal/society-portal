@@ -614,7 +614,7 @@ export async function sendCurrentQuarterPaymentReminders() {
 }
 
 export async function getFinanceUserSummary(filters?: { quarterId?: string; userId?: string }) {
-  await requireAdmin();
+  await requireAuth();
 
   const paymentWhere: any = {
     status: { in: ["PAID", "PARTIAL"] },
