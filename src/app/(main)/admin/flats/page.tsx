@@ -7,6 +7,7 @@ import {
   updateFlat,
   deleteFlat,
   createFlatRange,
+  getFlatEligibilityCounts,
 } from "@/actions/flats";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,7 @@ type Flat = Awaited<ReturnType<typeof getFlats>>[number];
 
 export default function FlatsPage() {
   const [flats, setFlats] = useState<Flat[]>([]);
+  const [eligibilityCounts, setEligibilityCounts] = useState<Awaited<ReturnType<typeof getFlatEligibilityCounts>> | null>(null);
   const [editing, setEditing] = useState<Flat | null>(null);
   const [open, setOpen] = useState(false);
   const [rangeOpen, setRangeOpen] = useState(false);
@@ -44,8 +46,9 @@ export default function FlatsPage() {
   }, []);
 
   async function load() {
-    const data = await getFlats();
+    const [data, counts] = await Promise.all([getFlats(), getFlatEligibilityCounts()]);
     setFlats(data);
+    setEligibilityCounts(counts);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -197,6 +200,14 @@ export default function FlatsPage() {
           ))}
         </select>
       </div>
+
+      {eligibilityCounts && (
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm" aria-label="Villa eligibility counts">
+          <span>Eligible: <strong>{eligibilityCounts.eligible}</strong></span>
+          <span>Not eligible: <strong>{eligibilityCounts.notEligible}</strong></span>
+          <span className="text-muted-foreground">Total: {eligibilityCounts.total}</span>
+        </div>
+      )}
 
       <Table>
         <TableHeader>
