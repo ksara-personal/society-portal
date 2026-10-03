@@ -572,7 +572,6 @@ export async function sendCurrentQuarterPaymentReminders() {
 
   const residents = await prisma.user.findMany({
     where: {
-      role: "RESIDENT",
       approvalStatus: "APPROVED",
       isActive: true,
       wing: { in: Array.from(new Set(Array.from(duesByFlat.values()).map((flat) => flat.wing))) },
