@@ -2,11 +2,11 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { getQuarters } from "@/actions/quarters";
 import { getFinanceUserSummary } from "@/actions/payments";
+import { FinanceSummaryQuarterFilter } from "./finance-summary-quarter-filter";
 
 interface FinanceSummaryPageProps {
   searchParams: Promise<{
     quarterId?: string | string[];
-    search?: string | string[];
   }>;
 }
 
@@ -18,24 +18,12 @@ export default async function FinanceSummaryPage({ searchParams }: FinanceSummar
   const quarterId = Array.isArray(resolvedSearchParams.quarterId)
     ? resolvedSearchParams.quarterId[0]
     : resolvedSearchParams.quarterId;
-  const searchText = Array.isArray(resolvedSearchParams.search)
-    ? resolvedSearchParams.search[0]
-    : resolvedSearchParams.search ?? "";
 
   const quarters = await getQuarters();
   const rows = await getFinanceUserSummary({ quarterId: quarterId || undefined });
-  const normalizedSearch = searchText.trim().toLowerCase();
-
-  const filteredRows = normalizedSearch
-    ? rows.filter((row) =>
-        row.user.name.toLowerCase().includes(normalizedSearch) ||
-        row.user.email.toLowerCase().includes(normalizedSearch)
-      )
-    : rows;
-
-  const totalCollected = filteredRows.reduce((sum, row) => sum + row.collected, 0);
-  const totalExpenses = filteredRows.reduce((sum, row) => sum + row.expenses, 0);
-  const totalRemaining = filteredRows.reduce((sum, row) => sum + row.remaining, 0);
+  const totalCollected = rows.reduce((sum, row) => sum + row.collected, 0);
+  const totalExpenses = rows.reduce((sum, row) => sum + row.expenses, 0);
+  const totalRemaining = rows.reduce((sum, row) => sum + row.remaining, 0);
 
   return (
     <div className="space-y-6">
@@ -47,34 +35,7 @@ export default async function FinanceSummaryPage({ searchParams }: FinanceSummar
           </p>
         </div>
 
-        <form method="get" className="grid gap-3 sm:grid-cols-[220px_minmax(220px,1fr)_auto]">
-            <select
-              name="quarterId"
-              defaultValue={quarterId ?? ""}
-              className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="">All quarters</option>
-              {quarters.map((quarter) => (
-                <option key={quarter.id} value={quarter.id}>
-                  {quarter.name}
-                </option>
-              ))}
-            </select>
-
-            <input
-              name="search"
-              defaultValue={searchText}
-              placeholder="Search user or email"
-              className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-
-          <button
-            type="submit"
-            className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/50"
-          >
-            Apply
-          </button>
-        </form>
+        <FinanceSummaryQuarterFilter quarters={quarters} quarterId={quarterId} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -99,24 +60,22 @@ export default async function FinanceSummaryPage({ searchParams }: FinanceSummar
           <thead className="bg-gray-50 text-gray-700">
             <tr>
               <th className="px-4 py-3 font-medium">User</th>
-              <th className="px-4 py-3 font-medium">Email</th>
               <th className="px-4 py-3 font-medium">Collected</th>
               <th className="px-4 py-3 font-medium">Expenses</th>
               <th className="px-4 py-3 font-medium">Remaining</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {filteredRows.length === 0 ? (
+            {rows.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">
+                <td colSpan={4} className="px-4 py-8 text-center text-sm text-gray-500">
                   No collectors found for the selected filters.
                 </td>
               </tr>
             ) : (
-              filteredRows.map((row) => (
+              rows.map((row) => (
                 <tr key={row.userId}>
                   <td className="px-4 py-4 font-medium text-gray-900">{row.user.name}</td>
-                  <td className="px-4 py-4 text-gray-600">{row.user.email || "—"}</td>
                   <td className="px-4 py-4 text-gray-900">₹{row.collected.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                   <td className="px-4 py-4 text-gray-900">₹{row.expenses.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                   <td className={`px-4 py-4 font-semibold ${row.remaining < 0 ? "text-destructive" : "text-emerald-700"}`}>

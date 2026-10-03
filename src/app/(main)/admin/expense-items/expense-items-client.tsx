@@ -61,7 +61,7 @@ export default function ExpenseItemsAdminClient({ currentUserId, isAdmin }: Expe
   const pageTitle = useMemo(() => {
     if (selectedQuarterId === "ALL" || selectedQuarterId === "") return "All Expenses";
     const quarter = quarters.find((q) => q.id === selectedQuarterId);
-    return quarter ? `All ${quarter.name} Expenses` : "All Expenses";
+    return quarter ? `${quarter.name} Expenses` : "All Expenses";
   }, [selectedQuarterId, quarters]);
 
   async function load() {
