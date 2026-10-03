@@ -60,8 +60,10 @@ async function sendMailSafe(options: {
 
   try {
     await sendMail({ ...options, to });
+    return true;
   } catch (err) {
     console.error(`[mailer] Failed to send "${options.subject}" to ${to}:`, err);
+    return false;
   }
 }
 
@@ -161,4 +163,29 @@ export async function sendAccountRejectedEmail(to: string, name: string) {
   });
 
   await sendMailSafe({ to, subject, html });
+}
+
+export async function sendCurrentQuarterPaymentReminder(
+  to: string,
+  resident: { name: string; wing: string; flatNo: string },
+  quarterName: string,
+  remainingAmount: number
+) {
+  const amount = remainingAmount.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const subject = `${BRANDING.communityName} — ${quarterName} maintenance payment reminder`;
+  const html = renderEmailTemplate("payment-reminder", {
+    name: escapeHtml(resident.name),
+    communityName: BRANDING.communityName,
+    quarterName: escapeHtml(quarterName),
+    unitLabel: escapeHtml(BRANDING.unitLabel),
+    wing: escapeHtml(resident.wing),
+    flatNo: escapeHtml(resident.flatNo),
+    remainingAmount: escapeHtml(amount),
+  });
+  const text = `Hello ${resident.name}, a maintenance payment of ₹${amount} remains due for ${quarterName} for ${resident.wing} ${BRANDING.unitLabel} ${resident.flatNo}. Please contact the society office if you have already paid.`;
+
+  return sendMailSafe({ to, subject, html, text });
 }

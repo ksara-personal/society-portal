@@ -8,6 +8,7 @@ import { summarizeFlatPayment } from "@/lib/payment-summary";
 import { getFlatPairs } from "@/actions/flats";
 import { getCachedWings } from "@/lib/master-data";
 import { toPlainAmountRow, toPlainQuarter } from "@/lib/decimal";
+import { sendCurrentQuarterPaymentReminder } from "@/lib/mailer";
 
 type ActionResult = { success: boolean; count?: number } | { error: string };
 
@@ -508,6 +509,109 @@ export async function getCurrentQuarterDues(filters?: {
       collectionRate: totalFlats > 0 ? Math.round((paidCount / totalFlats) * 100) : 0,
     },
   };
+}
+
+export async function sendCurrentQuarterPaymentReminders() {
+  await requireAdmin();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const quarter = await prisma.paymentQuarter.findFirst({
+    where: { isActive: true, startDate: { lte: today }, endDate: { gte: today } },
+  });
+
+  if (!quarter) return { error: "No active quarter is configured for the current date range." };
+
+  const [flats, payments] = await Promise.all([
+    getFlatPairs(undefined, { eligibleOnly: false }),
+    prisma.payment.findMany({
+      where: {
+        quarterId: quarter.id,
+        OR: [{ paymentTypeId: null }, { paymentType: { slug: "maintenance" } }],
+      },
+      select: { wing: true, flatNo: true, amount: true, status: true },
+    }),
+  ]);
+
+  const eligibilityByFlat = new Map(
+    flats.map((flat) => [`${flat.wing}-${normalizeFlatNo(flat.flatNo)}`, flat.eligibleForMaintenance])
+  );
+  const paymentsByFlat = new Map<string, typeof payments>();
+  for (const payment of payments) {
+    const key = `${payment.wing}-${normalizeFlatNo(payment.flatNo)}`;
+    const flatPayments = paymentsByFlat.get(key) ?? [];
+    flatPayments.push(payment);
+    paymentsByFlat.set(key, flatPayments);
+  }
+
+  const target = Number(quarter.defaultAmount);
+  const duesByFlat = new Map<string, { wing: string; flatNo: string; amount: number }>();
+  const flatKeys = new Set([
+    ...flats.filter((flat) => flat.eligibleForMaintenance).map((flat) => `${flat.wing}-${normalizeFlatNo(flat.flatNo)}`),
+    ...paymentsByFlat.keys(),
+  ]);
+
+  for (const key of flatKeys) {
+    if (eligibilityByFlat.get(key) === false) continue;
+    const flatPayments = paymentsByFlat.get(key) ?? [];
+    if (flatPayments.some((payment) => payment.status === "PAID" || payment.status === "WAIVED")) continue;
+
+    const partialPaid = flatPayments
+      .filter((payment) => payment.status === "PARTIAL")
+      .reduce((sum, payment) => sum + Number(payment.amount), 0);
+    const amount = Math.max(target - partialPaid, 0);
+    if (amount <= 0) continue;
+
+    const [wing, flatNo] = key.split("-", 2);
+    duesByFlat.set(key, { wing, flatNo, amount });
+  }
+
+  if (duesByFlat.size === 0) {
+    return { success: true as const, sent: 0, failed: 0, noEmailFlats: 0, quarterName: quarter.name };
+  }
+
+  const residents = await prisma.user.findMany({
+    where: {
+      role: "RESIDENT",
+      approvalStatus: "APPROVED",
+      isActive: true,
+      wing: { in: Array.from(new Set(Array.from(duesByFlat.values()).map((flat) => flat.wing))) },
+    },
+    select: { name: true, email: true, wing: true, flatNo: true },
+  });
+
+  const residentsByFlat = new Map<string, typeof residents>();
+  for (const resident of residents) {
+    const key = `${resident.wing}-${normalizeFlatNo(resident.flatNo)}`;
+    if (!duesByFlat.has(key)) continue;
+    const flatResidents = residentsByFlat.get(key) ?? [];
+    flatResidents.push(resident);
+    residentsByFlat.set(key, flatResidents);
+  }
+
+  let sent = 0;
+  let failed = 0;
+  let noEmailFlats = 0;
+  for (const [key, due] of duesByFlat) {
+    const recipients = (residentsByFlat.get(key) ?? []).filter((resident) => resident.email.trim());
+    if (recipients.length === 0) {
+      noEmailFlats++;
+      continue;
+    }
+
+    for (const resident of recipients) {
+      const delivered = await sendCurrentQuarterPaymentReminder(
+        resident.email,
+        { name: resident.name, wing: due.wing, flatNo: due.flatNo },
+        quarter.name,
+        due.amount
+      );
+      if (delivered) sent++;
+      else failed++;
+    }
+  }
+
+  return { success: true as const, sent, failed, noEmailFlats, quarterName: quarter.name };
 }
 
 export async function getFinanceUserSummary(filters?: { quarterId?: string; userId?: string }) {

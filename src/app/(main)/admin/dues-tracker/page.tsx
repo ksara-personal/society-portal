@@ -4,6 +4,7 @@ import { getQuarters } from "@/actions/quarters";
 import { getDuesTrackerData, getCurrentQuarterDues } from "@/actions/payments";
 import { getFlatEligibilityCounts } from "@/actions/flats";
 import { cn } from "@/lib/utils";
+import { SendPaymentRemindersButton } from "@/components/payments/send-payment-reminders-button";
 
 interface PageProps {
   searchParams: Promise<{ year?: string | string[] }>;
@@ -61,6 +62,13 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
           </p>
         </div>
 
+        <div className="flex flex-wrap items-center gap-3">
+        {user.role === "ADMIN" && currentQuarter && currentSummary && (
+          <SendPaymentRemindersButton
+            quarterName={currentQuarter.name}
+            unpaidCount={currentSummary.unpaidCount}
+          />
+        )}
         <form method="get" className="flex items-center gap-3">
           <label className="text-sm font-medium">
             Year
@@ -74,6 +82,7 @@ export default async function DuesTrackerPage({ searchParams }: PageProps) {
             Apply
           </button>
         </form>
+        </div>
         </div>
 
         <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">

@@ -17,6 +17,7 @@ const TEMPLATES = {
   ),
   "account-approved": fs.readFileSync(path.join(TEMPLATES_DIR, "account-approved.html"), "utf-8"),
   "account-rejected": fs.readFileSync(path.join(TEMPLATES_DIR, "account-rejected.html"), "utf-8"),
+  "payment-reminder": fs.readFileSync(path.join(TEMPLATES_DIR, "payment-reminder.html"), "utf-8"),
 } as const;
 
 export type EmailTemplateName = keyof typeof TEMPLATES;
